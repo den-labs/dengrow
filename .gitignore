@@ -1,5 +1,8 @@
-node_modules
+node_modules/
+.next/
 .turbo/
+dist/
+.cache/
 
 clarity/.turbo/
 clarity/.debug_history

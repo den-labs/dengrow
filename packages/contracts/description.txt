@@ -1,0 +1,1 @@
+Smart contracts for the DenGrow on-chain plant NFT game.
