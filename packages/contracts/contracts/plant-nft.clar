@@ -3,7 +3,7 @@
 ;; (impl-trait 'STM6S3AESTK9NAYE3Z7RS00T11ER8JJCDNTKG711.nft-trait.nft-trait)
 
 ;; Define the NFT's name
-(define-non-fungible-token funny-dog uint)
+(define-non-fungible-token plant-nft uint)
 
 ;; Keep track of the last minted token ID
 (define-data-var last-token-id uint u0)
@@ -30,7 +30,7 @@
 
 ;; SIP-009 function: Get the owner of a given token
 (define-read-only (get-owner (token-id uint))
-  (ok (nft-get-owner? funny-dog token-id))
+  (ok (nft-get-owner? plant-nft token-id))
 )
 
 ;; SIP-009 function: Transfer NFT token to another owner.
@@ -42,7 +42,7 @@
   (begin
     ;; #[filter(sender)]
     (asserts! (is-eq tx-sender sender) ERR_NOT_TOKEN_OWNER)
-    (nft-transfer? funny-dog token-id sender recipient)
+    (nft-transfer? plant-nft token-id sender recipient)
   )
 )
 
@@ -55,7 +55,7 @@
     ;; Only the contract owner can mint.
     ;; (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_OWNER_ONLY)
     ;; Mint the NFT and send it to the given recipient.
-    (try! (nft-mint? funny-dog token-id recipient))
+    (try! (nft-mint? plant-nft token-id recipient))
     ;; Update the last minted token ID.
     (var-set last-token-id token-id)
     ;; Return a success status and the newly minted NFT ID.

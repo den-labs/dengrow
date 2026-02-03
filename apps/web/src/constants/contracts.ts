@@ -18,6 +18,6 @@ export const getNftContractAddress = (network: Network) => {
 export const getNftContract = (network: Network) => {
   return {
     contractAddress: getNftContractAddress(network),
-    contractName: 'funny-dog',
+    contractName: 'plant-nft',
   } as const;
 };
