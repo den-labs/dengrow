@@ -4,7 +4,7 @@ Smart contracts for the DenGrow on-chain plant NFT game.
 
 ## Know your Contract
 
-The `funny-dog.clar` contract demonstrates a simple SIP-009 NFT implementation.
+The `plant-nft.clar` contract demonstrates a simple SIP-009 NFT implementation.
 
 To add new contracts, follow detailed instructions at [Add new Contract](https://docs.hiro.so/clarinet/how-to-guides/how-to-add-contract).
 
