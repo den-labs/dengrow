@@ -16,6 +16,11 @@ path = 'contracts/plant-nft.clar'
 clarity_version = 1
 epoch = 2.0
 
+[contracts.plant-game]
+path = 'contracts/plant-game.clar'
+clarity_version = 1
+epoch = 2.0
+
 [repl.analysis]
 passes = []
 
