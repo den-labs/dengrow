@@ -3,38 +3,42 @@ id: 0
 name: Testnet deployment
 network: testnet
 stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
 plan:
   batches:
     - id: 0
       transactions:
         - requirement-publish:
             contract-id: SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait
-            remap-sender: deployer
+            remap-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
             remap-principals:
-              SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9: deployer
+              SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
             cost: 4680
             path: "./.cache/requirements/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.clar"
             clarity-version: 1
         - requirement-publish:
             contract-id: SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard
-            remap-sender: deployer
+            remap-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
             remap-principals:
-              SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE: deployer
+              SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
             cost: 8400
             path: "./.cache/requirements/SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.clar"
             clarity-version: 1
+      epoch: "2.0"
+    - id: 1
+      transactions:
         - contract-publish:
             contract-name: plant-game
-            expected-sender: deployer
-            cost: 35000
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 973452
             path: contracts/plant-game.clar
             anchor-block-only: true
-            clarity-version: 1
+            clarity-version: 2
         - contract-publish:
             contract-name: plant-nft
-            expected-sender: deployer
-            cost: 21410
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 969780
             path: contracts/plant-nft.clar
             anchor-block-only: true
-            clarity-version: 1
-      epoch: "2.0"
+            clarity-version: 2
+      epoch: "2.5"

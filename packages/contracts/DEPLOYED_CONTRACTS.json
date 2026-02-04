@@ -1,0 +1,28 @@
+{
+  "network": "testnet",
+  "timestamp": "2026-02-04T17:21:41.000Z",
+  "deployer": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ",
+  "clarityVersion": 2,
+  "contracts": {
+    "plant-game": {
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game",
+      "txid": "0x0421847934a956d17da561f0fcb774e711c348dc142fc192a1d969e04af91acd",
+      "nonce": 22,
+      "blockHeight": 3768499,
+      "explorerUrl": "https://explorer.hiro.so/txid/0x0421847934a956d17da561f0fcb774e711c348dc142fc192a1d969e04af91acd?chain=testnet"
+    },
+    "plant-nft": {
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft",
+      "txid": "0xa2f57bdfb6a4e5c254833c4768410c9b87c96df2497dedf3ab95e614c093b0f1",
+      "nonce": 23,
+      "blockHeight": 3768499,
+      "explorerUrl": "https://explorer.hiro.so/txid/0xa2f57bdfb6a4e5c254833c4768410c9b87c96df2497dedf3ab95e614c093b0f1?chain=testnet"
+    }
+  },
+  "notes": {
+    "clarityUpgrade": "Upgraded from Clarity 1 to Clarity 2 to support block-height variable",
+    "mintPermission": "Public minting enabled - anyone can mint their own plant",
+    "baseUri": "https://dengrow.app/api/metadata/{id}",
+    "testsPassing": "31/31 tests passing with Clarity 2"
+  }
+}
