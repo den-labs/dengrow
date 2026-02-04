@@ -47,3 +47,19 @@ Run contract tests:
 ```bash
 pnpm --filter @dengrow/contracts test
 ```
+
+## Documentation
+
+Complete project documentation is available in the `docs/` directory:
+
+- **[Product Requirements](docs/PRD.md)** - Product vision and requirements
+- **[Master Plan](docs/MASTER_PLAN.md)** - Complete roadmap with milestones and DoD
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - How to deploy contracts to testnet/mainnet
+- **[Security Review](docs/SECURITY.md)** - Security considerations and audits
+- **[Task Backlog](docs/TASKS.md)** - Current development tasks
+- **[Roadmap](docs/ROADMAP.md)** - High-level project phases
+
+### Milestones
+
+- **[M1: Core On-Chain Gameplay](docs/milestones/M1_COMPLETION.md)** ✅ Completed
+
