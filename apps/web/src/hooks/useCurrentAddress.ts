@@ -14,6 +14,6 @@ export function useCurrentAddress(): string | null {
     case 'mainnet':
       return mainnetAddress;
     default:
-      return null;
+      return mainnetAddress || testnetAddress || null;
   }
 }
