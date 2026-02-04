@@ -2,8 +2,7 @@
 import { createContext, FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { getPersistedNetwork, persistNetwork } from '@/lib/network';
 import { Network } from '@/lib/network';
-import { showConnect, disconnect as disconnectWallet } from '@stacks/connect';
-import { userSession } from '@/lib/userSession';
+import { connect, disconnect as disconnectWallet, getLocalStorage } from '@stacks/connect';
 interface HiroWallet {
   isWalletOpen: boolean;
   isWalletConnected: boolean;
@@ -43,8 +42,9 @@ export const HiroWalletProvider: FC<ProviderProps> = ({ children }) => {
 
   useEffect(() => {
     setMounted(true);
-    // Check if user is already signed in
-    if (userSession.isUserSignedIn()) {
+    // Check if wallet is already connected
+    const storage = getLocalStorage();
+    if (storage?.addresses?.stx && storage.addresses.stx.length > 0) {
       setIsWalletConnected(true);
     }
   }, []);
@@ -57,36 +57,39 @@ export const HiroWalletProvider: FC<ProviderProps> = ({ children }) => {
 
   const authenticate = useCallback(async () => {
     setIsWalletOpen(true);
-    showConnect({
-      appDetails: {
-        name: 'DenGrow',
-        icon: '/icon.png',
-      },
-      redirectTo: '/',
-      onFinish: () => {
-        setIsWalletOpen(false);
-        setIsWalletConnected(true);
-      },
-      onCancel: () => {
-        setIsWalletOpen(false);
-      },
-      userSession,
-    });
+    try {
+      await connect({
+        forceWalletSelect: true,
+      });
+      setIsWalletConnected(true);
+      setIsWalletOpen(false);
+    } catch (error) {
+      console.error('Wallet connection failed:', error);
+      setIsWalletOpen(false);
+    }
   }, []);
 
   const handleDisconnect = useCallback(() => {
     disconnectWallet();
-    userSession.signUserOut();
     setIsWalletConnected(false);
   }, []);
 
   const { testnetAddress, mainnetAddress } = useMemo(() => {
-    if (!isWalletConnected || !userSession.isUserSignedIn()) {
+    if (!isWalletConnected) {
       return { testnetAddress: null, mainnetAddress: null };
     }
 
-    const userData = userSession.loadUserData();
-    const address = userData.profile.stxAddress[network || 'testnet'];
+    const storage = getLocalStorage();
+    const stxAddresses = storage?.addresses?.stx || [];
+
+    // Get address for current network
+    const addressData = stxAddresses.find((addr: any) => {
+      if (network === 'testnet') return addr.address.startsWith('ST');
+      if (network === 'mainnet') return addr.address.startsWith('SP');
+      return false;
+    });
+
+    const address = addressData?.address || stxAddresses[0]?.address;
 
     const isTestnet = address?.startsWith('ST');
     const isMainnet = address?.startsWith('SP');
