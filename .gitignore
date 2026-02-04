@@ -7,3 +7,9 @@ dist/
 clarity/.turbo/
 clarity/.debug_history
 clarity/.cache/
+
+# Temporary documentation
+*_CHECKLIST.md
+*_REPORT_TEMP.md
+CHANGES_FOR_*.md
+*_SNAPSHOT.md
