@@ -52,6 +52,9 @@ export const useGetPlant = (tokenId: number): UseQueryResult<PlantQueryResult> =
         const clarityValue = hexToCV(result.result);
         const parsedValue: any = cvToValue(clarityValue);
 
+        console.log('[useGetPlant] Token:', tokenId, 'Parsed:', parsedValue);
+
+        // cvToValue on a (some tuple) returns the tuple value directly
         // Check if it's a Some(value) optional
         if (parsedValue && typeof parsedValue === 'object' && 'stage' in parsedValue) {
           return {
@@ -66,6 +69,7 @@ export const useGetPlant = (tokenId: number): UseQueryResult<PlantQueryResult> =
         }
 
         // Plant doesn't exist (None optional)
+        console.log('[useGetPlant] Plant not found or invalid format');
         return {
           exists: false,
           plant: null,
