@@ -52,24 +52,37 @@ export const useGetPlant = (tokenId: number): UseQueryResult<PlantQueryResult> =
         const clarityValue = hexToCV(result.result);
         const parsedValue: any = cvToValue(clarityValue);
 
-        console.log('[useGetPlant] Token:', tokenId, 'Parsed:', parsedValue);
+        // cvToValue returns: {type: "(tuple ...)", value: {stage: {type: "uint", value: 0}, ...}}
+        // For (none), it returns null
+        if (!parsedValue || !parsedValue.value) {
+          return {
+            exists: false,
+            plant: null,
+          };
+        }
 
-        // cvToValue on a (some tuple) returns the tuple value directly
-        // Check if it's a Some(value) optional
-        if (parsedValue && typeof parsedValue === 'object' && 'stage' in parsedValue) {
+        // Extract the tuple value
+        const tupleValue = parsedValue.value;
+
+        // Check if it has the expected fields
+        if (
+          tupleValue.stage &&
+          tupleValue['growth-points'] &&
+          tupleValue['last-water-block'] &&
+          tupleValue.owner
+        ) {
           return {
             exists: true,
             plant: {
-              stage: Number(parsedValue.stage),
-              'growth-points': Number(parsedValue['growth-points']),
-              'last-water-block': Number(parsedValue['last-water-block']),
-              owner: String(parsedValue.owner),
+              stage: Number(tupleValue.stage.value),
+              'growth-points': Number(tupleValue['growth-points'].value),
+              'last-water-block': Number(tupleValue['last-water-block'].value),
+              owner: String(tupleValue.owner.value),
             },
           };
         }
 
-        // Plant doesn't exist (None optional)
-        console.log('[useGetPlant] Plant not found or invalid format');
+        // Plant doesn't exist or invalid format
         return {
           exists: false,
           plant: null,
