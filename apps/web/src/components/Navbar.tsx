@@ -14,19 +14,7 @@ export const Navbar = () => {
   const { currentWallet, wallets, setCurrentWallet } = useDevnetWallet();
   const network = useNetwork();
 
-  const handleConnect = useCallback(async () => {
-    if (!isWalletConnected) {
-      try {
-        const { connect } = await import('@stacks/connect');
-        // In the latest API, connect() doesn't take appDetails directly
-        // It's now handled through the request method with forceWalletSelect option
-        await connect();
-        window.location.reload();
-      } catch (error) {
-        console.error('Failed to load @stacks/connect:', error);
-      }
-    }
-  }, [isWalletConnected]);
+  // Remove unused handleConnect - using HiroWalletContext.authenticate instead
 
   return (
     <Box as="nav" bg="white" boxShadow="sm">
