@@ -94,6 +94,7 @@ export const HiroWalletProvider: FC<ProviderProps> = ({ children }) => {
     };
   }, [isWalletConnected]);
 
+
   const value = useMemo(
     () => ({
       isWalletOpen,
