@@ -151,7 +151,7 @@ export default function MyPlantsPage() {
         </Text>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
           {nftHoldings?.results && nftHoldings.results.length > 0
-            ? nftHoldings.results.map((holding) => (
+            ? nftHoldings.results.map((holding: any) => (
                 <PlantCard
                   key={holding.asset_identifier}
                   plant={{

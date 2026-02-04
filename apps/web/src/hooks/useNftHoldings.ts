@@ -1,8 +1,9 @@
 import { UseQueryResult, useQuery } from '@tanstack/react-query';
-import { NonFungibleTokenHoldingsList } from '@stacks/stacks-blockchain-api-types';
-import { TransactionsApi } from '@stacks/blockchain-api-client';
 import { getApi } from '@/lib/stacks-api';
 import { useNetwork } from '@/lib/use-network';
+
+// Type from API response
+type NonFungibleTokenHoldingsList = any;
 
 // Custom hook to fetch NFT holdings for a given address
 export const useNftHoldings = (address?: string): UseQueryResult<NonFungibleTokenHoldingsList> => {
