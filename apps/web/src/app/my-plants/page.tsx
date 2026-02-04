@@ -151,15 +151,18 @@ export default function MyPlantsPage() {
         </Text>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
           {nftHoldings?.results && nftHoldings.results.length > 0
-            ? nftHoldings.results.map((holding: any) => (
-                <PlantCard
-                  key={holding.asset_identifier}
-                  plant={{
-                    nftAssetContract: holding.asset_identifier.split('::')[0],
-                    tokenId: +formatValue(holding.value.hex).replace('u', ''),
-                  }}
-                />
-              ))
+            ? nftHoldings.results.map((holding: any) => {
+                const tokenId = +formatValue(holding.value.hex).replace('u', '');
+                return (
+                  <PlantCard
+                    key={`${holding.asset_identifier}-${tokenId}`}
+                    plant={{
+                      nftAssetContract: holding.asset_identifier.split('::')[0],
+                      tokenId,
+                    }}
+                  />
+                );
+              })
             : null}
           <MintCard />
         </SimpleGrid>
