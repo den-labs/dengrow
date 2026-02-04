@@ -127,13 +127,13 @@ SIP-009 compliant NFT:
 - [x] Contracts broadcasted to testnet
 - [x] nft-trait confirmed
 - [x] sip-010-trait-ft-standard confirmed
-- [ ] plant-game confirmed (waiting for block)
-- [ ] plant-nft confirmed (waiting for block)
+- [x] plant-game confirmed (block 3768499, 2026-02-04 17:21:41 UTC)
+- [x] plant-nft confirmed (block 3768499, 2026-02-04 17:21:41 UTC)
 - [ ] Manual testing: mint NFT
 - [ ] Manual testing: water plant
 - [ ] Manual testing: verify cooldown
 - [ ] Manual testing: verify growth progression
-- [ ] Web app constants updated
+- [x] Web app constants updated (apps/web/src/constants/contracts.ts)
 - [ ] Frontend tested with testnet
 
 ---
