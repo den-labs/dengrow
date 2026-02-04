@@ -1,0 +1,120 @@
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { hexToCV, cvToValue, cvToHex, uintCV } from '@stacks/transactions';
+import { getGameContract } from '@/constants/contracts';
+import { useNetwork } from '@/lib/use-network';
+import { getApi } from '@/lib/stacks-api';
+
+export interface PlantState {
+  stage: number;
+  'growth-points': number;
+  'last-water-block': number;
+  owner: string;
+}
+
+interface PlantQueryResult {
+  plant: PlantState | null;
+  exists: boolean;
+}
+
+/**
+ * Hook to fetch plant state from plant-game contract
+ */
+export const useGetPlant = (tokenId: number): UseQueryResult<PlantQueryResult> => {
+  const network = useNetwork();
+
+  return useQuery<PlantQueryResult>({
+    queryKey: ['plant', tokenId, network],
+    queryFn: async () => {
+      if (!network) throw new Error('Network is required');
+
+      const contract = getGameContract(network);
+      const api = getApi(network);
+
+      try {
+        const result = await api.smartContractsApi.callReadOnlyFunction({
+          contractAddress: contract.contractAddress,
+          contractName: contract.contractName,
+          functionName: 'get-plant',
+          readOnlyFunctionArgs: {
+            sender: contract.contractAddress,
+            arguments: [cvToHex(uintCV(tokenId))],
+          },
+        });
+
+        if (!result.result) {
+          return {
+            exists: false,
+            plant: null,
+          };
+        }
+
+        // Parse the hex result
+        const clarityValue = hexToCV(result.result);
+        const parsedValue: any = cvToValue(clarityValue);
+
+        // Check if it's a Some(value) optional
+        if (parsedValue && typeof parsedValue === 'object' && 'stage' in parsedValue) {
+          return {
+            exists: true,
+            plant: {
+              stage: Number(parsedValue.stage),
+              'growth-points': Number(parsedValue['growth-points']),
+              'last-water-block': Number(parsedValue['last-water-block']),
+              owner: String(parsedValue.owner),
+            },
+          };
+        }
+
+        // Plant doesn't exist (None optional)
+        return {
+          exists: false,
+          plant: null,
+        };
+      } catch (error) {
+        console.error('Error fetching plant state:', error);
+        // Don't throw, return null state
+        return {
+          exists: false,
+          plant: null,
+        };
+      }
+    },
+    enabled: !!network && tokenId > 0,
+    retry: 2,
+    staleTime: 5000, // Consider data fresh for 5 seconds
+    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchOnWindowFocus: true,
+  });
+};
+
+/**
+ * Helper to get stage name from stage number
+ */
+export const getStageName = (stage: number): string => {
+  const stageNames = ['Seed', 'Sprout', 'Plant', 'Bloom', 'Tree'];
+  return stageNames[stage] || 'Unknown';
+};
+
+/**
+ * Helper to get stage color for badges
+ */
+export const getStageColor = (stage: number): string => {
+  const stageColors = ['gray', 'green', 'teal', 'purple', 'orange'];
+  return stageColors[stage] || 'gray';
+};
+
+/**
+ * Helper to check if plant can be watered
+ */
+export const canWaterPlant = (plant: PlantState | null, currentBlockHeight: number): boolean => {
+  if (!plant) return false;
+
+  const BLOCKS_PER_DAY = 144;
+  const isTree = plant.stage >= 4;
+
+  if (isTree) return false;
+
+  if (plant['last-water-block'] === 0) return true;
+
+  return currentBlockHeight >= plant['last-water-block'] + BLOCKS_PER_DAY;
+};
