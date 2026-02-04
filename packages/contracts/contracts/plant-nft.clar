@@ -1,6 +1,6 @@
 ;; This contract implements the SIP-009 community-standard Non-Fungible Token trait
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
-;; (impl-trait 'STM6S3AESTK9NAYE3Z7RS00T11ER8JJCDNTKG711.nft-trait.nft-trait)
+;; Note: For testnet deployment, this trait will be remapped to STM6S3AESTK9NAYE3Z7RS00T11ER8JJCDNTKG711 automatically
 
 ;; Define the NFT's name
 (define-non-fungible-token plant-nft uint)
@@ -16,7 +16,7 @@
 (define-constant ERR_NOT_TOKEN_OWNER (err u101))
 (define-constant ERR_SOLD_OUT (err u300))
 
-(define-data-var base-uri (string-ascii 80) "https://placedog.net/500/500?id={id}")
+(define-data-var base-uri (string-ascii 80) "https://dengrow.app/api/metadata/{id}")
 
 ;; SIP-009 function: Get the last minted token ID.
 (define-read-only (get-last-token-id)
@@ -42,7 +42,10 @@
   (begin
     ;; #[filter(sender)]
     (asserts! (is-eq tx-sender sender) ERR_NOT_TOKEN_OWNER)
-    (nft-transfer? plant-nft token-id sender recipient)
+    (try! (nft-transfer? plant-nft token-id sender recipient))
+    ;; Update plant owner in game contract
+    (try! (contract-call? .plant-game update-owner token-id recipient))
+    (ok true)
   )
 )
 
@@ -52,10 +55,12 @@
   (let ((token-id (+ (var-get last-token-id) u1)))
     ;; Ensure the collection stays within the limit.
     (asserts! (< (var-get last-token-id) COLLECTION_LIMIT) ERR_SOLD_OUT)
-    ;; Only the contract owner can mint.
+    ;; Mint is public - anyone can mint their own plant
     ;; (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_OWNER_ONLY)
     ;; Mint the NFT and send it to the given recipient.
     (try! (nft-mint? plant-nft token-id recipient))
+    ;; Initialize plant in game contract
+    (try! (contract-call? .plant-game initialize-plant token-id recipient))
     ;; Update the last minted token ID.
     (var-set last-token-id token-id)
     ;; Return a success status and the newly minted NFT ID.
