@@ -32,12 +32,12 @@ import { useNetwork } from '@/lib/use-network';
 import { isTestnetEnvironment } from '@/lib/use-network';
 import { useGetPlant, getStageName, getStageColor, getCooldownBlocks } from '@/hooks/useGetPlant';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
-import { getPlaceholderImage } from '@/utils/nft-utils';
-import { getNftContract } from '@/constants/contracts';
+import { getPlantImage } from '@/utils/nft-utils';
 import { waterPlant } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { getExplorerLink } from '@/utils/explorer-links';
+import { generateTraits, calculateRarityScore } from '@/lib/traits';
 
 // Stage descriptions for the journey
 const stageDescriptions: Record<number, { title: string; description: string; icon: string }> = {
@@ -92,16 +92,15 @@ export default function PlantDetailPage() {
 
   const { data: plantData, isLoading, refetch } = useGetPlant(tokenId);
 
-  // Get NFT contract info
-  const nftContract = network ? getNftContract(network) : null;
-  const nftAssetContract = nftContract
-    ? `${nftContract.contractAddress}.${nftContract.contractName}`
-    : '';
-
-  const imageSrc = network ? getPlaceholderImage(network, nftAssetContract, tokenId) : null;
-
   const plantState = plantData?.plant;
   const stage = plantState?.stage ?? 0;
+
+  // Get dynamic image URL with current stage
+  const imageSrc = getPlantImage(tokenId, stage);
+
+  // Generate deterministic traits for this plant
+  const traits = generateTraits(tokenId);
+  const rarityScore = calculateRarityScore(traits);
   const growthPoints = plantState?.['growth-points'] ?? 0;
   const lastWaterBlock = plantState?.['last-water-block'] ?? 0;
   const isTree = stage >= 4;
@@ -401,6 +400,62 @@ export default function PlantDetailPage() {
                   </Text>
                 </HStack>
               </VStack>
+            </Box>
+
+            <Divider />
+
+            {/* Plant Traits */}
+            <Box>
+              <HStack justify="space-between" mb={3}>
+                <Text fontSize="sm" fontWeight="medium">
+                  Traits
+                </Text>
+                <Badge colorScheme={rarityScore >= 50 ? 'purple' : rarityScore >= 25 ? 'blue' : 'gray'}>
+                  Rarity Score: {rarityScore}
+                </Badge>
+              </HStack>
+              <SimpleGrid columns={2} spacing={3}>
+                <Box p={3} bg="gray.50" borderRadius="md">
+                  <Text fontSize="xs" color="gray.500" mb={1}>Pot</Text>
+                  <HStack>
+                    <Box w={4} h={4} borderRadius="full" bg={traits.pot.color} />
+                    <Text fontSize="sm" fontWeight="medium">{traits.pot.name}</Text>
+                  </HStack>
+                  <Badge size="sm" colorScheme={traits.pot.rarity === 'legendary' ? 'yellow' : traits.pot.rarity === 'rare' ? 'purple' : traits.pot.rarity === 'uncommon' ? 'blue' : 'gray'} mt={1}>
+                    {traits.pot.rarity}
+                  </Badge>
+                </Box>
+                <Box p={3} bg="gray.50" borderRadius="md">
+                  <Text fontSize="xs" color="gray.500" mb={1}>Background</Text>
+                  <HStack>
+                    <Box w={4} h={4} borderRadius="full" bg={traits.background.color} />
+                    <Text fontSize="sm" fontWeight="medium">{traits.background.name}</Text>
+                  </HStack>
+                  <Badge size="sm" colorScheme={traits.background.rarity === 'legendary' ? 'yellow' : traits.background.rarity === 'rare' ? 'purple' : traits.background.rarity === 'uncommon' ? 'blue' : 'gray'} mt={1}>
+                    {traits.background.rarity}
+                  </Badge>
+                </Box>
+                <Box p={3} bg="gray.50" borderRadius="md">
+                  <Text fontSize="xs" color="gray.500" mb={1}>Flower</Text>
+                  <HStack>
+                    <Text>{traits.flower.emoji}</Text>
+                    <Text fontSize="sm" fontWeight="medium">{traits.flower.name}</Text>
+                  </HStack>
+                  <Badge size="sm" colorScheme={traits.flower.rarity === 'legendary' ? 'yellow' : traits.flower.rarity === 'rare' ? 'purple' : traits.flower.rarity === 'uncommon' ? 'blue' : 'gray'} mt={1}>
+                    {traits.flower.rarity}
+                  </Badge>
+                </Box>
+                <Box p={3} bg="gray.50" borderRadius="md">
+                  <Text fontSize="xs" color="gray.500" mb={1}>Companion</Text>
+                  <HStack>
+                    <Text>{traits.companion.emoji || '—'}</Text>
+                    <Text fontSize="sm" fontWeight="medium">{traits.companion.name}</Text>
+                  </HStack>
+                  <Badge size="sm" colorScheme={traits.companion.rarity === 'legendary' ? 'yellow' : traits.companion.rarity === 'rare' ? 'purple' : traits.companion.rarity === 'uncommon' ? 'blue' : 'gray'} mt={1}>
+                    {traits.companion.rarity}
+                  </Badge>
+                </Box>
+              </SimpleGrid>
             </Box>
 
             {/* Impact Pool CTA for graduated plants */}

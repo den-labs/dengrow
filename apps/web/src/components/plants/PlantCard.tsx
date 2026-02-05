@@ -39,7 +39,10 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
   const { nftAssetContract, tokenId } = plant;
   const { data: plantData, isLoading, refetch } = useGetPlant(tokenId);
 
-  const imageSrc = network ? getPlaceholderImage(network, nftAssetContract, tokenId) : null;
+  const plantState = plantData?.plant;
+  const stage = plantState?.stage ?? 0;
+
+  const imageSrc = network ? getPlaceholderImage(network, nftAssetContract, tokenId, stage) : null;
 
   const handleWater = async () => {
     if (!network) return;
@@ -90,8 +93,6 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
     }
   };
 
-  const plantState = plantData?.plant;
-  const stage = plantState?.stage ?? 0;
   const growthPoints = plantState?.['growth-points'] ?? 0;
   const isTree = stage >= 4;
 
