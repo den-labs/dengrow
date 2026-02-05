@@ -122,17 +122,33 @@ export const getStageColor = (stage: number): string => {
 };
 
 /**
+ * Get cooldown blocks based on network
+ * - Testnet: 0 blocks (instant, matches deployed contract)
+ * - Mainnet: 144 blocks (~1 day at 10 min/block)
+ */
+export const getCooldownBlocks = (isTestnet: boolean): number => {
+  return isTestnet ? 0 : 144;
+};
+
+/**
  * Helper to check if plant can be watered
  */
-export const canWaterPlant = (plant: PlantState | null, currentBlockHeight: number): boolean => {
+export const canWaterPlant = (
+  plant: PlantState | null,
+  currentBlockHeight: number,
+  isTestnet: boolean = false
+): boolean => {
   if (!plant) return false;
 
-  const BLOCKS_PER_DAY = 144;
+  const BLOCKS_PER_DAY = getCooldownBlocks(isTestnet);
   const isTree = plant.stage >= 4;
 
   if (isTree) return false;
 
   if (plant['last-water-block'] === 0) return true;
+
+  // If cooldown is 0, always allow watering
+  if (BLOCKS_PER_DAY === 0) return true;
 
   return currentBlockHeight >= plant['last-water-block'] + BLOCKS_PER_DAY;
 };
