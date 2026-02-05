@@ -9,7 +9,9 @@
 (define-constant STAGE-TREE u4)
 
 ;; Constants - Game Mechanics
-(define-constant BLOCKS-PER-DAY u144) ;; Approx 1 day in Stacks (10min blocks)
+;; TESTNET: Using u0 (no cooldown) for fast testing
+;; PRODUCTION: Should be u144 (~24 hours)
+(define-constant BLOCKS-PER-DAY u0) ;; No cooldown for testnet testing
 (define-constant DAYS-TO-TREE u7) ;; 7 successful waters to reach Tree stage
 
 ;; Error Codes
