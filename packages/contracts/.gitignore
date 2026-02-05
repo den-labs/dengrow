@@ -6,3 +6,5 @@
 !.cache/requirements/**
 history.txt
 node_modules/**
+# Testnet-specific contracts (with remapped addresses)
+contracts/testnet/
