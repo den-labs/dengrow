@@ -1,6 +1,6 @@
 [project]
 name = 'dengrow-contracts'
-description = 'DenGrow smart contracts'
+description = 'DenGrow smart contracts - Upgradeable Architecture'
 authors = []
 telemetry = true
 cache_dir = './.cache'
@@ -11,11 +11,32 @@ contract_id = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait'
 [[project.requirements]]
 contract_id = 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard'
 
+# ============================================================================
+# UPGRADEABLE ARCHITECTURE CONTRACTS
+# ============================================================================
+# Deployment order matters! Storage must be deployed first.
+
+# 1. Storage Layer (IMMUTABLE - never redeploy)
+[contracts.plant-storage]
+path = 'contracts/plant-storage.clar'
+clarity_version = 2
+epoch = 2.5
+
+# 2. Logic Layer (VERSIONABLE - deploy new versions as needed)
+[contracts.plant-game-v1]
+path = 'contracts/plant-game-v1.clar'
+clarity_version = 2
+epoch = 2.5
+
+# 3. NFT Contract (calls storage and game-v1)
 [contracts.plant-nft]
 path = 'contracts/plant-nft.clar'
 clarity_version = 2
 epoch = 2.5
 
+# ============================================================================
+# LEGACY CONTRACT (for backward compatibility with existing tests)
+# ============================================================================
 [contracts.plant-game]
 path = 'contracts/plant-game.clar'
 clarity_version = 2
