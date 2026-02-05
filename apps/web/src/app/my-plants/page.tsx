@@ -16,6 +16,7 @@ import { PlantCard } from '@/components/plants/PlantCard';
 import { useNftHoldings, useGetTxId } from '@/hooks/useNftHoldings';
 import { formatValue } from '@/lib/clarity-utils';
 import { mintFunnyDogNFT } from '@/lib/nft/operations';
+import { getNftContract } from '@/constants/contracts';
 import { useNetwork } from '@/lib/use-network';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
@@ -151,18 +152,27 @@ export default function MyPlantsPage() {
         </Text>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
           {nftHoldings?.results && nftHoldings.results.length > 0
-            ? nftHoldings.results.map((holding: any) => {
-                const tokenId = +formatValue(holding.value.hex).replace('u', '');
-                return (
-                  <PlantCard
-                    key={`${holding.asset_identifier}-${tokenId}`}
-                    plant={{
-                      nftAssetContract: holding.asset_identifier.split('::')[0],
-                      tokenId,
-                    }}
-                  />
-                );
-              })
+            ? nftHoldings.results
+                .filter((holding: any) => {
+                  // Only show NFTs from the correct contract for current network
+                  if (!network) return false;
+                  const expectedContract = getNftContract(network);
+                  const fullContractId = `${expectedContract.contractAddress}.${expectedContract.contractName}`;
+                  const holdingContract = holding.asset_identifier.split('::')[0];
+                  return holdingContract === fullContractId;
+                })
+                .map((holding: any) => {
+                  const tokenId = +formatValue(holding.value.hex).replace('u', '');
+                  return (
+                    <PlantCard
+                      key={`${holding.asset_identifier}-${tokenId}`}
+                      plant={{
+                        nftAssetContract: holding.asset_identifier.split('::')[0],
+                        tokenId,
+                      }}
+                    />
+                  );
+                })
             : null}
           <MintCard />
         </SimpleGrid>
