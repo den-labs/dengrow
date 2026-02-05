@@ -15,7 +15,8 @@ import {
 } from '@chakra-ui/react';
 import { useNetwork } from '@/lib/use-network';
 import { getPlaceholderImage } from '@/utils/nft-utils';
-import { useGetPlant, getStageName, getStageColor } from '@/hooks/useGetPlant';
+import { useGetPlant, getStageName, getStageColor, getCooldownBlocks } from '@/hooks/useGetPlant';
+import { isTestnetEnvironment } from '@/lib/use-network';
 import { waterPlant } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
@@ -93,7 +94,12 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
   const stage = plantState?.stage ?? 0;
   const growthPoints = plantState?.['growth-points'] ?? 0;
   const isTree = stage >= 4;
-  const canWater = plantState && !isTree && plantState['last-water-block'] === 0;
+
+  // Check if watering is allowed based on network cooldown
+  const isTestnet = network ? isTestnetEnvironment(network) : false;
+  const cooldownBlocks = getCooldownBlocks(isTestnet);
+  // If cooldown is 0 (testnet), always allow watering. Otherwise check last-water-block.
+  const canWater = plantState && !isTree && (cooldownBlocks === 0 || plantState['last-water-block'] === 0);
 
   return (
     <Link href={`/my-plants/${tokenId}`} style={{ textDecoration: 'none' }}>
