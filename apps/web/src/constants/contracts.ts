@@ -17,16 +17,29 @@ export const getContractAddress = (network: Network) => {
 };
 
 export const getNftContract = (network: Network) => {
+  const isTestnet = isTestnetEnvironment(network);
   return {
     contractAddress: getContractAddress(network),
-    contractName: 'plant-nft',
+    // Testnet uses v2 with upgradeable architecture
+    contractName: isTestnet ? 'plant-nft-v2' : 'plant-nft',
   } as const;
 };
 
 export const getGameContract = (network: Network) => {
+  const isTestnet = isTestnetEnvironment(network);
   return {
     contractAddress: getContractAddress(network),
-    contractName: 'plant-game',
+    // Testnet uses v1 game logic layer
+    contractName: isTestnet ? 'plant-game-v1' : 'plant-game',
+  } as const;
+};
+
+export const getStorageContract = (network: Network) => {
+  const isTestnet = isTestnetEnvironment(network);
+  return {
+    contractAddress: getContractAddress(network),
+    // Testnet has separate storage layer, legacy uses plant-game
+    contractName: isTestnet ? 'plant-storage' : 'plant-game',
   } as const;
 };
 
