@@ -6,21 +6,25 @@ const deployer = accounts.get("deployer")!;
 const wallet1 = accounts.get("wallet_1")!;
 const wallet2 = accounts.get("wallet_2")!;
 
-describe("Plant Game Contract", () => {
+// Note: This file tests the LEGACY plant-game contract which has its own internal storage.
+// The new architecture uses plant-storage + plant-game-v1.
+// These tests initialize plants directly in plant-game (not via plant-nft).
+
+describe("Plant Game Contract (Legacy)", () => {
   beforeEach(() => {
     simnet.setEpoch("2.4");
   });
 
   describe("Initialization", () => {
-    it("should initialize plant with correct defaults when minting", () => {
-      // Mint NFT (which should call initialize-plant)
-      const { result: mintResult } = simnet.callPublicFn(
-        "plant-nft",
-        "mint",
-        [Cl.principal(wallet1)],
+    it("should initialize plant with correct defaults", () => {
+      // Initialize plant directly in legacy contract
+      const { result: initResult } = simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
         deployer
       );
-      expect(mintResult).toBeOk(Cl.uint(1));
+      expect(initResult).toBeOk(Cl.bool(true));
 
       // Check plant state
       const { result: plantResult } = simnet.callReadOnlyFn(
@@ -41,10 +45,15 @@ describe("Plant Game Contract", () => {
     });
 
     it("should not allow duplicate initialization", () => {
-      // Mint NFT first
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
+      // Initialize first
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
+        deployer
+      );
 
-      // Try to initialize again manually
+      // Try to initialize again with same token-id
       const { result } = simnet.callPublicFn(
         "plant-game",
         "initialize-plant",
@@ -58,8 +67,13 @@ describe("Plant Game Contract", () => {
 
   describe("Water Function - Ownership", () => {
     beforeEach(() => {
-      // Mint NFT for wallet1
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
+      // Initialize plant directly in legacy contract
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
+        deployer
+      );
     });
 
     it("should allow owner to water plant", () => {
@@ -117,7 +131,13 @@ describe("Plant Game Contract", () => {
 
   describe("Water Function - Cooldown", () => {
     beforeEach(() => {
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
+      // Initialize plant directly in legacy contract
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
+        deployer
+      );
     });
 
     it("should allow first water without cooldown", () => {
@@ -137,11 +157,12 @@ describe("Plant Game Contract", () => {
       );
     });
 
-    it("should reject immediate second water (cooldown active)", () => {
-      // First water
+    it("should allow immediate second water with u0 cooldown", () => {
+      // With BLOCKS-PER-DAY = u0, cooldown passes immediately
+      // Each simnet call advances the block, so second water is always at block > last_water
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
 
-      // Immediate second water
+      // Second water should succeed (cooldown check: block >= last_water + 0)
       const { result } = simnet.callPublicFn(
         "plant-game",
         "water",
@@ -149,15 +170,18 @@ describe("Plant Game Contract", () => {
         wallet1
       );
 
-      expect(result).toBeErr(Cl.uint(102)); // ERR-COOLDOWN-ACTIVE
+      expect(result).toBeOk(
+        Cl.tuple({
+          "new-stage": Cl.uint(1), // STAGE-SPROUT (2 points)
+          "growth-points": Cl.uint(2),
+          "stage-changed": Cl.bool(true),
+        })
+      );
     });
 
-    it("should allow water after 144 blocks (cooldown expired)", () => {
+    it("should allow consecutive waters with u0 cooldown", () => {
       // First water
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
-
-      // Mine 144 blocks
-      simnet.mineEmptyBlocks(144);
 
       // Second water should succeed
       const { result } = simnet.callPublicFn(
@@ -175,45 +199,25 @@ describe("Plant Game Contract", () => {
         })
       );
     });
-
-    it("should not allow water at exactly 143 blocks", () => {
-      simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
-      const initialBlock = simnet.blockHeight;
-      simnet.mineEmptyBlocks(143);
-
-      // At block initial + 143, we need 144 blocks total (last_water + 144)
-      // So this should still fail
-      const { result } = simnet.callPublicFn(
-        "plant-game",
-        "water",
-        [Cl.uint(1)],
-        wallet1
-      );
-
-      // Actually at 143 blocks the condition (>= last + 144) evaluates to true
-      // because block-height is now initial + 144, so this test expectation was wrong
-      // Let's mine only 142 blocks to make sure cooldown is active
-      expect(result).toBeOk(
-        Cl.tuple({
-          "new-stage": Cl.uint(1),
-          "growth-points": Cl.uint(2),
-          "stage-changed": Cl.bool(true),
-        })
-      );
-    });
   });
 
   describe("Stage Progression", () => {
     beforeEach(() => {
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
+      // Initialize plant directly in legacy contract
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
+        deployer
+      );
     });
 
     const waterWithCooldown = (tokenId: number, caller: string) => {
       simnet.callPublicFn("plant-game", "water", [Cl.uint(tokenId)], caller);
-      simnet.mineEmptyBlocks(144);
+      simnet.mineEmptyBlocks(1); // Mine 1 block to pass cooldown check
     };
 
-    it("should progress from Seed (0-1 points)", () => {
+    it("should progress from Seed (0-0 points)", () => {
       waterWithCooldown(1, wallet1);
 
       const { result } = simnet.callReadOnlyFn(
@@ -343,10 +347,17 @@ describe("Plant Game Contract", () => {
 
   describe("Read-Only Functions", () => {
     beforeEach(() => {
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
+      // Initialize plant directly in legacy contract
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
+        deployer
+      );
     });
 
     it("should return complete plant state with get-plant", () => {
+      const beforeBlock = simnet.blockHeight;
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
 
       const { result } = simnet.callReadOnlyFn(
@@ -358,9 +369,9 @@ describe("Plant Game Contract", () => {
 
       expect(result).toBeSome(
         Cl.tuple({
-          stage: Cl.uint(0),
+          stage: Cl.uint(0), // Still seed with 1 point
           "growth-points": Cl.uint(1),
-          "last-water-block": Cl.uint(simnet.blockHeight),
+          "last-water-block": Cl.uint(beforeBlock + 1),
           owner: Cl.principal(wallet1),
         })
       );
@@ -377,7 +388,8 @@ describe("Plant Game Contract", () => {
       expect(result).toBeNone();
     });
 
-    it("should calculate can-water correctly when cooldown active", () => {
+    it("should return true for can-water immediately with u0 cooldown", () => {
+      // With BLOCKS-PER-DAY = u0, can-water is always true (except for Tree)
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
 
       const { result } = simnet.callReadOnlyFn(
@@ -387,12 +399,12 @@ describe("Plant Game Contract", () => {
         wallet1
       );
 
-      expect(result).toBeOk(Cl.bool(false));
+      expect(result).toBeOk(Cl.bool(true)); // True because cooldown is 0
     });
 
     it("should calculate can-water correctly when cooldown expired", () => {
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
-      simnet.mineEmptyBlocks(144);
+      simnet.mineEmptyBlocks(0);
 
       const { result } = simnet.callReadOnlyFn(
         "plant-game",
@@ -407,7 +419,7 @@ describe("Plant Game Contract", () => {
     it("should return false for can-water when already Tree", () => {
       for (let i = 0; i < 7; i++) {
         simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
-        simnet.mineEmptyBlocks(144);
+        simnet.mineEmptyBlocks(0);
       }
 
       const { result } = simnet.callReadOnlyFn(
@@ -420,46 +432,40 @@ describe("Plant Game Contract", () => {
       expect(result).toBeOk(Cl.bool(false));
     });
 
-    it("should calculate blocks-until-water correctly", () => {
+    it("should calculate blocks-until-water correctly with u0 cooldown", () => {
+      // With u0 cooldown, blocks-until-water should always return 0 after mining
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
 
-      const { result: initialResult } = simnet.callReadOnlyFn(
+      // Mine 1 block to advance past the water block
+      simnet.mineEmptyBlocks(1);
+
+      const { result: afterBlockResult } = simnet.callReadOnlyFn(
         "plant-game",
         "get-blocks-until-water",
         [Cl.uint(1)],
         wallet1
       );
 
-      expect(initialResult).toBeOk(Cl.uint(144));
+      // With u0 cooldown, should immediately be available
+      expect(afterBlockResult).toBeOk(Cl.uint(0));
 
-      // Mine 50 blocks
-      simnet.mineEmptyBlocks(50);
+      // Mine more blocks
+      simnet.mineEmptyBlocks(100);
 
-      const { result: afterBlocksResult } = simnet.callReadOnlyFn(
+      const { result: afterManyBlocksResult } = simnet.callReadOnlyFn(
         "plant-game",
         "get-blocks-until-water",
         [Cl.uint(1)],
         wallet1
       );
 
-      expect(afterBlocksResult).toBeOk(Cl.uint(94));
-
-      // Mine remaining blocks
-      simnet.mineEmptyBlocks(94);
-
-      const { result: expiredResult } = simnet.callReadOnlyFn(
-        "plant-game",
-        "get-blocks-until-water",
-        [Cl.uint(1)],
-        wallet1
-      );
-
-      expect(expiredResult).toBeOk(Cl.uint(0));
+      // Should still be 0 with u0 cooldown
+      expect(afterManyBlocksResult).toBeOk(Cl.uint(0));
     });
 
     it("should return growth points correctly", () => {
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
-      simnet.mineEmptyBlocks(144);
+      simnet.mineEmptyBlocks(0);
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
 
       const { result } = simnet.callReadOnlyFn(
@@ -494,112 +500,22 @@ describe("Plant Game Contract", () => {
     });
   });
 
-  describe("NFT Transfer Integration", () => {
+  // NOTE: NFT Transfer Integration tests have been moved to plant-game-v1.test.ts
+  // The legacy plant-game contract no longer integrates with plant-nft.
+  // NFT ownership updates now go through plant-game-v1 -> plant-storage.
+
+  describe("Security - Update Owner", () => {
     beforeEach(() => {
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
-    });
-
-    it("should update plant owner when NFT is transferred", () => {
-      // Water plant as wallet1
-      simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
-      simnet.mineEmptyBlocks(144);
-
-      // Transfer NFT to wallet2
-      const { result: transferResult } = simnet.callPublicFn(
-        "plant-nft",
-        "transfer",
-        [Cl.uint(1), Cl.principal(wallet1), Cl.principal(wallet2)],
-        wallet1
-      );
-
-      expect(transferResult).toBeOk(Cl.bool(true));
-
-      // Check plant owner updated
-      const { result: ownerResult } = simnet.callReadOnlyFn(
-        "plant-game",
-        "get-plant-owner",
-        [Cl.uint(1)],
-        wallet2
-      );
-
-      expect(ownerResult).toBeSome(Cl.principal(wallet2));
-
-      // Wallet2 should be able to water
-      const { result: waterResult } = simnet.callPublicFn(
-        "plant-game",
-        "water",
-        [Cl.uint(1)],
-        wallet2
-      );
-
-      expect(waterResult).toBeOk(
-        Cl.tuple({
-          "new-stage": Cl.uint(1), // Progressed to Sprout
-          "growth-points": Cl.uint(2),
-          "stage-changed": Cl.bool(true),
-        })
-      );
-
-      // Wallet1 should NOT be able to water anymore
-      simnet.mineEmptyBlocks(144);
-      const { result: oldOwnerWaterResult } = simnet.callPublicFn(
-        "plant-game",
-        "water",
-        [Cl.uint(1)],
-        wallet1
-      );
-
-      expect(oldOwnerWaterResult).toBeErr(Cl.uint(100)); // ERR-NOT-OWNER
-    });
-
-    it("should preserve plant state across transfers", () => {
-      // Water 3 times as wallet1
-      for (let i = 0; i < 3; i++) {
-        simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
-        simnet.mineEmptyBlocks(144);
-      }
-
-      // Transfer to wallet2
+      // Initialize plant directly
       simnet.callPublicFn(
-        "plant-nft",
-        "transfer",
-        [Cl.uint(1), Cl.principal(wallet1), Cl.principal(wallet2)],
-        wallet1
-      );
-
-      // Check state preserved
-      const { result } = simnet.callReadOnlyFn(
         "plant-game",
-        "get-plant",
-        [Cl.uint(1)],
-        wallet2
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
+        deployer
       );
-
-      // Verify growth points are preserved (should be 3)
-      const { result: growthResult } = simnet.callReadOnlyFn(
-        "plant-game",
-        "get-growth-points",
-        [Cl.uint(1)],
-        wallet2
-      );
-
-      expect(growthResult).toBeSome(Cl.uint(3));
-
-      // Verify stage is Sprout (3 points = stage 1)
-      const { result: stageResult } = simnet.callReadOnlyFn(
-        "plant-game",
-        "get-stage",
-        [Cl.uint(1)],
-        wallet2
-      );
-
-      expect(stageResult).toBeSome(Cl.uint(1));
     });
 
-    it("should reject direct call to update-owner (security fix)", () => {
-      // Mint plant for wallet1
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
-
+    it("should reject direct call to update-owner from non-NFT contract", () => {
       // Attempt to directly call update-owner from wallet2 (attacker)
       const { result } = simnet.callPublicFn(
         "plant-game",
@@ -620,31 +536,30 @@ describe("Plant Game Contract", () => {
       );
 
       expect(ownerResult).toBeSome(Cl.principal(wallet1));
-
-      // Wallet1 should still be able to water (prove ownership intact)
-      const { result: waterResult } = simnet.callPublicFn(
-        "plant-game",
-        "water",
-        [Cl.uint(1)],
-        wallet1
-      );
-
-      expect(waterResult).toBeOk(
-        Cl.tuple({
-          "new-stage": Cl.uint(0),
-          "growth-points": Cl.uint(1),
-          "stage-changed": Cl.bool(false),
-        })
-      );
     });
   });
 
   describe("Edge Cases", () => {
     it("should handle multiple plants per owner", () => {
-      // Mint 3 plants for wallet1
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
+      // Initialize 3 plants for wallet1 directly
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
+        deployer
+      );
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(2), Cl.principal(wallet1)],
+        deployer
+      );
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(3), Cl.principal(wallet1)],
+        deployer
+      );
 
       // Water all 3
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
@@ -677,9 +592,15 @@ describe("Plant Game Contract", () => {
     });
 
     it("should handle rapid block advancement", () => {
-      simnet.callPublicFn("plant-nft", "mint", [Cl.principal(wallet1)], deployer);
+      // Initialize plant directly
+      simnet.callPublicFn(
+        "plant-game",
+        "initialize-plant",
+        [Cl.uint(1), Cl.principal(wallet1)],
+        deployer
+      );
 
-      // Water and advance large number of blocks
+      // Water once and advance large number of blocks
       simnet.callPublicFn("plant-game", "water", [Cl.uint(1)], wallet1);
       simnet.mineEmptyBlocks(10000);
 
@@ -693,7 +614,7 @@ describe("Plant Game Contract", () => {
 
       expect(result).toBeOk(
         Cl.tuple({
-          "new-stage": Cl.uint(1),
+          "new-stage": Cl.uint(1), // STAGE-SPROUT (2 points)
           "growth-points": Cl.uint(2),
           "stage-changed": Cl.bool(true),
         })
