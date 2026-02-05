@@ -1,6 +1,6 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { hexToCV, cvToValue, cvToHex, uintCV } from '@stacks/transactions';
-import { getGameContract } from '@/constants/contracts';
+import { getStorageContract } from '@/constants/contracts';
 import { useNetwork } from '@/lib/use-network';
 import { getApi } from '@/lib/stacks-api';
 
@@ -17,7 +17,8 @@ interface PlantQueryResult {
 }
 
 /**
- * Hook to fetch plant state from plant-game contract
+ * Hook to fetch plant state from storage contract
+ * (plant-storage on testnet, plant-game on mainnet/devnet)
  */
 export const useGetPlant = (tokenId: number): UseQueryResult<PlantQueryResult> => {
   const network = useNetwork();
@@ -27,7 +28,7 @@ export const useGetPlant = (tokenId: number): UseQueryResult<PlantQueryResult> =
     queryFn: async () => {
       if (!network) throw new Error('Network is required');
 
-      const contract = getGameContract(network);
+      const contract = getStorageContract(network);
       const api = getApi(network);
 
       try {

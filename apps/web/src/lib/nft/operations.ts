@@ -3,7 +3,11 @@ import { getNftContract } from '@/constants/contracts';
 import { Network } from '@/lib/network';
 import { ContractCallRegularOptions } from '@stacks/connect';
 
-export const mintFunnyDogNFT = (
+/**
+ * Mint a plant NFT - calls NFT contract mint(recipient)
+ * (plant-nft-v2 on testnet, plant-nft on mainnet/devnet)
+ */
+export const mintPlantNFT = (
   network: Network,
   recipientAddress: string
 ): ContractCallRegularOptions => {
@@ -21,3 +25,6 @@ export const mintFunnyDogNFT = (
     postConditions: [],
   };
 };
+
+// Legacy alias for backwards compatibility
+export const mintFunnyDogNFT = mintPlantNFT;
