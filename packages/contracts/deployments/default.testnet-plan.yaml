@@ -30,14 +30,28 @@ plan:
         - contract-publish:
             contract-name: plant-game
             expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
-            cost: 973452
+            cost: 277172
             path: contracts/plant-game.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: plant-storage
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 277322
+            path: contracts/plant-storage.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: plant-game-v1
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 277272
+            path: contracts/plant-game-v1.clar
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
             contract-name: plant-nft
             expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
-            cost: 969780
+            cost: 276376
             path: contracts/plant-nft.clar
             anchor-block-only: true
             clarity-version: 2
