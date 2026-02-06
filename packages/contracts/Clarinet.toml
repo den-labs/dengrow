@@ -34,6 +34,12 @@ path = 'contracts/plant-nft.clar'
 clarity_version = 2
 epoch = 2.5
 
+# 4. Impact Registry (tracks graduated trees and redemptions)
+[contracts.impact-registry]
+path = 'contracts/impact-registry.clar'
+clarity_version = 2
+epoch = 2.5
+
 # ============================================================================
 # LEGACY CONTRACT (for backward compatibility with existing tests)
 # ============================================================================
