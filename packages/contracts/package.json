@@ -8,7 +8,10 @@
     "test:reports": "vitest run -- --coverage --costs",
     "test:watch": "chokidar \"unit-tests/**/*.ts\" \"contracts/**/*.clar\" -c \"pnpm test\"",
     "test:testnet": "tsx scripts/test-testnet.ts",
-    "derive-key": "tsx scripts/derive-key.ts"
+    "derive-key": "tsx scripts/derive-key.ts",
+    "deploy:impact-registry": "tsx scripts/deploy-impact-registry.ts",
+    "register:graduated": "tsx scripts/register-graduated-plants.ts",
+    "redeem": "tsx scripts/record-redemption.ts"
   },
   "author": "",
   "license": "ISC",
