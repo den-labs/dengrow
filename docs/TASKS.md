@@ -144,9 +144,25 @@
 
 | Task | Owner | Status | Notes |
 |------|-------|--------|-------|
-| Mainnet deploy | - | Pending | Requires STX for fees |
-| README update | - | Pending | M6 priority |
-| Demo assets | - | Pending | Screenshots, GIF |
+| Define Impact Partner | - | **BLOCKING** | One Tree Planted recommended |
+| Set Redemption Schedule | - | **BLOCKING** | Every Monday proposed |
+| Fund Initial Redemptions | - | **BLOCKING** | Treasury allocation needed |
+| Mainnet deploy | - | Pending | Requires above decisions + STX |
+
+---
+
+## Pre-Mainnet Decisions Required
+
+See `docs/IMPACT_POLICY.md` for full details.
+
+| Decision | Options | Recommended | Status |
+|----------|---------|-------------|--------|
+| What happens after graduation? | Mint again, Badge, Leaderboard | Mint again + Leaderboard | TBD |
+| Who performs redemptions? | Team, DAO, Oracle, Partner | Team (MVP) | TBD |
+| Where are trees planted? | One Tree Planted, Ecosia, Local | One Tree Planted | TBD |
+| When are redemptions? | Weekly, Monthly, On-demand | Weekly (Mondays) | TBD |
+| Minimum batch size? | 5, 10, 20 trees | 10 trees | TBD |
+| User reward for graduating? | Nothing, Badge, Leaderboard spot | Leaderboard (M7) | TBD |
 
 ---
 
