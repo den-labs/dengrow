@@ -21,6 +21,13 @@ const setupPlant = (owner: string) => {
     [Cl.principal(`${deployer}.plant-game-v1`)],
     deployer
   );
+  // Authorize plant-game-v1 as registrar in impact-registry
+  simnet.callPublicFn(
+    "impact-registry",
+    "authorize-registrar",
+    [Cl.principal(`${deployer}.plant-game-v1`)],
+    deployer
+  );
   // Mint NFT (this also initializes plant in storage)
   return simnet.callPublicFn("plant-nft", "mint", [Cl.principal(owner)], deployer);
 };
@@ -274,6 +281,38 @@ describe("Plant Game V1 Contract", () => {
       const printEvents = events.filter((e) => e.event === "print_event");
       // Should have stage-changed and tree-graduated events
       expect(printEvents.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("should register graduation in Impact Registry when reaching Tree stage", () => {
+      // Water 7 times to reach Tree
+      for (let i = 0; i < 7; i++) {
+        waterWithCooldown(1, wallet1);
+      }
+
+      // Check impact registry pool stats
+      const { result } = simnet.callReadOnlyFn(
+        "impact-registry",
+        "get-pool-stats",
+        [],
+        deployer
+      );
+
+      expect(result).toBeTuple({
+        "total-graduated": Cl.uint(1),
+        "total-redeemed": Cl.uint(0),
+        "current-pool-size": Cl.uint(1),
+        "total-batches": Cl.uint(0),
+      });
+
+      // Verify the token was registered
+      const { result: graduationResult } = simnet.callReadOnlyFn(
+        "impact-registry",
+        "is-graduated",
+        [Cl.uint(1)],
+        deployer
+      );
+
+      expect(graduationResult).toBeBool(true);
     });
   });
 

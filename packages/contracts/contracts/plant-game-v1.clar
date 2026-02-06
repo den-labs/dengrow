@@ -121,6 +121,26 @@
               block-height: current-block,
               total-waters: new-points
             })
+            ;; Register graduation in Impact Registry
+            ;; Note: This requires plant-game-v1 to be authorized as registrar
+            (match (contract-call? .impact-registry register-graduation token-id plant-owner)
+              success (begin
+                (print {
+                  event: "impact-registered",
+                  token-id: token-id,
+                  pool-size: (get total-in-pool success)
+                })
+                true
+              )
+              error (begin
+                (print {
+                  event: "impact-registration-failed",
+                  token-id: token-id,
+                  error-code: error
+                })
+                true
+              )
+            )
             true
           )
           true
