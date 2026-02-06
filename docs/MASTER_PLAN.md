@@ -173,11 +173,11 @@
 
 ---
 
-## Milestone 6 — "Product Final" Packaging ❌ PENDING
+## Milestone 6 — "Product Final" Packaging 🟡 IN PROGRESS
 
 **Goal:** Make it shippable for rewards, demos, and users.
 
-- [ ] README (root) with:
+- [x] README (root) with:
   - what DenGrow is
   - how to run locally
   - how to deploy contracts
@@ -186,7 +186,7 @@
 - [ ] Demo script (1–2 min walkthrough)
 - [ ] Screenshots + short GIF
 - [ ] "Pitch" copy for Talent/Stacks rewards
-- [ ] License + contribution notes
+- [x] License + contribution notes
 
 **DoD:** Someone can evaluate and try it without asking you questions.
 
@@ -215,7 +215,7 @@
 | M3 Metadata/Visuals | ✅ | 100% |
 | M4 Impact Pool | ✅ | 100% |
 | M5 Production | 🟡 | 80% |
-| M6 Packaging | ❌ | 0% |
+| M6 Packaging | 🟡 | 50% |
 | M7 Growth Hooks | ❌ | 0% |
 
 **MVP Core Complete!** Ready for M5 completion (mainnet) and M6 (launch assets).

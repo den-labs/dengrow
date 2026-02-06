@@ -113,17 +113,17 @@
 
 ---
 
-## Milestone 6 — Product Packaging ❌ PENDING
+## Milestone 6 — Product Packaging 🟡 IN PROGRESS
 
-- [ ] Root README with:
-  - [ ] What DenGrow is
-  - [ ] How to run locally
-  - [ ] How to deploy contracts
-  - [ ] Links to docs
+- [x] Root README with:
+  - [x] What DenGrow is
+  - [x] How to run locally
+  - [x] How to deploy contracts
+  - [x] Links to docs
 - [ ] Demo script (1-2 min walkthrough)
 - [ ] Screenshots + GIF
 - [ ] Pitch copy for Stacks rewards
-- [ ] License + contribution notes
+- [x] License + contribution notes
 
 **DoD:** Someone can evaluate and try it without asking questions.
 
