@@ -113,7 +113,7 @@
 
 ---
 
-## Milestone 6 — Product Packaging 🟡 IN PROGRESS
+## Milestone 6 — Product Packaging ✅ COMPLETE
 
 - [x] Root README with:
   - [x] What DenGrow is
@@ -121,7 +121,7 @@
   - [x] How to deploy contracts
   - [x] Links to docs
 - [x] Demo script (1-2 min walkthrough) → `docs/DEMO_SCRIPT.md`
-- [ ] Screenshots + GIF (manual capture needed)
+- [x] Screenshots → `docs/assets/` (automated with Playwright)
 - [x] Pitch copy for Stacks rewards → `docs/PITCH.md`
 - [x] License + contribution notes
 
