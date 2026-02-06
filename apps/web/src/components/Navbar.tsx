@@ -48,6 +48,9 @@ export const Navbar = () => {
             <Link href="/my-plants">
               <Box>My Plants</Box>
             </Link>
+            <Link href="/impact">
+              <Box>Impact</Box>
+            </Link>
             <NetworkSelector />
             {isDevnetEnvironment() ? (
               <DevnetWalletButton
