@@ -173,7 +173,7 @@
 
 ---
 
-## Milestone 6 — "Product Final" Packaging 🟡 IN PROGRESS
+## Milestone 6 — "Product Final" Packaging ✅ COMPLETE
 
 **Goal:** Make it shippable for rewards, demos, and users.
 
@@ -184,7 +184,7 @@
   - links to PRD/Impact Policy
 
 - [x] Demo script (1–2 min walkthrough) → `docs/DEMO_SCRIPT.md`
-- [ ] Screenshots + short GIF (manual capture needed)
+- [x] Screenshots → `docs/assets/` (automated with Playwright)
 - [x] "Pitch" copy for Talent/Stacks rewards → `docs/PITCH.md`
 - [x] License + contribution notes
 
@@ -215,7 +215,7 @@
 | M3 Metadata/Visuals | ✅ | 100% |
 | M4 Impact Pool | ✅ | 100% |
 | M5 Production | 🟡 | 80% |
-| M6 Packaging | 🟡 | 90% |
+| M6 Packaging | ✅ | 100% |
 | M7 Growth Hooks | ❌ | 0% |
 
 **MVP Core Complete!** Ready for M5 completion (mainnet) and M6 (launch assets).
