@@ -1,402 +1,303 @@
-# DenGrow - Testnet Deployment Guide
+# DenGrow - Deployment Guide
 
-**Fecha:** 2026-02-04
-**Target Network:** Stacks Testnet
-**Estado:** Ready for Deployment ✅
-
----
-
-## Pre-Deployment Checklist
-
-### ✅ Completado
-
-- [x] Security fix aplicado (update-owner vulnerability)
-- [x] Todos los tests pasando (31/31)
-- [x] Contratos compilando correctamente
-- [x] Clarinet check exitoso
-
-### 🔄 Pendiente (Decisiones Necesarias)
-
-- [ ] **Decisión: Mint Permission**
-  - Opción A: Solo deployer puede mintear (actual)
-  - Opción B: Mint público para testing
-  - Opción C: Mint con fee
-
-- [ ] **Decisión: Metadata URI**
-  - Actualizar base-uri con URL real o placeholder informativo
-
-- [ ] **Decisión: NFT Trait**
-  - Cambiar a testnet trait (STM...) o mantener mainnet (SP...)
+**Last Updated:** 2026-02-05
+**Status:** Testnet Deployed ✅ | Mainnet Pending
 
 ---
 
-## Opción 1: Deployment con Clarinet
+## Architecture Overview
 
-### Prerrequisitos
+DenGrow uses an **upgradeable architecture** with 4 contracts:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    CONTRACTS                             │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────────┐    ┌──────────────┐                   │
+│  │ plant-nft-v2 │───▶│plant-storage │◀── Data Layer    │
+│  └──────────────┘    └──────────────┘    (Immutable)    │
+│         │                   ▲                            │
+│         │                   │                            │
+│         ▼                   │                            │
+│  ┌──────────────┐    ┌──────────────┐                   │
+│  │plant-game-v1 │───▶│impact-registry│◀── Impact Pool   │
+│  └──────────────┘    └──────────────┘                   │
+│   Logic Layer                                            │
+│   (Versionable)                                          │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Contract | Purpose | Upgradeable |
+|----------|---------|-------------|
+| `plant-storage` | Stores all plant data | ❌ Immutable |
+| `plant-game-v1` | Game logic (water, stages) | ✅ Versionable |
+| `plant-nft-v2` | SIP-009 NFT with game hooks | ✅ Versionable |
+| `impact-registry` | Tracks graduated trees & redemptions | ❌ Immutable |
+
+---
+
+## Deployed Contracts (Testnet)
+
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| plant-storage | `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-storage` | [View](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-storage?chain=testnet) |
+| plant-game-v1 | `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v1` | [View](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v1?chain=testnet) |
+| plant-nft-v2 | `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v2` | [View](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v2?chain=testnet) |
+| impact-registry | `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry` | [View](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry?chain=testnet) |
+
+**Deployer Address:** `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ`
+
+---
+
+## Local Development
+
+### Prerequisites
 
 ```bash
-# Instalar Clarinet (si no está instalado)
+# Install dependencies
+pnpm install
+
+# Install Clarinet (for contract development)
+brew install clarinet
+# or
 curl -L https://github.com/hirosystems/clarinet/releases/latest/download/clarinet-macos-x64.tar.gz | tar xz
-sudo mv clarinet /usr/local/bin
-
-# Verificar instalación
-clarinet --version
-
-# Tener STX en testnet
-# Usar faucet: https://explorer.hiro.so/sandbox/faucet?chain=testnet
 ```
 
-### Paso 1: Configurar Wallet para Testnet
+### Run Tests
 
 ```bash
 cd packages/contracts
 
-# Exportar tu private key de testnet
-export STACKS_PRIVATE_KEY="tu-private-key-aquí"
+# Run all 103 tests
+pnpm test
 
-# O usar account del Devnet.toml (NO recomendado para testnet público)
-# Deployer: 753b7cc01a1a2e86221266a154af739463fce51219d97e4f856cd7200c3bd2a601
+# Run with coverage
+pnpm test:reports
 ```
 
-### Paso 2: Crear Deployment Plan para Testnet
+### Start Web App
 
 ```bash
-# Generar plan de testnet
+# From root
+pnpm dev
+
+# Or just web app
+pnpm --filter @dengrow/web dev
+```
+
+---
+
+## Testnet Deployment
+
+### Step 1: Get Testnet STX
+
+1. Go to [Testnet Faucet](https://explorer.hiro.so/sandbox/faucet?chain=testnet)
+2. Request STX to your wallet address
+
+### Step 2: Configure Environment
+
+```bash
+cd packages/contracts
+
+# Create .env.testnet
+cat > .env.testnet << EOF
+# DenGrow Testnet Configuration
+STX_TESTNET_KEY=your_private_key_here
+EOF
+```
+
+To get your private key from seed phrase:
+```bash
+pnpm derive-key
+# Enter your 24-word seed phrase
+# Copy the "Private Key (hex)" value
+```
+
+### Step 3: Deploy Contracts
+
+**Deployment Order Matters!**
+
+1. `plant-storage` (data layer - first)
+2. `plant-game-v1` (logic layer)
+3. `plant-nft-v2` (NFT layer)
+4. `impact-registry` (impact pool)
+
+Using Clarinet:
+```bash
 clarinet deployment generate --testnet
-
-# Esto crea: deployments/default.testnet-plan.yaml
-```
-
-### Paso 3: Review del Deployment Plan
-
-El archivo `default.testnet-plan.yaml` debe verse así:
-
-```yaml
----
-id: 0
-name: Testnet deployment
-network: testnet
-stacks-node: "https://api.testnet.hiro.so"
-plan:
-  batches:
-    - id: 0
-      transactions:
-        - requirement-publish:
-            contract-id: SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait
-            remap-sender: <TU-TESTNET-ADDRESS>
-            cost: 4680
-        - contract-publish:
-            contract-name: plant-game
-            expected-sender: <TU-TESTNET-ADDRESS>
-            cost: 35000
-            path: contracts/plant-game.clar
-        - contract-publish:
-            contract-name: plant-nft
-            expected-sender: <TU-TESTNET-ADDRESS>
-            cost: 21410
-            path: contracts/plant-nft.clar
-```
-
-### Paso 4: Deploy
-
-```bash
-# Aplicar deployment plan
 clarinet deployment apply -p deployments/default.testnet-plan.yaml
-
-# Confirmar cuando pregunte
 ```
 
-### Paso 5: Verificar Deployment
+Or using custom scripts:
+```bash
+# Deploy impact-registry (if not deployed)
+pnpm deploy:impact-registry
+```
+
+### Step 4: Post-Deployment Setup
+
+After deploying, authorize contracts:
 
 ```bash
-# Verificar que plant-game fue desplegado
-curl https://api.testnet.hiro.so/v2/contracts/interface/<address>/plant-game
+# Authorize plant-nft-v2 to write to storage
+# (Done via contract call by deployer)
 
-# Verificar que plant-nft fue desplegado
-curl https://api.testnet.hiro.so/v2/contracts/interface/<address>/plant-nft
+# Authorize plant-game-v1 to write to storage
+# (Done via contract call by deployer)
+
+# Authorize plant-game-v1 as registrar in impact-registry
+# (Done automatically by deploy script)
+```
+
+### Step 5: Verify Deployment
+
+```bash
+# Test the deployment
+pnpm test:testnet
+
+# This will:
+# - Mint an NFT
+# - Water the plant
+# - Query plant state
 ```
 
 ---
 
-## Opción 2: Deployment Manual con Stacks CLI
+## Admin Operations
 
-### Prerrequisitos
+### Register Existing Graduated Plants
+
+For plants that graduated before impact-registry was deployed:
 
 ```bash
-# Instalar Stacks CLI
-npm install -g @stacks/cli
-
-# Verificar
-stx --version
-
-# Configurar red testnet
-stx -t
+pnpm register:graduated
 ```
 
-### Paso 1: Deploy plant-game
+### Record Redemption Batch
+
+When converting virtual trees to real-world impact:
 
 ```bash
-cd packages/contracts
-
-# Deploy plant-game
-stx deploy_contract \
-  contracts/plant-game.clar \
-  plant-game \
-  35000 \
-  0 \
-  --testnet
-
-# Guardar transaction ID
-```
-
-### Paso 2: Esperar Confirmación
-
-```bash
-# Verificar status de transacción
-stx tx <transaction-id> --testnet
-
-# Esperar hasta que status = success
-```
-
-### Paso 3: Deploy plant-nft
-
-```bash
-# Deploy plant-nft (DESPUÉS de que plant-game esté confirmado)
-stx deploy_contract \
-  contracts/plant-nft.clar \
-  plant-nft \
-  21410 \
-  0 \
-  --testnet
+# Redeem 5 trees with proof
+pnpm redeem -- --quantity 5 --proof-url "https://example.com/proof.pdf"
 ```
 
 ---
 
-## Opción 3: Deployment con Platform.hiro.so
+## Mainnet Deployment
 
-### Paso 1: Ir a Hiro Platform
+### Checklist
 
-1. Abrir https://platform.hiro.so
-2. Conectar wallet (Hiro/Xverse)
-3. Cambiar a Testnet
+- [ ] Audit contracts (recommended)
+- [ ] Test thoroughly on testnet
+- [ ] Prepare mainnet STX for deployment (~0.5 STX)
+- [ ] Update `BLOCKS-PER-DAY` constant to `u144` (24 hours)
+- [ ] Update web app contract addresses
+- [ ] Configure metadata API base URL
 
-### Paso 2: Deploy Contracts
+### Contract Changes for Mainnet
 
-1. Click en "Deploy Contract"
-2. Copiar contenido de `contracts/plant-game.clar`
-3. Contract name: `plant-game`
-4. Click "Deploy"
-5. Confirmar en wallet
-
-Repetir para `plant-nft.clar`
-
----
-
-## Post-Deployment
-
-### 1. Guardar Direcciones de Contratos
-
-Crear archivo `deployed-contracts.json`:
-
-```json
-{
-  "network": "testnet",
-  "deployer": "ST1ABC...",
-  "contracts": {
-    "plant-game": {
-      "address": "ST1ABC...plant-game",
-      "tx": "0x123...",
-      "block": 12345
-    },
-    "plant-nft": {
-      "address": "ST1ABC...plant-nft",
-      "tx": "0x456...",
-      "block": 12346
-    }
-  }
-}
-```
-
-### 2. Actualizar Web App
-
-Editar `apps/web/src/constants/contracts.ts`:
-
-```typescript
-export const CONTRACTS = {
-  testnet: {
-    plantNft: 'ST1ABC...plant-nft',
-    plantGame: 'ST1ABC...plant-game',
-  },
-  // ...
-}
-```
-
-### 3. Testing en Testnet
-
-```bash
-# Test 1: Mint NFT
-stx contract-call \
-  <deployer> \
-  plant-nft \
-  mint \
-  <recipient> \
-  --testnet
-
-# Test 2: Check plant state
-stx contract-call-read \
-  <deployer> \
-  plant-game \
-  get-plant \
-  u1 \
-  --testnet
-
-# Test 3: Water plant
-stx contract-call \
-  <deployer> \
-  plant-game \
-  water \
-  u1 \
-  --testnet
-```
-
-### 4. Verificar en Explorer
-
-Abrir:
-- https://explorer.hiro.so/txid/<tx-id>?chain=testnet
-- https://explorer.hiro.so/address/<deployer>?chain=testnet
-
----
-
-## Cambios Opcionales Pre-Deployment
-
-### A. Habilitar Mint Público (Recomendado para Testnet)
-
-**Archivo:** `contracts/plant-nft.clar`
-
-**Cambio:**
+In `plant-game-v1.clar`:
 ```clarity
-;; ANTES (solo owner puede mintear)
-(asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_OWNER_ONLY)
+;; Change from testnet (instant)
+(define-constant BLOCKS-PER-DAY u0)
 
-;; DESPUÉS (cualquiera puede mintear)
-;; (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_OWNER_ONLY)
+;; To mainnet (24 hours)
+(define-constant BLOCKS-PER-DAY u144)
 ```
 
-**Pro:** Usuarios pueden testear sin necesidad de que les mintees
-**Con:** Cualquiera puede mintear (spam posible)
+---
 
-### B. Cambiar NFT Trait a Testnet
+## Contract Interfaces
 
-**Archivo:** `contracts/plant-nft.clar`
+### plant-storage (Read-Only)
 
-**Cambio:**
 ```clarity
-;; ANTES (mainnet trait)
-(impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
-
-;; DESPUÉS (testnet trait)
-(impl-trait 'STM6S3AESTK9NAYE3Z7RS00T11ER8JJCDNTKG711.nft-trait.nft-trait)
+(get-plant (token-id uint))           ;; Returns plant state
+(get-stage (token-id uint))           ;; Returns stage (0-4)
+(get-growth-points (token-id uint))   ;; Returns growth points (0-7)
+(get-plant-owner (token-id uint))     ;; Returns owner principal
+(plant-exists (token-id uint))        ;; Returns bool
 ```
 
-**Pro:** Más correcto para testnet
-**Con:** Requiere re-compilación
+### plant-game-v1 (Public)
 
-### C. Actualizar Metadata URI
-
-**Archivo:** `contracts/plant-nft.clar`
-
-**Cambio:**
 ```clarity
-;; ANTES (placeholder de perros)
-(define-data-var base-uri (string-ascii 80) "https://placedog.net/500/500?id={id}")
-
-;; DESPUÉS (placeholder informativo)
-(define-data-var base-uri (string-ascii 80) "https://dengrow-testnet-placeholder.com/metadata/{id}")
+(water (token-id uint))               ;; Water plant (owner only)
+(update-owner (token-id uint) (new-owner principal))  ;; Called by NFT on transfer
 ```
+
+### plant-nft-v2 (SIP-009)
+
+```clarity
+(mint (recipient principal))          ;; Mint new plant
+(transfer (id uint) (sender principal) (recipient principal))
+(get-owner (id uint))
+(get-token-uri (id uint))
+```
+
+### impact-registry (Read-Only + Admin)
+
+```clarity
+;; Read-Only
+(get-pool-stats)                      ;; Returns totals
+(get-graduation (token-id uint))      ;; Returns graduation info
+(is-graduated (token-id uint))        ;; Returns bool
+(get-batch (batch-id uint))           ;; Returns batch info
+
+;; Admin Only
+(register-graduation (token-id uint) (owner principal))
+(record-redemption (quantity uint) (proof-hash buff) (proof-url string))
+(authorize-registrar (registrar principal))
+```
+
+---
+
+## Gas Costs (Estimated)
+
+| Operation | Cost (μSTX) | ~USD |
+|-----------|-------------|------|
+| Deploy plant-storage | ~50,000 | $0.05 |
+| Deploy plant-game-v1 | ~35,000 | $0.035 |
+| Deploy plant-nft-v2 | ~25,000 | $0.025 |
+| Deploy impact-registry | ~50,000 | $0.05 |
+| Mint NFT | ~2,000 | $0.002 |
+| Water plant | ~1,000 | $0.001 |
+| Transfer NFT | ~1,500 | $0.0015 |
+| Record redemption | ~10,000 | $0.01 |
+
+**Total Deployment:** ~160,000 μSTX (~0.16 STX)
 
 ---
 
 ## Troubleshooting
 
-### Error: "Contract already exists"
+### "Contract already exists"
+Deploy with a different contract name or use a new wallet.
 
-**Causa:** Ya desplegaste este contrato antes
-**Solución:** Cambiar el nombre del contrato o usar otra wallet
+### "Insufficient funds"
+Get STX from [testnet faucet](https://explorer.hiro.so/sandbox/faucet?chain=testnet).
 
-### Error: "Insufficient funds"
+### "Unauthorized" error
+Ensure contract authorization is set up:
+- plant-nft-v2 authorized in plant-storage
+- plant-game-v1 authorized in plant-storage
+- plant-game-v1 authorized as registrar in impact-registry
 
-**Causa:** No tienes suficientes STX
-**Solución:** Pedir STX del faucet: https://explorer.hiro.so/sandbox/faucet?chain=testnet
-
-### Error: "Contract not found: .plant-game"
-
-**Causa:** plant-nft se desplegó antes que plant-game
-**Solución:** Desplegar en orden correcto: plant-game primero, luego plant-nft
-
-### Error: "Analysis error"
-
-**Causa:** Error de sintaxis en el contrato
-**Solución:** Correr `clarinet check` localmente para ver el error específico
-
----
-
-## Gas Costs Estimados
-
-| Operación | Cost (μSTX) |
-|-----------|-------------|
-| Deploy plant-game | ~35,000 |
-| Deploy plant-nft | ~21,410 |
-| Mint NFT | ~2,000 |
-| Water plant | ~800 |
-| Transfer NFT | ~1,500 |
-
-**Total para deployment:** ~56,410 μSTX (~0.056 STX)
-
----
-
-## Comandos Útiles
-
-```bash
-# Ver balance de testnet
-stx balance <address> --testnet
-
-# Ver contratos desplegados
-stx accounts <address> --testnet
-
-# Ver detalles de transacción
-stx tx <tx-id> --testnet
-
-# Llamar función read-only
-stx contract-call-read <deployer> plant-game get-plant u1 --testnet
-
-# Llamar función pública
-stx contract-call <deployer> plant-game water u1 --testnet
+### "block-height unresolved"
+Contract deployed with wrong Clarity version. Use Clarity 2:
+```typescript
+clarityVersion: ClarityVersion.Clarity2
 ```
 
 ---
 
-## Next Steps Después de Testnet
+## Links
 
-1. ✅ Deploy exitoso a testnet
-2. 🔄 Testing manual con usuarios reales
-3. 🔄 Implementar Milestone 2 (Web UI integration)
-4. 🔄 Testing E2E en testnet
-5. 🔄 Preparar para mainnet
-6. 🔄 Auditoría externa (recomendado)
-7. 🔄 Mainnet deployment
-
----
-
-## Enlaces Útiles
-
-- **Testnet Faucet:** https://explorer.hiro.so/sandbox/faucet?chain=testnet
 - **Testnet Explorer:** https://explorer.hiro.so/?chain=testnet
+- **Testnet Faucet:** https://explorer.hiro.so/sandbox/faucet?chain=testnet
 - **Hiro Platform:** https://platform.hiro.so
 - **Clarinet Docs:** https://docs.hiro.so/clarinet
-- **Stacks CLI Docs:** https://docs.hiro.so/stacks-cli
-
----
-
-**Status:** 📋 Ready for Deployment
-**Última Actualización:** 2026-02-04
-**Próximo Milestone:** M2 - Web MVP
+- **Stacks Docs:** https://docs.stacks.co
