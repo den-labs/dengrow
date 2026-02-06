@@ -70,11 +70,23 @@ export type BackgroundTrait = (typeof BACKGROUND_TRAITS)[number];
 export type FlowerTrait = (typeof FLOWER_TRAITS)[number];
 export type CompanionTrait = (typeof COMPANION_TRAITS)[number];
 
+// Species/Archetype - determines the plant's visual style
+export const SPECIES_TRAITS = [
+  { id: 'flowering', name: 'Flowering Plant', rarity: 'common' },
+  { id: 'rose_bush', name: 'Rose Bush', rarity: 'uncommon' },
+  { id: 'pine_tree', name: 'Pine Tree', rarity: 'rare' },
+  { id: 'cactus', name: 'Desert Cactus', rarity: 'uncommon' },
+  { id: 'bonsai', name: 'Bonsai', rarity: 'legendary' },
+] as const;
+
+export type SpeciesTrait = (typeof SPECIES_TRAITS)[number];
+
 export interface PlantTraits {
   pot: PotTrait;
   background: BackgroundTrait;
   flower: FlowerTrait;
   companion: CompanionTrait;
+  species: SpeciesTrait;
 }
 
 // ============================================================================
@@ -136,6 +148,7 @@ export function generateTraits(tokenId: number): PlantTraits {
     background: selectTraitByRarity(BACKGROUND_TRAITS, hashTokenId(tokenId, 'background')),
     flower: selectTraitByRarity(FLOWER_TRAITS, hashTokenId(tokenId, 'flower')),
     companion: selectTraitByRarity(COMPANION_TRAITS, hashTokenId(tokenId, 'companion')),
+    species: selectTraitByRarity(SPECIES_TRAITS, hashTokenId(tokenId, 'species')),
   };
 }
 
