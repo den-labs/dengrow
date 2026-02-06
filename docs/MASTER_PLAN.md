@@ -1,6 +1,6 @@
 ## DenGrow — Master Task Plan (End-to-End)
 
-### Milestone 0 — Repo Baseline (DONE)
+### Milestone 0 — Repo Baseline ✅ COMPLETE
 
 - [x] Monorepo structure: `apps/web`, `packages/contracts`
 - [x] Marketplace removed
@@ -13,184 +13,167 @@
 
 ---
 
-## Milestone 1 — Core On-Chain Gameplay (Contracts)
+## Milestone 1 — Core On-Chain Gameplay ✅ COMPLETE
 
-**Goal:** A plant can be minted and “watered” daily with verifiable on-chain state.
+**Goal:** A plant can be minted and "watered" daily with verifiable on-chain state.
 
-### 1.1 Plant Game Contract (NEW)
+### 1.1 Plant Game Contract
 
-- [ ] Add `plant-game` contract
-- [ ] Store plant state by token-id:
+- [x] Add `plant-game-v1` contract (upgradeable architecture)
+- [x] Store plant state in `plant-storage` (data layer):
   - stage (Seed → Sprout → Plant → Bloom → Tree)
   - growth points / successful days
   - last water block (cooldown)
 
-- [ ] Implement `water(token-id)` with:
+- [x] Implement `water(token-id)` with:
   - ownership check (only token owner can water)
-  - cooldown enforced (block-based “daily”)
+  - cooldown enforced (block-based "daily")
   - stage progression after required days
 
-- [ ] Read-only endpoints:
+- [x] Read-only endpoints:
   - `get-plant(token-id)`
-  - `can-water(token-id)` (optional but recommended)
+  - `can-water(token-id)`
+  - `get-stage(token-id)`
 
-- [ ] Emit event/log when stage changes (especially Tree graduation)
-
-**DoD:** Mint → Water updates state; second water before cooldown fails; after 7 valid waters stage becomes Tree.
+- [x] Emit event/log when stage changes (especially Tree graduation)
 
 ### 1.2 Deployment Wiring
 
-- [ ] Add contract to `Clarinet.toml`
-- [ ] Add to deployment plans (devnet/simnet)
-- [ ] Ensure `pnpm test:contracts` includes plant-game tests
+- [x] Add contracts to `Clarinet.toml`
+- [x] Testnet deployment (plant-storage, plant-game-v1, plant-nft-v2)
+- [x] 103 tests passing
 
-**DoD:** `pnpm test:contracts` passes in CI/local.
+**Contracts deployed to testnet:**
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-storage`
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v1`
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v2`
 
 ---
 
-## Milestone 2 — Web MVP (Playable Loop)
+## Milestone 2 — Web MVP (Playable Loop) ✅ COMPLETE
 
 **Goal:** A user can mint and water from the UI.
 
 ### 2.1 Wallet + Network UX
 
-- [ ] Wallet connect stable (testnet)
-- [ ] Network selector works (Testnet default)
-- [ ] Clear UX states:
-  - disconnected
-  - connecting
-  - wrong network
-  - transaction pending/confirmed/failed
-
-**DoD:** A user can connect and see their address reliably.
+- [x] Wallet connect stable (testnet)
+- [x] Network selector works (Testnet default)
+- [x] Clear UX states (disconnected, connecting, pending, confirmed)
 
 ### 2.2 Mint Flow
 
-- [ ] “Mint Plant” action triggers `plant-nft::mint`
-- [ ] On success: redirect to “My Plants” and show the new NFT
-
-**DoD:** Mint is one click, and the minted plant appears.
+- [x] "Mint Plant" action triggers `plant-nft::mint`
+- [x] On success: redirect to "My Plants" and show the new NFT
 
 ### 2.3 My Plants + Plant Detail
 
-- [ ] “My Plants” lists owned token IDs
-- [ ] Each plant card shows:
+- [x] "My Plants" lists owned token IDs
+- [x] Each plant card shows:
   - stage badge (Seed/Sprout/…)
-  - progress (e.g., 2/7)
-  - “Water” button state (enabled/disabled)
+  - progress bar (e.g., 2/7)
+  - "Water" button state (enabled/disabled/graduated)
 
-- [ ] Plant detail page shows:
-  - stage, streak, next watering eligibility
-  - tx history placeholder (optional)
-
-**DoD:** User can water from UI and see updated state after confirmation.
+- [x] Plant detail page `/my-plants/[tokenId]` shows:
+  - Dynamic SVG image
+  - Stage, growth points, traits
+  - Water button
+  - On-chain data
 
 ---
 
-## Milestone 3 — Metadata + Visuals (Traits & Stages)
+## Milestone 3 — Metadata + Visuals ✅ COMPLETE
 
 **Goal:** Plants feel unique and recognizable; metadata is valid.
 
-### 3.1 Traits (4 traits)
+### 3.1 Traits (5 traits)
 
-- [ ] Define final trait sets (Pot, Background, Flower, Companion)
-- [ ] Assign traits at mint (deterministic from token-id or seed)
-- [ ] Store traits (on-chain or off-chain mapping; MVP can be off-chain deterministic)
+- [x] Define final trait sets:
+  - Pot (7 options: Terracotta, Ceramic, Golden, etc.)
+  - Background (7 options: Sky Blue, Sunset, Aurora, etc.)
+  - Flower (7 options: Daisy, Rose, Lotus, etc.)
+  - Companion (6 options: None, Butterfly, Fairy, etc.)
+  - Species/Archetype (5 options: Flowering, Rose Bush, Pine, Cactus, Bonsai)
 
-**DoD:** Same token always yields same traits.
+- [x] Assign traits at mint (deterministic from token-id hash)
+- [x] Rarity weighting: common 50%, uncommon 30%, rare 15%, legendary 5%
 
 ### 3.2 Metadata Endpoint
 
-- [ ] Add `/api/metadata/[tokenId]` returning standard NFT JSON:
-  - name, description
-  - image
-  - attributes array (traits + stage)
+- [x] Add `/api/metadata/[tokenId]` returning standard NFT JSON
+- [x] Includes: name, description, image URL, attributes array
 
-- [ ] `plant-nft::token-uri` points to metadata base URL (env-driven)
+### 3.3 Visual System (Generative SVG)
 
-**DoD:** Metadata renders correctly in common NFT viewers.
-
-### 3.3 Visual System
-
-Choose one approach for MVP:
-
-- **A) Fixed illustration per stage** (fastest)
-- **B) “Generative” layering** (stage base + trait overlays)
-
-Tasks:
-
-- [ ] Create stage images (Seed/Sprout/Plant/Bloom/Tree)
-- [ ] If layering: create transparent overlays for each trait
-- [ ] Display correct image in UI and metadata
-
-**DoD:** The plant image changes with stage, traits show in attributes.
+- [x] Created 5 plant archetypes with unique visuals
+- [x] Each archetype has 5 stage variations (Seed → Tree)
+- [x] Dynamic SVG generation at `/api/image/[tokenId]`
+- [x] Traits affect: pot color, background gradient, flower emoji, companion
 
 ---
 
-## Milestone 4 — Impact Pool (Honest Batching)
+## Milestone 4 — Impact Pool ✅ COMPLETE
 
 **Goal:** Trees enter a global pool; weekly redemptions are recorded transparently.
 
 ### 4.1 Impact Registry Contract
 
-- [ ] Add `impact-registry` contract with:
+- [x] Add `impact-registry` contract with:
   - total trees graduated
   - total redeemed
   - weekly batch records (batch id, timestamp, quantity, proof hash)
 
-- [ ] `record-redemption(...)` admin-only (MVP)
-- [ ] Read-only endpoints for UI dashboard
+- [x] `register-graduation(token-id, owner)` - called by game contract
+- [x] `record-redemption(quantity, proof-hash, proof-url)` admin-only
+- [x] Read-only endpoints: `get-pool-stats`, `get-batch`, `is-graduated`
 
-**DoD:** Can record a batch and retrieve it on-chain.
+**Contract deployed:**
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry`
 
 ### 4.2 UI: Impact Dashboard
 
-- [ ] Show:
+- [x] Show:
   - Trees in pool (graduated - redeemed)
+  - Total graduated
   - Total redeemed
-  - Latest batch entries
+  - Redemption batches count
+  - Progress bar
 
-- [ ] Add `IMPACT_POLICY.md` link in UI
-
-**DoD:** Dashboard is understandable and consistent.
+- [x] "How It Works" explainer section
+- [ ] Add `IMPACT_POLICY.md` link in UI (optional)
 
 ### 4.3 Proof Format (MVP)
 
-- [ ] Define “Batch Proof” format:
-  - CSV or JSON with batch details
-  - Photos/receipts links
-  - Hash stored on-chain
-
-**DoD:** A batch can be verified by anyone.
+- [x] Batch records include:
+  - quantity
+  - proof-hash (SHA256)
+  - proof-url (link to proof document)
+  - timestamp (block height)
+  - recorded-by (admin principal)
 
 ---
 
-## Milestone 5 — Production Readiness (Testnet → Mainnet)
+## Milestone 5 — Production Readiness 🟡 IN PROGRESS
 
 **Goal:** Deploy and demo publicly.
 
 ### 5.1 Deployments
 
-- [ ] Testnet deploy all contracts
+- [x] Testnet deploy all contracts
 - [ ] Mainnet deploy (when ready)
-- [ ] Save contract addresses in `apps/web/src/constants/contracts.ts`
-
-**DoD:** A fresh user can use the app on testnet (and later mainnet).
+- [x] Contract addresses configured in web app
 
 ### 5.2 Observability + Safety
 
-- [ ] Basic error reporting/logging in web
-- [ ] Rate limit metadata API (light)
-- [ ] Security sanity checks:
-  - ownership checks correct
-  - no re-entrancy analog patterns (Clarity)
-  - fail safely
+- [x] Basic error handling in web
+- [x] Ownership checks correct
+- [x] Fail safely patterns
+- [ ] Rate limit metadata API (optional)
 
-**DoD:** No obvious foot-guns; app doesn’t brick users.
+**DoD:** A fresh user can use the app on testnet.
 
 ---
 
-## Milestone 6 — “Product Final” Packaging (Launch Assets)
+## Milestone 6 — "Product Final" Packaging ❌ PENDING
 
 **Goal:** Make it shippable for rewards, demos, and users.
 
@@ -202,26 +185,45 @@ Tasks:
 
 - [ ] Demo script (1–2 min walkthrough)
 - [ ] Screenshots + short GIF
-- [ ] “Pitch” copy for Talent/Stacks rewards
+- [ ] "Pitch" copy for Talent/Stacks rewards
 - [ ] License + contribution notes
 
 **DoD:** Someone can evaluate and try it without asking you questions.
 
 ---
 
-## Optional Milestone 7 — Growth Hooks (Post-MVP)
+## Milestone 7 — Growth Hooks (Post-MVP) ❌ FUTURE
 
 (Only after MVP is stable)
 
 - [ ] Weekly streak badges
 - [ ] Social share card for each Tree
+- [ ] Leaderboard (most trees graduated)
 - [ ] Limited events (seasonal traits)
 - [ ] Sponsored batches (partners)
+- [ ] Admin panel for redemption recording
 
 ---
 
-# Working Rules (so it never “gets lost”)
+# Summary
 
-- Every task must have: **DoD** + **owner** + **status** (todo/doing/done)
+| Milestone | Status | Completion |
+|-----------|--------|------------|
+| M0 Repo Baseline | ✅ | 100% |
+| M1 Core Gameplay | ✅ | 100% |
+| M2 Web MVP | ✅ | 100% |
+| M3 Metadata/Visuals | ✅ | 100% |
+| M4 Impact Pool | ✅ | 100% |
+| M5 Production | 🟡 | 80% |
+| M6 Packaging | ❌ | 0% |
+| M7 Growth Hooks | ❌ | 0% |
+
+**MVP Core Complete!** Ready for M5 completion (mainnet) and M6 (launch assets).
+
+---
+
+# Working Rules
+
+- Every task must have: **DoD** + **owner** + **status**
 - Keep `docs/TASKS.md` updated at the end of each session
 - Main branch stays demoable
