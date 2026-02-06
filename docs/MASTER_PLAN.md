@@ -183,9 +183,9 @@
   - how to deploy contracts
   - links to PRD/Impact Policy
 
-- [ ] Demo script (1–2 min walkthrough)
-- [ ] Screenshots + short GIF
-- [ ] "Pitch" copy for Talent/Stacks rewards
+- [x] Demo script (1–2 min walkthrough) → `docs/DEMO_SCRIPT.md`
+- [ ] Screenshots + short GIF (manual capture needed)
+- [x] "Pitch" copy for Talent/Stacks rewards → `docs/PITCH.md`
 - [x] License + contribution notes
 
 **DoD:** Someone can evaluate and try it without asking you questions.
@@ -215,7 +215,7 @@
 | M3 Metadata/Visuals | ✅ | 100% |
 | M4 Impact Pool | ✅ | 100% |
 | M5 Production | 🟡 | 80% |
-| M6 Packaging | 🟡 | 50% |
+| M6 Packaging | 🟡 | 90% |
 | M7 Growth Hooks | ❌ | 0% |
 
 **MVP Core Complete!** Ready for M5 completion (mainnet) and M6 (launch assets).

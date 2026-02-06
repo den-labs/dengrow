@@ -120,9 +120,9 @@
   - [x] How to run locally
   - [x] How to deploy contracts
   - [x] Links to docs
-- [ ] Demo script (1-2 min walkthrough)
-- [ ] Screenshots + GIF
-- [ ] Pitch copy for Stacks rewards
+- [x] Demo script (1-2 min walkthrough) → `docs/DEMO_SCRIPT.md`
+- [ ] Screenshots + GIF (manual capture needed)
+- [x] Pitch copy for Stacks rewards → `docs/PITCH.md`
 - [x] License + contribution notes
 
 **DoD:** Someone can evaluate and try it without asking questions.
