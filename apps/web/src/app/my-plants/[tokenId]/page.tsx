@@ -32,6 +32,7 @@ import { useNetwork } from '@/lib/use-network';
 import { isTestnetEnvironment } from '@/lib/use-network';
 import { useGetPlant, getStageName, getStageColor, getCooldownBlocks } from '@/hooks/useGetPlant';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
+import { useGraduationInfo } from '@/hooks/useImpactRegistry';
 import { getPlantImage } from '@/utils/nft-utils';
 import { waterPlant } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
@@ -91,6 +92,7 @@ export default function PlantDetailPage() {
   const [lastTxId, setLastTxId] = useState<string | null>(null);
 
   const { data: plantData, isLoading, refetch } = useGetPlant(tokenId);
+  const { data: graduationInfo } = useGraduationInfo(tokenId);
 
   const plantState = plantData?.plant;
   const stage = plantState?.stage ?? 0;
@@ -460,18 +462,40 @@ export default function PlantDetailPage() {
 
             {/* Impact Pool CTA for graduated plants */}
             {isTree && (
-              <Card bg="orange.50" borderColor="orange.200" borderWidth={1}>
+              <Card bg={graduationInfo?.redeemed ? "green.50" : "orange.50"} borderColor={graduationInfo?.redeemed ? "green.200" : "orange.200"} borderWidth={1}>
                 <CardBody>
-                  <VStack spacing={3}>
-                    <Text fontSize="lg" fontWeight="bold" color="orange.700">
-                      🎉 Congratulations!
+                  <VStack spacing={4}>
+                    <Text fontSize="lg" fontWeight="bold" color={graduationInfo?.redeemed ? "green.700" : "orange.700"}>
+                      {graduationInfo?.redeemed ? "🌍 Real Impact Made!" : "🎉 Congratulations!"}
                     </Text>
-                    <Text textAlign="center" color="orange.600">
-                      Your plant has graduated and entered the Impact Pool. It will contribute to
-                      real-world impact through weekly batch redemptions.
-                    </Text>
-                    <Button colorScheme="orange" variant="outline" isDisabled>
-                      View Impact Dashboard (Coming Soon)
+
+                    {graduationInfo ? (
+                      <VStack spacing={2} w="full">
+                        <HStack justify="space-between" w="full" px={4}>
+                          <Text fontSize="sm" color="gray.600">Status</Text>
+                          <Badge colorScheme={graduationInfo.redeemed ? "green" : "orange"}>
+                            {graduationInfo.redeemed ? "Redeemed" : "In Impact Pool"}
+                          </Badge>
+                        </HStack>
+                        <HStack justify="space-between" w="full" px={4}>
+                          <Text fontSize="sm" color="gray.600">Graduated at</Text>
+                          <Text fontSize="sm" fontFamily="mono">Block #{graduationInfo.graduatedAt}</Text>
+                        </HStack>
+                        <Text textAlign="center" color={graduationInfo.redeemed ? "green.600" : "orange.600"} pt={2}>
+                          {graduationInfo.redeemed
+                            ? "This tree has been converted to real-world impact! A real tree was planted thanks to your care."
+                            : "Your tree is in the Impact Pool waiting to be converted to real-world impact in the next batch."}
+                        </Text>
+                      </VStack>
+                    ) : (
+                      <Text textAlign="center" color="orange.600">
+                        Your plant has graduated and entered the Impact Pool. It will contribute to
+                        real-world impact through weekly batch redemptions.
+                      </Text>
+                    )}
+
+                    <Button as={Link} href="/impact" colorScheme={graduationInfo?.redeemed ? "green" : "orange"}>
+                      View Impact Dashboard
                     </Button>
                   </VStack>
                 </CardBody>
