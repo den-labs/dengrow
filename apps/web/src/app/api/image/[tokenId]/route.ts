@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateTraits, getStage, STAGES } from '@/lib/traits';
+import { generateTraits, getStage } from '@/lib/traits';
+import { getArchetypeVisual } from '@/lib/archetypes';
 
 /**
  * GET /api/image/[tokenId]
@@ -43,6 +44,7 @@ interface Traits {
   background: { name: string; color: string };
   flower: { emoji: string; name: string };
   companion: { emoji: string; id: string };
+  species: { id: string; name: string };
 }
 
 interface StageInfo {
@@ -57,10 +59,10 @@ function generatePlantSVG(
   traits: Traits,
   stageInfo: StageInfo
 ): string {
-  const { pot, background, flower, companion } = traits;
+  const { pot, background, flower, companion, species } = traits;
 
-  // Plant visual based on stage
-  const plantVisuals = getPlantVisual(stage, flower.emoji);
+  // Plant visual based on archetype (species) and stage
+  const plantVisuals = getArchetypeVisual(species.id, stage, flower.emoji);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
@@ -122,72 +124,6 @@ function generatePlantSVG(
     <text x="0" y="5" font-family="system-ui, sans-serif" font-size="12" fill="white" text-anchor="middle">${stageInfo.emoji} ${stageInfo.name}</text>
   </g>
 </svg>`;
-}
-
-function getPlantVisual(stage: number, flowerEmoji: string): string {
-  // Different plant visuals for each stage
-  switch (stage) {
-    case 0: // Seed
-      return `
-        <!-- Seed -->
-        <ellipse cx="200" cy="270" rx="8" ry="12" fill="#8B4513" />
-        <path d="M 200 268 Q 205 260 200 250" stroke="#228B22" stroke-width="2" fill="none" />
-      `;
-    case 1: // Sprout
-      return `
-        <!-- Sprout -->
-        <path d="M 200 270 L 200 230" stroke="#228B22" stroke-width="4" stroke-linecap="round" />
-        <ellipse cx="190" cy="230" rx="15" ry="10" fill="#32CD32" transform="rotate(-30 190 230)" />
-        <ellipse cx="210" cy="230" rx="15" ry="10" fill="#32CD32" transform="rotate(30 210 230)" />
-      `;
-    case 2: // Seedling
-      return `
-        <!-- Seedling -->
-        <path d="M 200 270 L 200 180" stroke="#228B22" stroke-width="6" stroke-linecap="round" />
-        <!-- Leaves -->
-        <ellipse cx="175" cy="220" rx="25" ry="12" fill="#32CD32" transform="rotate(-40 175 220)" />
-        <ellipse cx="225" cy="220" rx="25" ry="12" fill="#32CD32" transform="rotate(40 225 220)" />
-        <ellipse cx="180" cy="190" rx="20" ry="10" fill="#3CB371" transform="rotate(-30 180 190)" />
-        <ellipse cx="220" cy="190" rx="20" ry="10" fill="#3CB371" transform="rotate(30 220 190)" />
-      `;
-    case 3: // Vegetative
-      return `
-        <!-- Vegetative (full plant) -->
-        <path d="M 200 270 L 200 140" stroke="#228B22" stroke-width="8" stroke-linecap="round" />
-        <!-- Multiple leaf layers -->
-        <ellipse cx="160" cy="240" rx="30" ry="15" fill="#228B22" transform="rotate(-50 160 240)" />
-        <ellipse cx="240" cy="240" rx="30" ry="15" fill="#228B22" transform="rotate(50 240 240)" />
-        <ellipse cx="165" cy="200" rx="28" ry="14" fill="#32CD32" transform="rotate(-40 165 200)" />
-        <ellipse cx="235" cy="200" rx="28" ry="14" fill="#32CD32" transform="rotate(40 235 200)" />
-        <ellipse cx="170" cy="165" rx="25" ry="12" fill="#3CB371" transform="rotate(-35 170 165)" />
-        <ellipse cx="230" cy="165" rx="25" ry="12" fill="#3CB371" transform="rotate(35 230 165)" />
-        <ellipse cx="180" cy="140" rx="20" ry="10" fill="#90EE90" transform="rotate(-25 180 140)" />
-        <ellipse cx="220" cy="140" rx="20" ry="10" fill="#90EE90" transform="rotate(25 220 140)" />
-      `;
-    case 4: // Tree (with flower)
-      return `
-        <!-- Tree trunk -->
-        <path d="M 200 270 L 200 100" stroke="#8B4513" stroke-width="12" stroke-linecap="round" />
-        <!-- Branches -->
-        <path d="M 200 180 Q 150 160 130 140" stroke="#8B4513" stroke-width="6" fill="none" stroke-linecap="round" />
-        <path d="M 200 180 Q 250 160 270 140" stroke="#8B4513" stroke-width="6" fill="none" stroke-linecap="round" />
-        <path d="M 200 140 Q 160 120 140 100" stroke="#8B4513" stroke-width="4" fill="none" stroke-linecap="round" />
-        <path d="M 200 140 Q 240 120 260 100" stroke="#8B4513" stroke-width="4" fill="none" stroke-linecap="round" />
-        <!-- Foliage -->
-        <circle cx="130" cy="130" r="35" fill="#228B22" />
-        <circle cx="200" cy="90" r="40" fill="#32CD32" />
-        <circle cx="270" cy="130" r="35" fill="#228B22" />
-        <circle cx="160" cy="100" r="30" fill="#3CB371" />
-        <circle cx="240" cy="100" r="30" fill="#3CB371" />
-        <!-- Flower at top -->
-        <text x="200" y="70" font-size="35" text-anchor="middle">${flowerEmoji}</text>
-        <!-- Additional flowers -->
-        <text x="140" cy="140" font-size="20" text-anchor="middle">${flowerEmoji}</text>
-        <text x="260" cy="140" font-size="20" text-anchor="middle">${flowerEmoji}</text>
-      `;
-    default:
-      return '';
-  }
 }
 
 /**
