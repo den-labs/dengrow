@@ -177,8 +177,8 @@ async function main() {
   console.log("Register Graduated Plants in Impact Registry");
   console.log("=".repeat(60));
 
-  // Check tokens 1, 2, 3 (based on user's screenshot)
-  const tokensToCheck = [1, 2, 3];
+  // Check tokens 1-8 (including newly graduated plants)
+  const tokensToCheck = [1, 2, 3, 4, 5, 6, 7, 8];
   const treesToRegister: { tokenId: number; owner: string }[] = [];
 
   console.log("\n📋 Checking plant statuses...");
