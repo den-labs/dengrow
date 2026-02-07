@@ -1,29 +1,60 @@
 # Security Review - DenGrow Contracts
 
-**Fecha:** 2026-02-04
-**Contratos Revisados:** `plant-game.clar`, `plant-nft.clar`
-**Estado:** Pre-Testnet Deployment
+**Fecha Revisión Inicial:** 2026-02-04
+**Última Actualización:** 2026-02-06
+**Contratos Revisados:** `plant-game-v1.clar`, `plant-nft.clar`, `plant-storage.clar`, `impact-registry.clar`
+**Estado:** ✅ Testnet Deployed - Issues Críticos Resueltos
 
 ---
 
 ## Resumen Ejecutivo
 
-| Severidad | Cantidad | Descripción |
-|-----------|----------|-------------|
-| 🔴 CRÍTICO | 1 | `update-owner` sin validación de caller |
-| 🟡 MEDIO | 2 | Mint permission, metadata URI placeholder |
-| 🟢 BAJO | 2 | Optimizaciones menores |
+| Severidad | Cantidad | Estado | Descripción |
+|-----------|----------|--------|-------------|
+| 🔴 CRÍTICO | 1 | ✅ **RESUELTO** | `update-owner` ahora valida caller |
+| 🟡 MEDIO | 2 | ✅ **RESUELTO** | Mint público, metadata API implementada |
+| 🟢 BAJO | 2 | ⚠️ Pendiente | Trait de testnet, optimización gas |
 
-**Recomendación:** Arreglar issue CRÍTICO antes de deploy a testnet.
+**Status:** ✅ **SEGURO PARA TESTNET** - Todos los issues críticos y medios fueron resueltos.
+**Deployed:** Testnet (`ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ`)
 
 ---
 
-## 🔴 CRÍTICO - Issue #1: update-owner Sin Validación
+## TL;DR - Estado Actual (2026-02-06)
 
-### Ubicación
-`plant-game.clar:156-167`
+### ✅ Lo que está bien
+- **Seguridad:** Issue crítico de `update-owner` RESUELTO - solo plant-nft puede actualizar ownership
+- **Funcionalidad:** Mint público funcionando, metadata API implementada con traits
+- **Testing:** 103 tests passing con coverage completo incluyendo security
+- **Deployment:** 4 contratos deployed en testnet y funcionando correctamente
+- **Arquitectura:** Sistema upgradeable (storage + logic + nft + registry) funcionando
 
-### Problema
+### ⚠️ Lo que falta (No crítico para testnet)
+- Issue #4: Optimización de gas (~10 μSTX por llamada)
+- Issue #5: Trait de testnet (funciona con mainnet trait, solo convención)
+
+### 🚀 Bloqueadores para Mainnet
+Ver `docs/IMPACT_POLICY.md` para 6 decisiones pendientes antes de mainnet:
+1. Partner de tree-planting
+2. Schedule de redemptions
+3. Funding inicial
+4. Post-graduation UX
+5. Proceso de redemption
+6. User rewards
+
+**Recomendación:** Los contratos son seguros para testnet. Resolver IMPACT_POLICY antes de mainnet.
+
+---
+
+## 🔴 CRÍTICO - Issue #1: update-owner Sin Validación ✅ RESUELTO
+
+### Estado: ✅ **ARREGLADO** (2026-02-05)
+
+**Implementado en:**
+- `plant-game-v1.clar:163-169` (testnet deployed)
+- `plant-game.clar:159-173` (legacy, también corregido)
+
+### Problema Original (2026-02-04)
 ```clarity
 (define-public (update-owner (token-id uint) (new-owner principal))
   (let
@@ -97,24 +128,67 @@
 (define-constant ERR-NOT-AUTHORIZED (err u105))
 ```
 
+### ✅ Fix Implementado (Opción A)
+
+**plant-game-v1.clar:163-169** (deployed en testnet):
+```clarity
+(define-public (update-owner (token-id uint) (new-owner principal))
+  (begin
+    ;; Only the plant-nft contract can update ownership
+    (asserts! (is-eq contract-caller .plant-nft) ERR-NOT-AUTHORIZED)
+    ;; Delegate to storage
+    (contract-call? .plant-storage update-plant-owner token-id new-owner)
+  )
+)
+```
+
+**Verificación:**
+- ✅ Validación `contract-caller` presente
+- ✅ Error `ERR-NOT-AUTHORIZED` implementado (línea 36)
+- ✅ Solo `plant-nft` puede actualizar ownership
+- ✅ 103 tests passing incluyen este escenario
+
 ---
 
-## 🟡 MEDIO - Issue #2: Mint Permission Restrictivo
+## 🟡 MEDIO - Issue #2: Mint Permission Restrictivo ✅ RESUELTO
 
-### Ubicación
-`plant-nft.clar:59`
+### Estado: ✅ **RESUELTO** - Mint Público Implementado
 
-### Problema
+**plant-nft.clar:78-90** (deployed en testnet):
+```clarity
+(define-public (mint (recipient principal))
+  (let ((token-id (+ (var-get last-token-id) u1)))
+    ;; Check collection limit
+    (asserts! (< (var-get last-token-id) COLLECTION_LIMIT) ERR_SOLD_OUT)
+    ;; Mint the NFT (NO owner restriction)
+    (try! (nft-mint? plant-nft token-id recipient))
+    ;; Initialize plant in storage
+    (try! (contract-call? .plant-storage initialize-plant token-id recipient))
+    ;; Update counter
+    (var-set last-token-id token-id)
+    (ok token-id)
+  )
+)
+```
+
+**Verificación:**
+- ✅ Sin restricción `ERR_OWNER_ONLY`
+- ✅ Cualquier usuario puede mintear
+- ✅ Perfecto para testnet público
+- ⚠️ Considerar agregar fee para mainnet
+
+### Problema Original (2026-02-04)
+`plant-nft.clar:59` (versión anterior)
 ```clarity
 (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_OWNER_ONLY)
 ```
 
-**Contexto:** Solo el deployer puede mintear NFTs.
+**Contexto:** Solo el deployer podía mintear NFTs.
 
-### Impacto en Testnet
-- Usuarios no pueden mintear sus propias plantas
-- Necesitas mintear manualmente para cada usuario
-- No es funcional para testing público
+### Impacto Original en Testnet
+- Usuarios no podían mintear sus propias plantas
+- Se requería minteo manual para cada usuario
+- No funcional para testing público
 
 ### Opciones
 
@@ -173,51 +247,49 @@
 
 ---
 
-## 🟡 MEDIO - Issue #3: Metadata URI Placeholder
+## 🟡 MEDIO - Issue #3: Metadata URI Placeholder ✅ RESUELTO
 
-### Ubicación
-`plant-nft.clar:19`
+### Estado: ✅ **RESUELTO** - Metadata API Implementada
 
-### Problema
+**plant-nft.clar:30** (deployed en testnet):
+```clarity
+(define-data-var base-uri (string-ascii 80) "https://dengrow.app/api/metadata/{id}")
+```
+
+**Implementación Completa:**
+- ✅ API endpoint: `apps/web/src/app/api/metadata/[tokenId]/route.ts`
+- ✅ Trait system: 5 categorías (Pot, Background, Flower, Companion, Species)
+- ✅ Deterministic generation: Hash-based desde token-id
+- ✅ Dynamic images: `apps/web/src/app/api/image/[tokenId]/route.ts`
+- ✅ Stage-aware: 5 stages × 5 species = 25 variaciones
+- ✅ Admin function: `set-base-uri` implementado (líneas 97-101)
+
+**Verificación:**
+```bash
+curl https://dengrow.app/api/metadata/1
+# Returns proper SIP-009 metadata with traits and image URL
+```
+
+### Problema Original (2026-02-04)
 ```clarity
 (define-data-var base-uri (string-ascii 80) "https://placedog.net/500/500?id={id}")
 ```
 
-**Contexto:** Usando placeholder de dogs en vez de metadata real.
+**Contexto:** Placeholder de perros en lugar de metadata real.
 
-### Impacto
-- NFTs aparecen con imágenes de perros en explorers
-- No hay información de traits/stages
-- No cumple con expectativas de usuarios
-
-### Fix para Testnet
-```clarity
-;; Placeholder para testnet con información correcta
-(define-data-var base-uri (string-ascii 80) "https://dengrow-testnet.example.com/metadata/{id}")
-```
-
-### Fix para Mainnet
-1. Crear API endpoint `/api/metadata/[tokenId]`
-2. Implementar trait system
-3. Generar imágenes reales de stages
-4. Actualizar base-uri con URL real
-
-**Nota:** Puedes usar `set-base-uri` si agregas función admin:
-```clarity
-(define-public (set-base-uri (new-uri (string-ascii 80)))
-  (begin
-    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_OWNER_ONLY)
-    (ok (var-set base-uri new-uri))
-  )
-)
-```
+### Impacto Original
+- NFTs aparecían con imágenes de perros en explorers
+- No había información de traits/stages
+- No cumplía expectativas de usuarios
 
 ---
 
-## 🟢 BAJO - Issue #4: Gas Optimization en calculate-stage
+## 🟢 BAJO - Issue #4: Gas Optimization en calculate-stage ⚠️ PENDIENTE
 
-### Ubicación
-`plant-game.clar:37-51`
+### Estado: ⚠️ **No Implementado** (No Crítico)
+
+### Ubicación Actual
+`plant-game-v1.clar:44-58`
 
 ### Optimización Sugerida
 ```clarity
@@ -260,24 +332,30 @@
 
 ---
 
-## 🟢 BAJO - Issue #5: SIP-009 Trait Comentado
+## 🟢 BAJO - Issue #5: SIP-009 Trait Comentado ⚠️ PENDIENTE
 
-### Ubicación
-`plant-nft.clar:3`
+### Estado: ⚠️ **No Actualizado** (Funciona, pero no sigue convención)
 
-### Observación
+### Ubicación Actual
+`plant-nft.clar:17`
+
+### Estado Actual
 ```clarity
-(impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
-;; (impl-trait 'STM6S3AESTK9NAYE3Z7RS00T11ER8JJCDNTKG711.nft-trait.nft-trait)
+(impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait) ;; Mainnet trait
 ```
 
-**Contexto:** Trait de devnet está comentado, usando mainnet trait.
+**Contexto:** Usa mainnet trait en lugar de testnet trait.
 
-### Para Testnet Deployment
-Cambiar a:
+**Impacto:** Bajo - El contrato funciona correctamente en testnet, pero no sigue la convención de usar el trait específico de cada red.
+
+### Recomendación para Mainnet
+Antes de mainnet deployment, verificar que se usa el trait correcto para cada red:
 ```clarity
-;; (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait) ;; Mainnet
-(impl-trait 'STM6S3AESTK9NAYE3Z7RS00T11ER8JJCDNTKG711.nft-trait.nft-trait) ;; Testnet
+;; Para Mainnet:
+(impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
+
+;; Para Testnet (opcional, si se redeploya):
+(impl-trait 'STM6S3AESTK9NAYE3Z7RS00T11ER8JJCDNTKG711.nft-trait.nft-trait)
 ```
 
 ---
@@ -341,7 +419,7 @@ Cambiar a:
 
 ## Test Coverage
 
-**30/30 tests passing** ✅
+**103/103 tests passing** ✅ (Actualizado 2026-02-06)
 
 Coverage por área:
 - Initialization: 100%
@@ -351,27 +429,53 @@ Coverage por área:
 - Read-only functions: 100%
 - Transfer integration: 100%
 - Edge cases: 100%
+- **Impact Registry: 100%** (nuevo en M4)
+- **Upgradeable Architecture: 100%** (nuevo en M1)
+- **Authorization Chain: 100%** (storage → game-v1 → nft)
 
-**Missing test cases:**
-- ❌ Direct call to update-owner (exploit test)
-- ❌ Contract-call vs tx-sender diferenciación
+**Security test cases incluidos:**
+- ✅ Direct call to update-owner (rechaza si no es plant-nft)
+- ✅ Contract-call vs tx-sender diferenciación
+- ✅ Graduation registration automático
+- ✅ Storage authorization checks
+
+**Comando:**
+```bash
+pnpm --filter @dengrow/contracts test
+# Output: 103 passed
+```
 
 ---
 
 ## Checklist Pre-Deployment
 
-### CRÍTICO (Debe arreglarse)
-- [ ] Fix `update-owner` con validación de caller
+### ✅ TESTNET DEPLOYMENT (Completado 2026-02-05)
 
-### Recomendado para Testnet
-- [ ] Cambiar trait a testnet version (STM...)
-- [ ] Remover o relajar mint permission
-- [ ] Actualizar base-uri con placeholder informativo
+**CRÍTICO**
+- [x] ✅ Fix `update-owner` con validación de caller
+  - Implementado en `plant-game-v1.clar:166`
+  - 103 tests passing
 
-### Opcional
-- [ ] Agregar `set-base-uri` para flexibilidad
-- [ ] Agregar error logging más detallado
-- [ ] Optimizar `calculate-stage`
+**Recomendado para Testnet**
+- [x] ✅ Remover mint permission → Mint público implementado
+- [x] ✅ Actualizar base-uri → `https://dengrow.app/api/metadata/{id}`
+- [ ] ⚠️ Cambiar trait a testnet version (funciona con mainnet trait, no crítico)
+
+**Opcional**
+- [x] ✅ Agregar `set-base-uri` → Implementado (línea 97-101)
+- [ ] ⚠️ Agregar error logging más detallado (future)
+- [ ] ⚠️ Optimizar `calculate-stage` (ahorra ~10 gas, no crítico)
+
+### 🚀 MAINNET PREPARATION (Pendiente)
+
+**Antes de Mainnet:**
+- [ ] Resolver decisiones de IMPACT_POLICY.md (6 decisiones pendientes)
+- [ ] Funding para primeras redemptions (~$20 USD para 20 árboles)
+- [ ] Considerar agregar mint fee (ej: 1 STX)
+- [ ] Opcional: Cambiar a testnet trait si se redeploya
+- [ ] Auditoría externa profesional (recomendado)
+- [ ] Emergency pause mechanism (opcional)
+- [ ] Timelock para updates críticos (opcional)
 
 ---
 
@@ -438,21 +542,53 @@ stx call <deployer>.plant-nft mint <recipient> --network testnet
 
 ## Recomendaciones Finales
 
-### Para Testnet NOW
-1. **FIX CRÍTICO:** Agregar validación en `update-owner`
-2. Cambiar trait a testnet
-3. Remover mint permission para testing público
-4. Deploy y testear manualmente
+### ✅ Testnet (Completado)
+1. ✅ **FIX CRÍTICO:** Validación en `update-owner` implementada
+2. ✅ Mint público habilitado para testing
+3. ✅ Metadata API implementada con traits y dynamic images
+4. ✅ 103 tests passing con security coverage
+5. ✅ Deployed y funcionando en testnet
 
-### Para Mainnet (futuro)
-1. Re-habilitar mint permission con fee system
-2. Implementar metadata API real
-3. Auditoría externa profesional
-4. Agregar emergency pause mechanism
-5. Considerar timelock para actualizaciones críticas
+**Contratos Deployed:**
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-storage`
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v1`
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v2` (como plant-nft)
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry`
+
+### 🚀 Para Mainnet (Próximos Pasos)
+
+**Bloqueadores (ver IMPACT_POLICY.md):**
+1. Definir partner de tree-planting (One Tree Planted recomendado)
+2. Establecer redemption schedule (Lunes semanales propuesto)
+3. Funding inicial para redemptions (~$20 para primeros 20 árboles)
+4. Decidir post-graduation UX (mint again + leaderboard)
+
+**Seguridad Adicional (Recomendado):**
+1. Auditoría externa profesional
+2. Agregar mint fee system (ej: 1 STX por mint)
+3. Emergency pause mechanism
+4. Timelock para actualizaciones críticas
+5. Bug bounty program
+
+**Optimizaciones Opcionales:**
+1. Optimizar `calculate-stage` (ahorra ~10 gas)
+2. Rate limiting en metadata API
+3. Actualizar a testnet trait (si se redeploya)
 
 ---
 
-**Auditor:** Claude Code
-**Status:** ⚠️ NO LISTO para deployment (requiere fix crítico)
-**Next Steps:** Arreglar Issue #1, luego proceder con testnet deployment
+## Historial de Auditorías
+
+| Fecha | Auditor | Status | Notas |
+|-------|---------|--------|-------|
+| 2026-02-04 | Claude Code | ⚠️ Issues encontrados | 1 crítico, 2 medios, 2 bajos |
+| 2026-02-06 | Claude Code | ✅ Issues resueltos | Críticos y medios resueltos, 2 bajos pendientes |
+
+**Status Actual:** ✅ **SEGURO PARA TESTNET**
+**Next Steps:** Resolver IMPACT_POLICY.md, preparar mainnet deployment
+
+---
+
+**Última Revisión:** 2026-02-06
+**Auditor:** Claude Code (Sonnet 4.5)
+**Recomendación:** Continuar con Prioridad 1.2 (Resolver decisiones de impacto) antes de mainnet
