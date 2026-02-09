@@ -77,6 +77,16 @@ plan:
     - id: 1
       transactions:
         - emulated-contract-publish:
+            contract-name: plant-storage
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: contracts/plant-storage.clar
+            clarity-version: 2
+        - emulated-contract-publish:
+            contract-name: achievement-badges
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: contracts/achievement-badges.clar
+            clarity-version: 2
+        - emulated-contract-publish:
             contract-name: impact-registry
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: contracts/impact-registry.clar
@@ -85,11 +95,6 @@ plan:
             contract-name: plant-game
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: contracts/plant-game.clar
-            clarity-version: 2
-        - emulated-contract-publish:
-            contract-name: plant-storage
-            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
-            path: contracts/plant-storage.clar
             clarity-version: 2
         - emulated-contract-publish:
             contract-name: plant-game-v1
