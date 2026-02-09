@@ -23,12 +23,16 @@ export async function GET(
   const stageParam = request.nextUrl.searchParams.get('stage');
   const stage = stageParam ? Math.min(Math.max(parseInt(stageParam, 10), 0), 4) : 0;
 
+  // Optional tier param (1=Basic, 2=Premium, 3=Impact)
+  const tierParam = request.nextUrl.searchParams.get('tier');
+  const tier = tierParam ? parseInt(tierParam, 10) : null;
+
   // Generate traits for this token
   const traits = generateTraits(tokenId);
   const stageInfo = getStage(stage);
 
   // Generate SVG
-  const svg = generatePlantSVG(tokenId, stage, traits, stageInfo);
+  const svg = generatePlantSVG(tokenId, stage, traits, stageInfo, tier);
 
   return new NextResponse(svg, {
     headers: {
@@ -53,11 +57,18 @@ interface StageInfo {
   emoji: string;
 }
 
+const TIER_CONFIG: Record<number, { name: string; color: string }> = {
+  1: { name: 'Basic', color: '#38A169' },
+  2: { name: 'Premium', color: '#805AD5' },
+  3: { name: 'Impact', color: '#319795' },
+};
+
 function generatePlantSVG(
   tokenId: number,
   stage: number,
   traits: Traits,
-  stageInfo: StageInfo
+  stageInfo: StageInfo,
+  tier: number | null = null
 ): string {
   const { pot, background, flower, companion, species } = traits;
 
@@ -123,6 +134,14 @@ function generatePlantSVG(
     <rect x="-45" y="-18" width="90" height="28" rx="14" fill="rgba(0,0,0,0.5)" />
     <text x="0" y="5" font-family="system-ui, sans-serif" font-size="12" fill="white" text-anchor="middle">${stageInfo.emoji} ${stageInfo.name}</text>
   </g>
+
+  ${tier && TIER_CONFIG[tier] ? `
+  <!-- Tier badge -->
+  <g transform="translate(200, 385)">
+    <rect x="-40" y="-14" width="80" height="22" rx="11" fill="${TIER_CONFIG[tier].color}" />
+    <text x="0" y="3" font-family="system-ui, sans-serif" font-size="11" fill="white" text-anchor="middle" font-weight="bold">${TIER_CONFIG[tier].name}</text>
+  </g>
+  ` : ''}
 </svg>`;
 }
 

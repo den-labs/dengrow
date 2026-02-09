@@ -172,6 +172,26 @@ export default function ImpactDashboardPage() {
           </CardBody>
         </Card>
 
+        {/* Mint Tiers & Revenue */}
+        <Card>
+          <CardHeader>
+            <Heading size="md">Mint Tiers & Impact</Heading>
+          </CardHeader>
+          <CardBody>
+            <VStack spacing={4} align="stretch">
+              <Text color="gray.600" fontSize="sm">
+                Every mint directly funds real-world tree planting. Higher tiers contribute more to
+                the Impact Pool.
+              </Text>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <TierCard name="Basic" price="1 STX" color="green" description="Start your plant journey. Covers base tree planting cost." />
+                <TierCard name="Premium" price="2 STX" color="purple" description="Priority support. Funds one full tree planting." />
+                <TierCard name="Impact" price="3 STX" color="teal" description="2x donation. Plants two trees for maximum impact." />
+              </SimpleGrid>
+            </VStack>
+          </CardBody>
+        </Card>
+
         {/* Recent Activity Placeholder */}
         {totalBatches > 0 && (
           <Card>
@@ -237,6 +257,33 @@ interface StepCardProps {
   title: string;
   description: string;
   icon: string;
+}
+
+interface TierCardProps {
+  name: string;
+  price: string;
+  color: string;
+  description: string;
+}
+
+function TierCard({ name, price, color, description }: TierCardProps) {
+  return (
+    <Box
+      p={4}
+      borderWidth="1px"
+      borderColor={`${color}.200`}
+      borderRadius="lg"
+      bg={`${color}.50`}
+    >
+      <VStack spacing={2} align="start">
+        <HStack justify="space-between" w="full">
+          <Badge colorScheme={color} fontSize="xs">{name}</Badge>
+          <Text fontWeight="bold" color={`${color}.600`}>{price}</Text>
+        </HStack>
+        <Text fontSize="sm" color="gray.600">{description}</Text>
+      </VStack>
+    </Box>
+  );
 }
 
 function StepCard({ step, title, description, icon }: StepCardProps) {

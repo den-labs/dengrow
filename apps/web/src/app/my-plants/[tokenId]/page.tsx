@@ -26,17 +26,18 @@ import {
 } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 import { useNetwork } from '@/lib/use-network';
 import { isTestnetEnvironment } from '@/lib/use-network';
 import { useGetPlant, getStageName, getStageColor, getCooldownBlocks } from '@/hooks/useGetPlant';
+import { useGetTxId } from '@/hooks/useNftHoldings';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { useGraduationInfo, usePoolStats } from '@/hooks/useImpactRegistry';
 import { useGetMintTier } from '@/hooks/useGetMintTier';
 import { getPlantImage } from '@/utils/nft-utils';
-import { waterPlant } from '@/lib/game/operations';
+import { waterPlant, waterPlantWithTip, WATER_TIP_STX } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
 import { getContractErrorMessage } from '@/lib/contract-errors';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
@@ -98,6 +99,25 @@ export default function PlantDetailPage() {
   const { data: tierInfo } = useGetMintTier(tokenId);
   const { data: graduationInfo } = useGraduationInfo(tokenId);
   const { data: poolStats } = usePoolStats();
+  const { data: txData } = useGetTxId(lastTxId || '');
+
+  // Track TX status for water action
+  // @ts-ignore
+  const txPending = lastTxId && (!txData || txData?.tx_status === 'pending');
+
+  useEffect(() => {
+    if (!txData || !lastTxId) return;
+    // @ts-ignore
+    if (txData.tx_status === 'success') {
+      toast({ title: 'Plant Watered', description: 'Transaction confirmed on-chain', status: 'success' });
+      setLastTxId(null);
+      refetch();
+    // @ts-ignore
+    } else if (txData.tx_status === 'abort_by_response') {
+      toast({ title: 'Watering Failed', description: 'Transaction was rejected on-chain', status: 'error' });
+      setLastTxId(null);
+    }
+  }, [txData, lastTxId, toast, refetch]);
 
   const plantState = plantData?.plant;
   const stage = plantState?.stage ?? 0;
@@ -125,34 +145,33 @@ export default function PlantDetailPage() {
 
   const stageInfo = stageDescriptions[stage] || stageDescriptions[0];
 
-  const handleWater = async () => {
-    if (!network) return;
+  const handleWater = async (withTip = false) => {
+    if (!network || !currentAddress || isWatering || txPending) return;
 
     setIsWatering(true);
     try {
-      const txOptions = waterPlant(network, tokenId);
+      const txOptions = withTip
+        ? waterPlantWithTip(network, tokenId, currentAddress)
+        : waterPlant(network, tokenId);
 
       if (shouldUseDirectCall()) {
         const { txid } = await executeContractCall(txOptions, currentWallet);
         setLastTxId(txid);
         toast({
           title: 'Watering Submitted',
-          description: `Transaction broadcast with ID: ${txid.slice(0, 10)}...`,
+          description: 'Confirming on-chain...',
           status: 'info',
         });
-        // Refetch plant data after a delay
-        setTimeout(() => refetch(), 3000);
       } else {
         await openContractCall({
           ...txOptions,
           onFinish: (data) => {
             setLastTxId(data.txId);
             toast({
-              title: 'Success',
-              description: 'Plant watered successfully!',
-              status: 'success',
+              title: 'Watering Submitted',
+              description: 'Confirming on-chain...',
+              status: 'info',
             });
-            setTimeout(() => refetch(), 3000);
           },
           onCancel: () => {
             toast({
@@ -282,16 +301,39 @@ export default function PlantDetailPage() {
                 </Box>
 
                 {/* Water button */}
-                <Button
-                  colorScheme={isTree ? 'orange' : canWater ? 'blue' : 'gray'}
-                  size="lg"
-                  width="full"
-                  isDisabled={isTree || !canWater}
-                  isLoading={isWatering}
-                  onClick={handleWater}
-                >
-                  {isTree ? 'Graduated to Impact Pool 🌳' : canWater ? 'Water Plant 💧' : 'Cooldown Active ⏳'}
-                </Button>
+                {isTree ? (
+                  <Button colorScheme="orange" size="lg" width="full" isDisabled>
+                    Graduated to Impact Pool 🌳
+                  </Button>
+                ) : canWater ? (
+                  <SimpleGrid columns={2} spacing={2} w="full">
+                    <Button
+                      colorScheme={txPending ? 'orange' : 'blue'}
+                      size="lg"
+                      isDisabled={!!txPending}
+                      isLoading={isWatering || !!txPending}
+                      loadingText={txPending ? 'Confirming...' : 'Watering...'}
+                      onClick={() => handleWater(false)}
+                    >
+                      Water 💧
+                    </Button>
+                    <Button
+                      colorScheme={txPending ? 'orange' : 'teal'}
+                      size="lg"
+                      variant="outline"
+                      isDisabled={!!txPending}
+                      isLoading={isWatering || !!txPending}
+                      loadingText={txPending ? 'Confirming...' : 'Watering...'}
+                      onClick={() => handleWater(true)}
+                    >
+                      Water + Tip ({WATER_TIP_STX} STX)
+                    </Button>
+                  </SimpleGrid>
+                ) : (
+                  <Button colorScheme="gray" size="lg" width="full" isDisabled>
+                    Cooldown Active ⏳
+                  </Button>
+                )}
 
                 {lastTxId && (
                   <Button

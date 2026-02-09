@@ -21,8 +21,9 @@ import { isTestnetEnvironment } from '@/lib/use-network';
 import { waterPlant } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
 import { getContractErrorMessage } from '@/lib/contract-errors';
+import { useGetTxId } from '@/hooks/useNftHoldings';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface PlantCardProps {
@@ -37,18 +38,38 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
   const toast = useToast();
   const { currentWallet } = useDevnetWallet();
   const [isWatering, setIsWatering] = useState(false);
+  const [waterTxId, setWaterTxId] = useState<string | null>(null);
 
   const { nftAssetContract, tokenId } = plant;
   const { data: plantData, isLoading, refetch } = useGetPlant(tokenId);
   const { data: tierInfo } = useGetMintTier(tokenId);
+  const { data: txData } = useGetTxId(waterTxId || '');
 
   const plantState = plantData?.plant;
   const stage = plantState?.stage ?? 0;
 
   const imageSrc = network ? getPlaceholderImage(network, nftAssetContract, tokenId, stage) : null;
 
+  // Track TX status for water action
+  // @ts-ignore
+  const txPending = waterTxId && (!txData || txData?.tx_status === 'pending');
+
+  useEffect(() => {
+    if (!txData || !waterTxId) return;
+    // @ts-ignore
+    if (txData.tx_status === 'success') {
+      toast({ title: 'Plant Watered', description: 'Transaction confirmed on-chain', status: 'success' });
+      setWaterTxId(null);
+      refetch();
+    // @ts-ignore
+    } else if (txData.tx_status === 'abort_by_response') {
+      toast({ title: 'Watering Failed', description: 'Transaction was rejected on-chain', status: 'error' });
+      setWaterTxId(null);
+    }
+  }, [txData, waterTxId, toast, refetch]);
+
   const handleWater = async () => {
-    if (!network) return;
+    if (!network || isWatering || txPending) return;
 
     setIsWatering(true);
     try {
@@ -56,24 +77,22 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
 
       if (shouldUseDirectCall()) {
         const { txid } = await executeContractCall(txOptions, currentWallet);
+        setWaterTxId(txid);
         toast({
           title: 'Watering Submitted',
-          description: `Transaction broadcast with ID: ${txid}`,
+          description: 'Confirming on-chain...',
           status: 'info',
         });
-        // Refetch plant data after a delay
-        setTimeout(() => refetch(), 2000);
       } else {
         await openContractCall({
           ...txOptions,
           onFinish: (data) => {
+            setWaterTxId(data.txId);
             toast({
-              title: 'Success',
-              description: 'Plant watered successfully!',
-              status: 'success',
+              title: 'Watering Submitted',
+              description: 'Confirming on-chain...',
+              status: 'info',
             });
-            // Refetch plant data
-            setTimeout(() => refetch(), 2000);
           },
           onCancel: () => {
             toast({
@@ -177,9 +196,10 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
 
               <Button
                 size="sm"
-                colorScheme="blue"
-                isDisabled={isTree || !canWater}
-                isLoading={isWatering}
+                colorScheme={txPending ? 'orange' : 'blue'}
+                isDisabled={isTree || !canWater || !!txPending}
+                isLoading={isWatering || !!txPending}
+                loadingText={txPending ? 'Confirming...' : 'Watering...'}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
