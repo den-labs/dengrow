@@ -16,6 +16,7 @@ import {
 import { useNetwork } from '@/lib/use-network';
 import { getPlaceholderImage } from '@/utils/nft-utils';
 import { useGetPlant, getStageName, getStageColor, getCooldownBlocks } from '@/hooks/useGetPlant';
+import { useGetMintTier } from '@/hooks/useGetMintTier';
 import { isTestnetEnvironment } from '@/lib/use-network';
 import { waterPlant } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
@@ -38,6 +39,7 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
 
   const { nftAssetContract, tokenId } = plant;
   const { data: plantData, isLoading, refetch } = useGetPlant(tokenId);
+  const { data: tierInfo } = useGetMintTier(tokenId);
 
   const plantState = plantData?.plant;
   const stage = plantState?.stage ?? 0;
@@ -127,6 +129,19 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
               </Text>
             )}
           </Center>
+          {tierInfo && (
+            <Badge
+              position="absolute"
+              top={2}
+              left={2}
+              colorScheme={tierInfo.colorScheme}
+              fontSize="xs"
+              px={2}
+              py={0.5}
+            >
+              {tierInfo.name}
+            </Badge>
+          )}
         </Box>
         <VStack p={4} spacing={3} align="stretch">
           <HStack justify="space-between">

@@ -34,6 +34,7 @@ import { isTestnetEnvironment } from '@/lib/use-network';
 import { useGetPlant, getStageName, getStageColor, getCooldownBlocks } from '@/hooks/useGetPlant';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { useGraduationInfo, usePoolStats } from '@/hooks/useImpactRegistry';
+import { useGetMintTier } from '@/hooks/useGetMintTier';
 import { getPlantImage } from '@/utils/nft-utils';
 import { waterPlant } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
@@ -93,6 +94,7 @@ export default function PlantDetailPage() {
   const [lastTxId, setLastTxId] = useState<string | null>(null);
 
   const { data: plantData, isLoading, refetch } = useGetPlant(tokenId);
+  const { data: tierInfo } = useGetMintTier(tokenId);
   const { data: graduationInfo } = useGraduationInfo(tokenId);
   const { data: poolStats } = usePoolStats();
 
@@ -250,6 +252,20 @@ export default function PlantDetailPage() {
                       </VStack>
                     )}
                   </Center>
+                  {/* Tier badge overlay */}
+                  {tierInfo && (
+                    <Badge
+                      position="absolute"
+                      top={4}
+                      left={4}
+                      colorScheme={tierInfo.colorScheme}
+                      fontSize="sm"
+                      px={3}
+                      py={1}
+                    >
+                      {tierInfo.name} Tier
+                    </Badge>
+                  )}
                   {/* Stage badge overlay */}
                   <Badge
                     position="absolute"
@@ -298,9 +314,16 @@ export default function PlantDetailPage() {
             <Box>
               <HStack justify="space-between" align="start">
                 <VStack align="start" spacing={1}>
-                  <Text fontSize="3xl" fontWeight="bold">
-                    Plant #{tokenId}
-                  </Text>
+                  <HStack spacing={3} align="baseline">
+                    <Text fontSize="3xl" fontWeight="bold">
+                      Plant #{tokenId}
+                    </Text>
+                    {tierInfo && (
+                      <Badge colorScheme={tierInfo.colorScheme} fontSize="sm" px={2} py={0.5}>
+                        {tierInfo.name}
+                      </Badge>
+                    )}
+                  </HStack>
                   <Text color="gray.600">{stageInfo.description}</Text>
                 </VStack>
               </HStack>
@@ -385,6 +408,14 @@ export default function PlantDetailPage() {
                 <HStack justify="space-between">
                   <Text color="gray.600">Token ID</Text>
                   <Text fontFamily="mono">#{tokenId}</Text>
+                </HStack>
+                <HStack justify="space-between">
+                  <Text color="gray.600">Mint Tier</Text>
+                  {tierInfo ? (
+                    <Badge colorScheme={tierInfo.colorScheme}>{tierInfo.name} ({tierInfo.priceSTX} STX)</Badge>
+                  ) : (
+                    <Text fontFamily="mono" color="gray.400">--</Text>
+                  )}
                 </HStack>
                 <HStack justify="space-between">
                   <Text color="gray.600">Owner</Text>
