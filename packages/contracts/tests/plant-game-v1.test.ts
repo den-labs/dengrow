@@ -502,7 +502,7 @@ describe("Plant Game V1 Contract", () => {
       );
 
       expect(result).toBeTuple({
-        version: Cl.stringAscii("1.0.0"),
+        version: Cl.stringAscii("1.1.0"),
         "cooldown-blocks": Cl.uint(0),
         stages: Cl.uint(5),
       });
@@ -663,6 +663,58 @@ describe("Plant Game V1 Contract", () => {
           "stage-changed": Cl.bool(true),
         })
       );
+    });
+  });
+
+  describe("Water With Tip", () => {
+    beforeEach(() => {
+      setupPlant(wallet1);
+    });
+
+    it("should water plant and transfer tip STX", () => {
+      const balanceBefore = simnet.getAssetsMap().get("STX")?.get(deployer) ?? 0n;
+
+      const { result } = simnet.callPublicFn(
+        "plant-game-v1",
+        "water-with-tip",
+        [Cl.uint(1)],
+        wallet1
+      );
+
+      expect(result).toBeOk(
+        Cl.tuple({
+          "new-stage": Cl.uint(0),
+          "growth-points": Cl.uint(1),
+          "stage-changed": Cl.bool(false),
+        })
+      );
+
+      // Verify tip was transferred (100000 microSTX = 0.1 STX)
+      const balanceAfter = simnet.getAssetsMap().get("STX")?.get(deployer) ?? 0n;
+      expect(balanceAfter - balanceBefore).toBe(100000n);
+    });
+
+    it("should reject water-with-tip from non-owner", () => {
+      const { result } = simnet.callPublicFn(
+        "plant-game-v1",
+        "water-with-tip",
+        [Cl.uint(1)],
+        wallet2
+      );
+
+      // STX transfer succeeds but water() fails with ERR-NOT-OWNER
+      expect(result).toBeErr(Cl.uint(100));
+    });
+
+    it("should return tip amount from read-only", () => {
+      const { result } = simnet.callReadOnlyFn(
+        "plant-game-v1",
+        "get-tip-amount",
+        [],
+        wallet1
+      );
+
+      expect(result).toBeUint(100000);
     });
   });
 });

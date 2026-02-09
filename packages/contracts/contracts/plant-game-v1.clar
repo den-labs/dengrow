@@ -15,6 +15,9 @@
 ;;   - Users call v2.water() instead of v1.water()
 ;; ============================================================================
 
+;; Contract owner (deployer) - captured at deploy time
+(define-constant CONTRACT-OWNER tx-sender)
+
 ;; Constants - Plant Stages
 (define-constant STAGE-SEED u0)
 (define-constant STAGE-SPROUT u1)
@@ -260,10 +263,32 @@
   BLOCKS-PER-DAY
 )
 
+;; ============================================================================
+;; WATER WITH TIP (optional STX donation to Impact Pool)
+;; ============================================================================
+
+;; Tip amount: 0.1 STX = 100,000 microSTX
+(define-constant TIP-AMOUNT u100000)
+
+;; Water a plant with an optional STX tip to the contract deployer (Impact Pool fund)
+(define-public (water-with-tip (token-id uint))
+  (begin
+    ;; Transfer tip from sender to deployer (Impact Pool fund)
+    (try! (stx-transfer? TIP-AMOUNT tx-sender CONTRACT-OWNER))
+    ;; Perform normal water action
+    (water token-id)
+  )
+)
+
+;; Get tip amount (for UI display)
+(define-read-only (get-tip-amount)
+  TIP-AMOUNT
+)
+
 ;; Get version info
 (define-read-only (get-version)
   {
-    version: "1.0.0",
+    version: "1.1.0",
     cooldown-blocks: BLOCKS-PER-DAY,
     stages: u5
   }
