@@ -1,5 +1,5 @@
 ;; ============================================================================
-;; Impact Registry Contract v1.0.0
+;; Impact Registry Contract v1.1.0
 ;; ============================================================================
 ;; Tracks graduated trees and weekly batch redemptions transparently.
 ;;
@@ -28,6 +28,9 @@
 (define-constant ERR-NOT-GRADUATED (err u103))
 (define-constant ERR-INVALID-BATCH (err u104))
 (define-constant ERR-BATCH-EXISTS (err u105))
+(define-constant ERR-BELOW-MINIMUM (err u106))
+(define-constant ERR-BATCH-NOT-FOUND (err u107))
+(define-constant ERR-ALREADY-SPONSORED (err u108))
 
 ;; ============================================================================
 ;; DATA STORAGE
@@ -194,4 +197,93 @@
 ;; Check if a principal is an authorized registrar
 (define-read-only (is-registrar (principal principal))
   (default-to false (map-get? authorized-registrars principal))
+)
+
+;; ============================================================================
+;; BATCH SPONSORSHIP
+;; ============================================================================
+;; Anyone can sponsor a batch by sending STX (min 1 STX).
+;; Funds go to the deployer (Impact Pool treasury).
+;; Sponsor name and amount are recorded on-chain for transparency.
+
+;; Minimum sponsorship: 1 STX = 1,000,000 microSTX
+(define-constant MIN-SPONSORSHIP u1000000)
+
+;; Sponsorship records per batch
+(define-map batch-sponsors uint
+  {
+    sponsor: principal,
+    sponsor-name: (string-ascii 64),
+    amount: uint,
+    sponsored-at: uint
+  }
+)
+
+;; Global sponsorship counter
+(define-data-var total-sponsored-amount uint u0)
+(define-data-var total-sponsorships uint u0)
+
+;; Sponsor an existing batch - sends STX to deployer and records attribution
+(define-public (sponsor-batch
+    (batch-id uint)
+    (sponsor-name (string-ascii 64))
+    (amount uint)
+  )
+  (begin
+    ;; Batch must exist
+    (asserts! (is-some (map-get? redemption-batches batch-id)) ERR-BATCH-NOT-FOUND)
+    ;; Batch must not already be sponsored
+    (asserts! (is-none (map-get? batch-sponsors batch-id)) ERR-ALREADY-SPONSORED)
+    ;; Amount must meet minimum
+    (asserts! (>= amount MIN-SPONSORSHIP) ERR-BELOW-MINIMUM)
+    ;; Transfer STX to deployer
+    (try! (stx-transfer? amount tx-sender CONTRACT_ADMIN))
+    ;; Record sponsorship
+    (map-set batch-sponsors batch-id {
+      sponsor: tx-sender,
+      sponsor-name: sponsor-name,
+      amount: amount,
+      sponsored-at: block-height
+    })
+    ;; Update counters
+    (var-set total-sponsored-amount (+ (var-get total-sponsored-amount) amount))
+    (var-set total-sponsorships (+ (var-get total-sponsorships) u1))
+    ;; Emit event
+    (print {
+      event: "batch-sponsored",
+      batch-id: batch-id,
+      sponsor: tx-sender,
+      sponsor-name: sponsor-name,
+      amount: amount,
+      block-height: block-height
+    })
+    (ok {
+      batch-id: batch-id,
+      amount: amount
+    })
+  )
+)
+
+;; Get sponsorship info for a batch
+(define-read-only (get-batch-sponsor (batch-id uint))
+  (map-get? batch-sponsors batch-id)
+)
+
+;; Check if a batch is sponsored
+(define-read-only (is-batch-sponsored (batch-id uint))
+  (is-some (map-get? batch-sponsors batch-id))
+)
+
+;; Get global sponsorship stats
+(define-read-only (get-sponsorship-stats)
+  {
+    total-sponsored-amount: (var-get total-sponsored-amount),
+    total-sponsorships: (var-get total-sponsorships),
+    min-sponsorship: MIN-SPONSORSHIP
+  }
+)
+
+;; Get minimum sponsorship amount
+(define-read-only (get-min-sponsorship)
+  MIN-SPONSORSHIP
 )
