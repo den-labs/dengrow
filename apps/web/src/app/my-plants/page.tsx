@@ -23,6 +23,7 @@ import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { useState, useEffect } from 'react';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
+import { getContractErrorMessage } from '@/lib/contract-errors';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { getExplorerLink } from '@/utils/explorer-links';
 
@@ -95,11 +96,11 @@ export default function MyPlantsPage() {
           });
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error minting plant:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to mint plant',
+        title: 'Minting Failed',
+        description: getContractErrorMessage(error),
         status: 'error',
       });
     } finally {
