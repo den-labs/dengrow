@@ -22,6 +22,7 @@ import {
   Card,
   CardBody,
   Icon,
+  Heading,
 } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { useParams, useRouter } from 'next/navigation';
@@ -32,7 +33,7 @@ import { useNetwork } from '@/lib/use-network';
 import { isTestnetEnvironment } from '@/lib/use-network';
 import { useGetPlant, getStageName, getStageColor, getCooldownBlocks } from '@/hooks/useGetPlant';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
-import { useGraduationInfo } from '@/hooks/useImpactRegistry';
+import { useGraduationInfo, usePoolStats } from '@/hooks/useImpactRegistry';
 import { getPlantImage } from '@/utils/nft-utils';
 import { waterPlant } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
@@ -93,6 +94,7 @@ export default function PlantDetailPage() {
 
   const { data: plantData, isLoading, refetch } = useGetPlant(tokenId);
   const { data: graduationInfo } = useGraduationInfo(tokenId);
+  const { data: poolStats } = usePoolStats();
 
   const plantState = plantData?.plant;
   const stage = plantState?.stage ?? 0;
@@ -106,6 +108,7 @@ export default function PlantDetailPage() {
   const growthPoints = plantState?.['growth-points'] ?? 0;
   const lastWaterBlock = plantState?.['last-water-block'] ?? 0;
   const isTree = stage >= 4;
+  const isRedeemed = graduationInfo?.redeemed ?? false;
 
   // Check if watering is allowed
   const isTestnet = network ? isTestnetEnvironment(network) : false;
@@ -460,46 +463,113 @@ export default function PlantDetailPage() {
               </SimpleGrid>
             </Box>
 
-            {/* Impact Pool CTA for graduated plants */}
+            {/* Impact Pool — Enhanced Post-Graduation UI */}
             {isTree && (
-              <Card bg={graduationInfo?.redeemed ? "green.50" : "orange.50"} borderColor={graduationInfo?.redeemed ? "green.200" : "orange.200"} borderWidth={1}>
-                <CardBody>
-                  <VStack spacing={4}>
-                    <Text fontSize="lg" fontWeight="bold" color={graduationInfo?.redeemed ? "green.700" : "orange.700"}>
-                      {graduationInfo?.redeemed ? "🌍 Real Impact Made!" : "🎉 Congratulations!"}
-                    </Text>
-
-                    {graduationInfo ? (
-                      <VStack spacing={2} w="full">
-                        <HStack justify="space-between" w="full" px={4}>
-                          <Text fontSize="sm" color="gray.600">Status</Text>
-                          <Badge colorScheme={graduationInfo.redeemed ? "green" : "orange"}>
-                            {graduationInfo.redeemed ? "Redeemed" : "In Impact Pool"}
-                          </Badge>
-                        </HStack>
-                        <HStack justify="space-between" w="full" px={4}>
-                          <Text fontSize="sm" color="gray.600">Graduated at</Text>
-                          <Text fontSize="sm" fontFamily="mono">Block #{graduationInfo.graduatedAt}</Text>
-                        </HStack>
-                        <Text textAlign="center" color={graduationInfo.redeemed ? "green.600" : "orange.600"} pt={2}>
-                          {graduationInfo.redeemed
-                            ? "This tree has been converted to real-world impact! A real tree was planted thanks to your care."
-                            : "Your tree is in the Impact Pool waiting to be converted to real-world impact in the next batch."}
-                        </Text>
-                      </VStack>
-                    ) : (
-                      <Text textAlign="center" color="orange.600">
-                        Your plant has graduated and entered the Impact Pool. It will contribute to
-                        real-world impact through weekly batch redemptions.
+              <VStack spacing={4}>
+                {/* Section A: Celebration Header */}
+                <Card
+                  bg={isRedeemed ? 'green.50' : 'orange.50'}
+                  borderColor={isRedeemed ? 'green.200' : 'orange.200'}
+                  borderWidth={1}
+                  w="full"
+                >
+                  <CardBody>
+                    <VStack spacing={3}>
+                      <Text fontSize="4xl">{isRedeemed ? '🌍' : '🎉'}</Text>
+                      <Heading
+                        size="md"
+                        color={isRedeemed ? 'green.700' : 'orange.700'}
+                        textAlign="center"
+                      >
+                        {isRedeemed ? 'Real Impact Made!' : 'Your Tree is in the Impact Pool!'}
+                      </Heading>
+                      <HStack spacing={2}>
+                        <Badge colorScheme={isRedeemed ? 'green' : 'orange'} fontSize="sm" px={2}>
+                          {isRedeemed ? 'Redeemed' : 'In Pool'}
+                        </Badge>
+                        {graduationInfo && (
+                          <Text fontSize="xs" color="gray.500" fontFamily="mono">
+                            Graduated at block #{graduationInfo.graduatedAt}
+                          </Text>
+                        )}
+                      </HStack>
+                      <Text
+                        textAlign="center"
+                        fontSize="sm"
+                        color={isRedeemed ? 'green.600' : 'orange.600'}
+                      >
+                        {isRedeemed
+                          ? 'This tree has been converted to real-world impact! A real tree was planted thanks to your care.'
+                          : 'Your tree is waiting in the Impact Pool to be converted to real-world impact in the next batch redemption.'}
                       </Text>
-                    )}
+                    </VStack>
+                  </CardBody>
+                </Card>
 
-                    <Button as={Link} href="/impact" colorScheme={graduationInfo?.redeemed ? "green" : "orange"}>
-                      View Impact Dashboard
-                    </Button>
-                  </VStack>
-                </CardBody>
-              </Card>
+                {/* Section B: Mini Pool Stats */}
+                <Card w="full">
+                  <CardBody>
+                    <VStack spacing={3}>
+                      <Text fontSize="sm" fontWeight="bold" color="gray.700">
+                        Impact Pool Status
+                      </Text>
+                      <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4} w="full">
+                        <Stat textAlign="center">
+                          <StatLabel>In Pool</StatLabel>
+                          <StatNumber>{poolStats?.currentPoolSize ?? '--'}</StatNumber>
+                          <StatHelpText>trees waiting</StatHelpText>
+                        </Stat>
+                        <Stat textAlign="center">
+                          <StatLabel>Redeemed</StatLabel>
+                          <StatNumber>{poolStats?.totalRedeemed ?? '--'}</StatNumber>
+                          <StatHelpText>real trees planted</StatHelpText>
+                        </Stat>
+                        <Stat textAlign="center">
+                          <StatLabel>Batches</StatLabel>
+                          <StatNumber>{poolStats?.totalBatches ?? '--'}</StatNumber>
+                          <StatHelpText>completed</StatHelpText>
+                        </Stat>
+                      </SimpleGrid>
+                      <Box w="full">
+                        <HStack justify="space-between" mb={1}>
+                          <Text fontSize="xs" color="gray.500">
+                            Redemption progress
+                          </Text>
+                          <Text fontSize="xs" color="gray.500">
+                            {poolStats
+                              ? poolStats.totalGraduated > 0
+                                ? `${Math.round((poolStats.totalRedeemed / poolStats.totalGraduated) * 100)}%`
+                                : '0%'
+                              : '--'}
+                          </Text>
+                        </HStack>
+                        <Progress
+                          value={
+                            poolStats && poolStats.totalGraduated > 0
+                              ? (poolStats.totalRedeemed / poolStats.totalGraduated) * 100
+                              : 0
+                          }
+                          colorScheme={isRedeemed ? 'green' : 'orange'}
+                          borderRadius="full"
+                          size="sm"
+                          hasStripe={!isRedeemed}
+                          isAnimated={!isRedeemed}
+                        />
+                      </Box>
+                    </VStack>
+                  </CardBody>
+                </Card>
+
+                {/* Section C: CTA Row */}
+                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3} w="full">
+                  <Button as={Link} href="/my-plants" colorScheme="green" size="lg">
+                    Mint Another Plant
+                  </Button>
+                  <Button as={Link} href="/impact" variant="outline" colorScheme={isRedeemed ? 'green' : 'orange'} size="lg">
+                    View Impact Dashboard
+                  </Button>
+                </SimpleGrid>
+              </VStack>
             )}
           </VStack>
         </SimpleGrid>
