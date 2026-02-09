@@ -1,287 +1,99 @@
-# Session Summary - 2026-02-07
+# Session Summary - 2026-02-08
 
-**Session Duration:** ~2 hours
-**Focus:** Redemption flow testing + Partner operations documentation
-**Status:** ✅ All tasks completed and committed
-
----
-
-## ✅ Accomplishments
-
-### 1. Testnet Redemption Flow Validation ✅
-- **Test Status:** PASSED (all core functionality working)
-- **Plants Graduated:** 5 (tokens #4-8)
-- **Batch Recorded:** #3 with 5 trees
-- **On-Chain Verification:** ✅ Confirmed
-- **Documentation:** Complete test report created
-
-**Key Findings:**
-- Plants graduate after 7 waters (not 28 as initially assumed)
-- Manual registration required via `pnpm register:graduated`
-- Testnet performance excellent (~5 sec per TX)
-
-**Files Created:**
-- `packages/contracts/scripts/fast-graduate.ts` - Automated graduation tool
-- `packages/contracts/test-proofs/batch-003.md` - Mock proof document
-- `docs/test-reports/2026-02-07-redemption-flow.md` - Comprehensive test report
+**Focus:** 3-tier paid minting (contracts + frontend + tests + tier display)
+**Status:** All tasks completed and committed
 
 ---
 
-### 2. Partner Operations Documentation ✅
-- **Manual Created:** Complete operational guide (27KB, 1,116 lines)
-- **Checklist Created:** Weekly workflow checklist (5.8KB, 222 lines)
-- **Language:** Bilingual (Spanish primary, English translations)
-- **Scope:** Non-technical operations fully documented
+## Accomplishments
 
-**PARTNER_OPERATIONS.md Includes:**
-- Partner selection criteria
-- Initial contact scripts (Spanish/English)
-- Partnership agreement template
-- Weekly redemption workflow (Monday → Saturday)
-- WhatsApp communication templates
-- Payment and invoicing procedures
-- Proof collection and verification standards
-- Emergency procedures
-- Partner performance review framework
+### 1. Pricing Tiers — Contract Layer
+- Added `mint-with-tier(recipient, tier)` to `plant-nft.clar` + `testnet/plant-nft-v2.clar`
+- On-chain payment via `stx-transfer?` (1/2/3 STX for Basic/Premium/Impact)
+- Free `mint` guarded as admin-only (`asserts! (is-eq tx-sender CONTRACT_OWNER)`)
+- Tier stored in `extension-data` map via `to-consensus-buff?`
+- Read-only helpers: `get-tier-price(tier)`, `get-mint-tier(token-id)`
+- Error code: `ERR_INVALID_TIER (u302)`
 
-**PARTNER_CHECKLIST.md Includes:**
-- Day-by-day task checklists
-- Verification checkboxes
-- Emergency procedure steps
-- Monthly review template
-- Quick reference contacts
+### 2. Pricing Tiers — Test Coverage
+- 18 new tests in `tests/plant-nft.test.ts` (120 total, all passing)
+- Covers: admin guard, all 3 tiers, invalid tiers, STX balance verification, tier storage, sequential minting
 
-**Benefit:** Tech team can now focus 100% on app development while operations follows structured process.
+### 3. Pricing Tiers — Frontend
+- `mintPlantNFTWithTier()` in `lib/nft/operations.ts` with `Pc` post-condition builder
+- `MINT_TIERS` config object with name, price, description, colorScheme
+- Tier selection UI on `/my-plants` — 3 clickable cards above plant grid
+- Double-submit protection with `isMinting` state
 
----
-
-## 📦 Commits Created
-
-### Commit 1: `602d015` ✅ PUSHED
-```
-test(redemption): complete end-to-end redemption flow validation
-
-- Graduated 5 plants to Tree stage (tokens #4-8)
-- Registered plants in impact-registry
-- Recorded batch #3 with 5 trees redeemed
-- Verified on-chain state updates
-- Transaction confirmed on explorer
-```
-
-**Status:** ✅ Already pushed to origin/main
+### 4. Tier Display — Hook + UI
+- New `useGetMintTier(tokenId)` hook querying contract read-only
+- PlantCard: tier badge (top-left corner of image)
+- Plant detail: tier badge in title, image overlay (left), On-Chain Data row
+- Graceful fallback for legacy plants without tier data
 
 ---
 
-### Commit 2: `557f965` ⏳ NOT PUSHED
-```
-docs(operations): add complete partner operations manual and checklist
+## Commits
 
-- Partner operations manual (1,116 lines)
-- Weekly checklist (222 lines)
-- All communications in Spanish
-- Clear separation: Operations (non-tech) vs Tech (script execution)
-```
+| Hash | Message |
+|------|---------|
+| `ce23e7a` | feat(web): enhance post-graduation UI with pool stats and CTAs |
+| `92e7fdc` | feat(contracts): add 3-tier paid minting (Basic/Premium/Impact) |
+| `c63a704` | feat(web): display mint tier on PlantCard and plant detail page |
 
-**Status:** ⏳ Ready to push manually
+**Status:** 3 commits ahead of origin/main (not yet pushed)
 
 ---
 
-## 📂 Files Modified/Created This Session
+## Files Modified/Created
 
-### Modified:
-- `.claude/TODO.md` - Updated with session results and task status
+### Contracts
+- `packages/contracts/contracts/plant-nft.clar` — tier pricing + mint-with-tier
+- `packages/contracts/contracts/testnet/plant-nft-v2.clar` — identical changes (gitignored)
+- `packages/contracts/tests/plant-nft.test.ts` — 18 new tests
 
-### Created:
-- `packages/contracts/scripts/fast-graduate.ts` (265 lines) - ✅ Committed
-- `packages/contracts/test-proofs/batch-003.md` (72 lines) - ✅ Committed
-- `docs/test-reports/2026-02-07-redemption-flow.md` (343 lines) - ✅ Committed
-- `docs/PARTNER_OPERATIONS.md` (1,116 lines) - ✅ Committed
-- `docs/PARTNER_CHECKLIST.md` (222 lines) - ✅ Committed
-
-### Modified (Extended):
-- `packages/contracts/scripts/register-graduated-plants.ts` - Extended token range 1-8
-
-**Total:** 2,018 lines of new code/documentation
+### Frontend
+- `apps/web/src/lib/nft/operations.ts` — MintTier type, MINT_TIERS, mintPlantNFTWithTier
+- `apps/web/src/hooks/useGetMintTier.ts` — new hook (created)
+- `apps/web/src/app/my-plants/page.tsx` — tier selection UI
+- `apps/web/src/app/my-plants/[tokenId]/page.tsx` — tier display (3 locations)
+- `apps/web/src/components/plants/PlantCard.tsx` — tier badge
 
 ---
 
-## 🎯 Current State
+## When Resuming Next Session
 
-### Git Status
-```
-Branch: main
-Ahead of origin/main by: 1 commit
-Working tree: CLEAN ✅
-Unpushed commits: 1 (557f965 - partner operations docs)
-```
-
-### Testnet Status
-```
-Pool Status:
-- Total Graduated: 8 trees
-- Total Redeemed: 8 trees
-- Current Pool: 0 trees
-- Total Batches: 3
-
-Last Batch (#3):
-- Quantity: 5 trees
-- TX: 6d6a4bef73266947...
-- Status: ✅ Confirmed
-- Proof URL: https://dengrow.xyz/testnet/proof/batch-003.md
-```
-
-### Documentation Status
-```
-✅ IMPACT_POLICY.md - All 6 decisions finalized
-✅ TESTNET_REDEMPTION_GUIDE.md - Complete workflow documented
-✅ ECONOMIC_MODEL.md - $2 revenue/user validated
-✅ PARTNER_OPERATIONS.md - Complete operational guide
-✅ PARTNER_CHECKLIST.md - Weekly workflow checklist
-✅ Test Reports - Redemption flow fully tested
-```
-
----
-
-## 📋 Next Session Starting Point
-
-### Priority 1.2b: Verify Web UI (10-15 min)
-**Status:** Not started
-**Actions:**
-```bash
-pnpm dev
-# Visit http://localhost:3000/impact
-# Verify batch #3 displays correctly
-# Check pool stats match on-chain data
-```
-
-**What to Check:**
-- [ ] Total Graduated shows 8
-- [ ] Total Redeemed shows 8
-- [ ] Current Pool shows 0
-- [ ] Batch #3 appears in history
-- [ ] Proof URL link works
-- [ ] Plant detail pages show graduated status
-
----
-
-### Priority 1.1: Contact Jardín Botánico (30-60 min)
-**Status:** Not started
-**Actions:**
-- [ ] Call: 3153349307
-- [ ] Email: investigaciones@jardinbotanicoquindio.org
-- [ ] Negotiate: $2/tree + photo proof process
-- [ ] Set up: WhatsApp communication channel
-
-**Reference:** See `docs/PARTNER_OPERATIONS.md` section "Initial Contact & Negotiation"
-
----
-
-### Priority 1.3: Bootstrap Treasury (30 min)
-**Status:** Not started
-**Dependencies:** Partner confirmation (1.1)
-**Actions:**
-- [ ] Decide funding method
-- [ ] Allocate $30-50 USD
-- [ ] Set up payment method for finca
-- [ ] Document wallet address
-
----
-
-## 🎯 Blockers Resolved This Session
-
-**BEFORE:**
-- ⚠️ Redemption flow not tested
-- ⚠️ No operational documentation
-- ⚠️ Unclear partner process
-
-**AFTER:**
-- ✅ Redemption flow tested and validated
-- ✅ Complete operational manual created
-- ✅ Clear partner workflow documented
-
-**Remaining Blocker:**
-- 🔴 Partner contact required (Priority 1.1)
-
----
-
-## 📊 Session Metrics
-
-### Time Allocation
-- Redemption testing: ~45 min (setup + execution + verification)
-- Test documentation: ~30 min
-- Partner operations manual: ~45 min
-- Commits and git management: ~15 min
-
-### Lines of Code/Documentation
-- Test scripts: 265 lines
-- Test documentation: 415 lines (343 report + 72 proof)
-- Operations documentation: 1,338 lines (1,116 manual + 222 checklist)
-- **Total:** 2,018 lines
-
-### Commits
-- Total created: 2
-- Total pushed: 1 (by user manually)
-- Ready to push: 1
-
----
-
-## 🔄 Continuity Notes
-
-### When Resuming Next Session:
-
-1. **First Action:** Push the partner operations commit
+1. **Push commits** (3 ahead of origin):
    ```bash
    git push
    ```
 
-2. **Second Action:** Start web app and verify UI
-   ```bash
-   pnpm dev
-   # Visit http://localhost:3000/impact
-   ```
+2. **Quick wins available** (no blockers):
+   - 2.5: Add tier pricing to landing page (`app/page.tsx`) — S effort
+   - 2.6: Add tier to metadata API (`/api/metadata/[tokenId]`) — S effort
+   - 2.2: Water tip feature (+0.1 STX optional) — M effort
 
-3. **Third Action:** Review Priority 1 tasks in TODO.md
-   - Focus on 1.2b (UI verification) - quick win
-   - Then move to 1.1 (partner contact) - critical path
+3. **Manual/ops task** (unblocks mainnet):
+   - Call Jardin Botanico Quindio: 3153349307
+   - See `docs/PARTNER_OPERATIONS.md` for contact scripts
 
-4. **Reference Documents:**
-   - TODO.md for current priorities
-   - PARTNER_OPERATIONS.md for partner workflow
-   - Test report for redemption flow details
-
----
-
-## ✅ Session Quality Checklist
-
-- [x] All work committed
-- [x] Working tree clean
-- [x] TODO.md updated
-- [x] Test results documented
-- [x] Clear next steps identified
-- [x] No incomplete features
-- [x] No temporary files left
-- [x] Documentation complete
-- [x] Session summary created
+4. **Reference files**:
+   - Tier config: `apps/web/src/lib/nft/operations.ts`
+   - Tier hook: `apps/web/src/hooks/useGetMintTier.ts`
+   - Contract: `packages/contracts/contracts/plant-nft.clar`
+   - TODO: `.claude/TODO.md`
 
 ---
 
-## 🎉 Session Success Criteria: MET ✅
+## Test Status
 
-- ✅ Redemption flow tested end-to-end
-- ✅ All findings documented
-- ✅ Partner operations fully documented
-- ✅ Team can focus on app development
-- ✅ Clear path forward for mainnet
-- ✅ No blocking issues
-- ✅ Repository in clean state
+```
+Contract tests: 120 passed (5 files)
+Web build: Compiled successfully
+TypeScript: No errors
+```
 
 ---
 
-**Session Status:** COMPLETE ✅
-**Ready to Continue:** YES ✅
-**Next Session Focus:** UI verification + Partner contact
-
----
-
-*Generated: 2026-02-07*
-*Session ID: redemption-testing-partner-ops*
+*Generated: 2026-02-08*
+*Session ID: pricing-tiers-implementation*
