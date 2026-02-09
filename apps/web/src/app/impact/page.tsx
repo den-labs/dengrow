@@ -22,8 +22,9 @@ import {
   Heading,
   Icon,
 } from '@chakra-ui/react';
-import { usePoolStats } from '@/hooks/useImpactRegistry';
+import { usePoolStats, useBatchInfo } from '@/hooks/useImpactRegistry';
 import { useNetwork } from '@/lib/use-network';
+import Link from 'next/link';
 
 export default function ImpactDashboardPage() {
   const network = useNetwork();
@@ -192,16 +193,28 @@ export default function ImpactDashboardPage() {
           </CardBody>
         </Card>
 
-        {/* Recent Activity Placeholder */}
+        {/* Recent Redemptions */}
         {totalBatches > 0 && (
           <Card>
             <CardHeader>
               <Heading size="md">Recent Redemptions</Heading>
             </CardHeader>
             <CardBody>
-              <Text color="gray.600">
-                {totalBatches} batch{totalBatches !== 1 ? 'es' : ''} recorded with proof of real-world impact.
-              </Text>
+              <VStack spacing={3} align="stretch">
+                <Text color="gray.600" fontSize="sm">
+                  {totalBatches} batch{totalBatches !== 1 ? 'es' : ''} recorded with proof of real-world impact.
+                </Text>
+                {Array.from({ length: Math.min(totalBatches, 5) }, (_, i) => totalBatches - i).map(
+                  (batchId) => (
+                    <BatchRow key={batchId} batchId={batchId} />
+                  )
+                )}
+                {totalBatches > 5 && (
+                  <Text fontSize="sm" color="gray.500" textAlign="center">
+                    Showing latest 5 of {totalBatches} batches
+                  </Text>
+                )}
+              </VStack>
             </CardBody>
           </Card>
         )}
@@ -283,6 +296,38 @@ function TierCard({ name, price, color, description }: TierCardProps) {
         <Text fontSize="sm" color="gray.600">{description}</Text>
       </VStack>
     </Box>
+  );
+}
+
+function BatchRow({ batchId }: { batchId: number }) {
+  const { data: batch, isLoading } = useBatchInfo(batchId);
+
+  return (
+    <Link href={`/impact/batch/${batchId}`} style={{ textDecoration: 'none' }}>
+      <HStack
+        justify="space-between"
+        p={3}
+        borderWidth="1px"
+        borderRadius="md"
+        _hover={{ bg: 'gray.50', borderColor: 'orange.300' }}
+        transition="all 0.2s"
+        cursor="pointer"
+      >
+        <HStack spacing={3}>
+          <Badge colorScheme="orange">#{batchId}</Badge>
+          {isLoading ? (
+            <Spinner size="xs" />
+          ) : batch ? (
+            <Text fontSize="sm" color="gray.700">
+              {batch.quantity} tree{batch.quantity !== 1 ? 's' : ''} redeemed
+            </Text>
+          ) : (
+            <Text fontSize="sm" color="gray.400">No data</Text>
+          )}
+        </HStack>
+        <Text color="gray.400" fontSize="sm">View details</Text>
+      </HStack>
+    </Link>
   );
 }
 
