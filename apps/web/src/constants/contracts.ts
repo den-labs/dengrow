@@ -29,8 +29,8 @@ export const getGameContract = (network: Network) => {
   const isTestnet = isTestnetEnvironment(network);
   return {
     contractAddress: getContractAddress(network),
-    // Testnet uses v1 game logic layer
-    contractName: isTestnet ? 'plant-game-v1' : 'plant-game',
+    // Testnet uses v2 game logic (v1 lacks water-with-tip)
+    contractName: isTestnet ? 'plant-game-v2' : 'plant-game',
   } as const;
 };
 
