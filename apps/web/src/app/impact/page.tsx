@@ -219,6 +219,29 @@ export default function ImpactDashboardPage() {
           </Card>
         )}
 
+        {/* Sponsor CTA */}
+        {totalBatches > 0 && (
+          <Link href="/impact/sponsor" style={{ textDecoration: 'none' }}>
+            <Card
+              borderWidth="1px"
+              borderStyle="dashed"
+              borderColor="teal.300"
+              _hover={{ borderColor: 'teal.400', bg: 'teal.50' }}
+              transition="all 0.2s"
+              cursor="pointer"
+            >
+              <CardBody>
+                <HStack justify="center" spacing={3}>
+                  <Text fontSize="xl">🤝</Text>
+                  <Text color="teal.600" fontWeight="medium">
+                    Sponsor a batch - fund real-world tree planting with on-chain attribution
+                  </Text>
+                </HStack>
+              </CardBody>
+            </Card>
+          </Link>
+        )}
+
         {/* Empty State */}
         {totalGraduated === 0 && (
           <Card bg="green.50" borderColor="green.200" borderWidth={1}>
