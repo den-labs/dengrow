@@ -27,60 +27,56 @@
 
 ---
 
-### Next Steps (Prioritized)
+### GitHub Issues & Milestones (synced 2026-02-09)
 
-#### Priority 1: Critical (Non-Code — Unblock Mainnet)
+#### M5: Production Readiness (5 closed, 3 open)
 
-| # | Task | Effort | Status |
-|---|------|--------|--------|
-| 1.1 | Contact Jardin Botanico (call 3153349307) | M | MANUAL |
-| 1.2 | Bootstrap treasury wallet ($30-50) | S | Blocked by 1.1 |
+| Issue | Task | Effort | Status |
+|-------|------|--------|--------|
+| ~~#1~~ | ~~3-tier paid minting~~ | ~~L~~ | ✅ Closed |
+| ~~#2~~ | ~~Post-graduation UI~~ | ~~M~~ | ✅ Closed |
+| ~~#3~~ | ~~Tier pricing on landing page~~ | ~~S~~ | ✅ Closed |
+| ~~#4~~ | ~~Tier in metadata API~~ | ~~S~~ | ✅ Closed |
+| ~~#5~~ | ~~Contract error messages~~ | ~~S~~ | ✅ Closed |
+| [#6](https://github.com/den-labs/dengrow/issues/6) | Water tip feature (+0.1 STX) | M | Open |
+| [#7](https://github.com/den-labs/dengrow/issues/7) | Tier visual in SVG images | M | Open |
+| [#8](https://github.com/den-labs/dengrow/issues/8) | Mainnet contract deployment | M | Blocked (partner+funding) |
 
-#### Priority 2: High (Code — Ready to Build)
+#### M5.5: UX Polish (3 open)
 
-| # | Task | Effort | Status | Description |
-|---|------|--------|--------|-------------|
-| ~~2.1~~ | ~~Pricing tiers~~ | ~~L~~ | ✅ Done | `92e7fdc` + `c63a704` |
-| 2.2 | Water tip feature (+0.1 STX optional) | M | Ready | Revenue: ~10% of total |
-| ~~2.3~~ | ~~Post-graduation UI~~ | ~~M~~ | ✅ Done | `ce23e7a` |
-| 2.4 | Mainnet contract deployment | M | Blocked (1.1+1.2) | All 4 contracts |
-| 2.5 | Add tier pricing to landing page | S | **Ready** | Show tier cards on `app/page.tsx` |
-| 2.6 | Add tier to metadata API | S | **Ready** | Include tier as NFT attribute |
-| 2.7 | Add tier to SVG image generation | M | **Ready** | Visual tier indicator on plant art |
+| Issue | Task | Effort | Status |
+|-------|------|--------|--------|
+| [#10](https://github.com/den-labs/dengrow/issues/10) | Loading states & optimistic UI | S | Open |
+| [#11](https://github.com/den-labs/dengrow/issues/11) | Tier explanation on Impact page | S | Open |
+| [#12](https://github.com/den-labs/dengrow/issues/12) | Batch proof detail page | M | Open |
 
-#### Priority 3: Medium (UX Polish)
+#### M7: Growth Hooks (3 open)
 
-| # | Task | Effort | Dependencies |
-|---|------|--------|-------------|
-| 3.1 | Improve contract error messages | S | None |
-| 3.2 | Batch proof detail page `/impact/batch/[id]` | M | None |
-| 3.3 | Loading states & optimistic UI for TX | S | None |
-| 3.4 | Add tier explanation to Impact page | S | None |
+| Issue | Task | Effort | Status |
+|-------|------|--------|--------|
+| [#13](https://github.com/den-labs/dengrow/issues/13) | Leaderboard page | L | Open |
+| [#14](https://github.com/den-labs/dengrow/issues/14) | Achievement badge NFTs | L | Open |
+| [#15](https://github.com/den-labs/dengrow/issues/15) | Sponsored batch feature | L | Open |
 
-#### Priority 4: Low (Post-Launch / M7)
+#### Non-Code Blockers (no issue — manual ops)
 
-| # | Task | Effort |
-|---|------|--------|
-| 4.1 | Leaderboard page | L |
-| 4.2 | Achievement badge NFTs | L |
-| 4.3 | Sponsored batch feature | L |
-| 4.4 | Rate limiting on metadata API | M |
+| Task | Effort | Status |
+|------|--------|--------|
+| Contact Jardin Botanico (3153349307) | M | MANUAL |
+| Bootstrap treasury wallet ($30-50) | S | Blocked by partner |
 
 ---
 
 ### Recommended Next Actions
 
-**Quick wins (can do now):**
-- **2.5** Landing page pricing — show 3 tier cards on home page (S)
-- **2.6** Metadata API — include tier as NFT attribute for marketplace display (S)
-- **3.1** Error messages — map contract error codes to user-friendly text (S)
+**Code ready now:**
+- **#6** Water tip (+0.1 STX) — revenue stream (M)
+- **#7** Tier in SVG — visual distinction (M)
+- **#10** Loading states — UX feedback (S)
+- **#11** Tier explanation on Impact page (S)
 
-**Feature work:**
-- **2.2** Water tip — optional +0.1 STX tip when watering, adds revenue stream (M)
-- **2.7** Tier in SVG — visual distinction between Basic/Premium/Impact plants (M)
-
-**If doing ops:**
-- Call Jardin Botanico (1.1) to unblock mainnet deployment path
+**Blocked on ops:**
+- **#8** Mainnet deployment — call Jardin Botanico first
 
 ### Key Files
 - Tier config: `apps/web/src/lib/nft/operations.ts`
@@ -95,7 +91,8 @@
 ---
 
 **Last Updated:** 2026-02-09
-**Next Review:** After completing 2.5/2.6 or after partner call
+**GitHub:** https://github.com/den-labs/dengrow/milestones
+**Next Review:** After completing #6 or #7, or after partner call
 
 ---
 
