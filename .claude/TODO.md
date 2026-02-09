@@ -13,27 +13,26 @@
 - M2: Web MVP with wallet connect, mint, and watering UI
 - M1: Core on-chain gameplay with upgradeable architecture
 - Testnet deployment: All 4 contracts deployed and integrated
-- 103 passing contract tests with full coverage
+- 120 passing contract tests (18 new tier tests)
+- 3-tier paid minting: Basic (1 STX) / Premium (2 STX) / Impact (3 STX)
+- Tier display on PlantCard + detail page via useGetMintTier hook
+- Post-graduation UI with pool stats and CTAs
 - Automated screenshot capture with Playwright
 - Graduation status now visible on plant detail page
 
 ### 🚧 In Progress
-- Playwright and tsx added to dependencies (pnpm-lock.yaml modified)
-- New screenshot asset: `plant-detail-graduated.png` (untracked)
 - M5: Production readiness - testnet complete, mainnet pending
 
 ### ⚠️ Blockers (Pre-Mainnet)
-- **Impact Partner Selection** - One Tree Planted recommended but not confirmed
-- **Redemption Schedule** - Every Monday proposed but not finalized
-- **Initial Treasury Funding** - No allocation for first redemptions yet
-- **Policy Decisions** - 6 key decisions in IMPACT_POLICY.md need team approval
+- **Impact Partner Contact** - Jardin Botanico Quindio (call 3153349307)
+- **Initial Treasury Funding** - $30-50 USD for first redemptions
+- **Mainnet Deployment** - Blocked on partner + funding
 
 ### 🔧 Technical State
-- Branch: `main` (46 commits ahead of origin/main)
-- Unstaged changes: `pnpm-lock.yaml` (Playwright + tsx additions)
-- Untracked: `docs/assets/plant-detail-graduated.png`
+- Branch: `main` (3 commits ahead of origin/main)
+- 120 contract tests passing, web build clean
 - No build errors or test failures
-- Ready for commit + push
+- Ready to push
 
 ---
 
@@ -321,6 +320,90 @@ git status                            # Check state
 
 **Last Updated:** 2026-02-07
 **Next Review:** After completing Priority 1 tasks or major milestone
+
+---
+
+## Session Plan - 2026-02-08 (Closed)
+
+### Session Accomplishments
+- ✅ **2.1 Pricing tiers**: Full contract + frontend + tests (`92e7fdc`, `c63a704`)
+  - `mint-with-tier(recipient, tier)` with on-chain STX payment (1/2/3 STX)
+  - Admin guard on free `mint`, `ERR_INVALID_TIER (u302)`
+  - Tier stored in `extension-data`, queryable via `get-mint-tier`
+  - 18 new contract tests (120 total, all passing)
+  - Tier selection UI on `/my-plants` with 3 clickable cards
+  - `useGetMintTier` hook for querying tier from contract
+  - Tier badges on PlantCard + plant detail page (header, image, On-Chain Data)
+- ✅ Post-graduation UI enhanced (`ce23e7a`)
+
+### Project Maturity
+- **M0-M4, M6**: ✅ Complete (100%)
+- **M5**: 🟡 90% — pricing tiers done, mainnet blocked on partner/funding
+- **M7**: Future (leaderboard, badges)
+
+---
+
+### Next Steps (Prioritized)
+
+#### Priority 1: Critical (Non-Code — Unblock Mainnet)
+
+| # | Task | Effort | Status |
+|---|------|--------|--------|
+| 1.1 | Contact Jardin Botanico (call 3153349307) | M | MANUAL |
+| 1.2 | Bootstrap treasury wallet ($30-50) | S | Blocked by 1.1 |
+
+#### Priority 2: High (Code — Mainnet Preparation)
+
+| # | Task | Effort | Status |
+|---|------|--------|--------|
+| ~~2.1~~ | ~~Pricing tiers UI~~ | ~~L~~ | ✅ Done (`92e7fdc` + `c63a704`) |
+| 2.2 | Add water tip feature (+0.1 STX optional) | M | Ready |
+| ~~2.3~~ | ~~Post-graduation UI~~ | ~~M~~ | ✅ Done (`ce23e7a`) |
+| 2.4 | Mainnet contract deployment | M | Blocked (1.1 + 1.2) |
+| 2.5 | Add tier pricing to landing page (`app/page.tsx`) | S | Ready |
+| 2.6 | Add tier to metadata API (`/api/metadata/[tokenId]`) | S | Ready |
+
+#### Priority 3: Medium (UX Polish)
+
+| # | Task | Effort | Dependencies |
+|---|------|--------|-------------|
+| 3.1 | Improve contract error messages | S | None |
+| 3.2 | Add batch proof detail page `/impact/batch/[id]` | M | None |
+| 3.3 | Loading states & optimistic UI for TX | S | None |
+| 3.4 | Add tier visual to generated SVG images | M | None |
+| 3.5 | Add tier explanation to Impact page | S | None |
+
+#### Priority 4: Low (Post-Launch / M7)
+
+| # | Task | Effort |
+|---|------|--------|
+| 4.1 | Leaderboard page | L |
+| 4.2 | Achievement badge NFTs | L |
+| 4.3 | Sponsored batch feature | L |
+
+---
+
+### Recommended Next Task
+
+**Quick win**: **2.5 Landing page pricing** — show tier cards on home page
+**Quick win**: **2.6 Metadata API** — include tier as NFT attribute for marketplaces
+**Feature**: **2.2 Water tip** — optional +0.1 STX tip when watering
+**If doing ops**: Call Jardin Botanico (1.1) to unblock mainnet path.
+
+### Key Files
+- Tier config: `apps/web/src/lib/nft/operations.ts` (MINT_TIERS, mintPlantNFTWithTier)
+- Tier hook: `apps/web/src/hooks/useGetMintTier.ts`
+- Mint page: `apps/web/src/app/my-plants/page.tsx` (tier selection UI)
+- Plant detail: `apps/web/src/app/my-plants/[tokenId]/page.tsx`
+- Contract: `packages/contracts/contracts/plant-nft.clar`
+- Contract tests: `packages/contracts/tests/plant-nft.test.ts`
+- Landing page: `apps/web/src/app/page.tsx`
+- Metadata API: `apps/web/src/app/api/metadata/[tokenId]/route.ts`
+
+---
+
+**Last Updated:** 2026-02-08
+**Next Review:** After completing 2.2 or 2.5, or after partner call
 
 ---
 
