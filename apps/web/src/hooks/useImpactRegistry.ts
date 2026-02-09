@@ -204,6 +204,121 @@ export const useBatchInfo = (batchId: number): UseQueryResult<BatchInfo | null> 
   });
 };
 
+export interface SponsorInfo {
+  sponsor: string;
+  sponsorName: string;
+  amount: number;
+  sponsoredAt: number;
+}
+
+export interface SponsorshipStats {
+  totalSponsoredAmount: number;
+  totalSponsorships: number;
+  minSponsorship: number;
+}
+
+/**
+ * Hook to fetch sponsor info for a batch
+ */
+export const useBatchSponsor = (batchId: number): UseQueryResult<SponsorInfo | null> => {
+  const network = useNetwork();
+
+  return useQuery<SponsorInfo | null>({
+    queryKey: ['batch-sponsor', batchId, network],
+    queryFn: async () => {
+      if (!network) throw new Error('Network is required');
+
+      const contract = getImpactRegistryContract(network);
+      const api = getApi(network);
+
+      try {
+        const result = await api.smartContractsApi.callReadOnlyFunction({
+          contractAddress: contract.contractAddress,
+          contractName: contract.contractName,
+          functionName: 'get-batch-sponsor',
+          readOnlyFunctionArgs: {
+            sender: contract.contractAddress,
+            arguments: [cvToHex(uintCV(batchId))],
+          },
+        });
+
+        if (!result.result) return null;
+
+        const clarityValue = hexToCV(result.result);
+        const parsed: any = cvToValue(clarityValue);
+
+        if (!parsed || !parsed.value) return null;
+
+        const t = parsed.value;
+
+        return {
+          sponsor: String(t.sponsor?.value ?? ''),
+          sponsorName: String(t['sponsor-name']?.value ?? ''),
+          amount: Number(t.amount?.value ?? 0),
+          sponsoredAt: Number(t['sponsored-at']?.value ?? 0),
+        };
+      } catch (error) {
+        console.error('Error fetching batch sponsor:', error);
+        return null;
+      }
+    },
+    enabled: !!network && batchId > 0,
+    retry: 2,
+    staleTime: 60000,
+  });
+};
+
+/**
+ * Hook to fetch global sponsorship stats
+ */
+export const useSponsorshipStats = (): UseQueryResult<SponsorshipStats> => {
+  const network = useNetwork();
+
+  return useQuery<SponsorshipStats>({
+    queryKey: ['sponsorship-stats', network],
+    queryFn: async () => {
+      if (!network) throw new Error('Network is required');
+
+      const contract = getImpactRegistryContract(network);
+      const api = getApi(network);
+
+      try {
+        const result = await api.smartContractsApi.callReadOnlyFunction({
+          contractAddress: contract.contractAddress,
+          contractName: contract.contractName,
+          functionName: 'get-sponsorship-stats',
+          readOnlyFunctionArgs: {
+            sender: contract.contractAddress,
+            arguments: [],
+          },
+        });
+
+        if (!result.result) throw new Error('No result');
+
+        const clarityValue = hexToCV(result.result);
+        const parsed: any = cvToValue(clarityValue);
+
+        return {
+          totalSponsoredAmount: Number(parsed['total-sponsored-amount']?.value ?? 0),
+          totalSponsorships: Number(parsed['total-sponsorships']?.value ?? 0),
+          minSponsorship: Number(parsed['min-sponsorship']?.value ?? 1000000),
+        };
+      } catch (error) {
+        console.error('Error fetching sponsorship stats:', error);
+        return {
+          totalSponsoredAmount: 0,
+          totalSponsorships: 0,
+          minSponsorship: 1000000,
+        };
+      }
+    },
+    enabled: !!network,
+    retry: 2,
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+};
+
 /**
  * Hook to check if a token has graduated
  */
