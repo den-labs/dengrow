@@ -33,6 +33,7 @@
 (define-constant ERR_OWNER_ONLY (err u100))
 (define-constant ERR_NOT_TOKEN_OWNER (err u101))
 (define-constant ERR_SOLD_OUT (err u300))
+(define-constant ERR_INVALID_TIER (err u302))
 
 ;; ============================================================================
 ;; SIP-009 READ-ONLY FUNCTIONS
@@ -77,6 +78,8 @@
 ;; Creates NFT and initializes plant in storage
 (define-public (mint (recipient principal))
   (let ((token-id (+ (var-get last-token-id) u1)))
+    ;; Admin only -- public minting uses mint-with-tier
+    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_OWNER_ONLY)
     ;; Check collection limit
     (asserts! (< (var-get last-token-id) COLLECTION_LIMIT) ERR_SOLD_OUT)
     ;; Mint the NFT
@@ -100,3 +103,37 @@
     (ok (var-set base-uri new-uri))
   )
 )
+
+;; ============================================================================
+;; TIER PRICING
+;; ============================================================================
+
+(define-constant TIER-BASIC u1000000)    ;; 1 STX
+(define-constant TIER-PREMIUM u2000000)  ;; 2 STX
+(define-constant TIER-IMPACT u3000000)   ;; 3 STX
+
+(define-read-only (get-tier-price (tier uint))
+  (if (is-eq tier u1) (some TIER-BASIC)
+    (if (is-eq tier u2) (some TIER-PREMIUM)
+      (if (is-eq tier u3) (some TIER-IMPACT) none))))
+
+(define-read-only (get-mint-tier (token-id uint))
+  (match (contract-call? .plant-storage get-extension-data "mint-tier" token-id)
+    data (from-consensus-buff? uint (get value data))
+    none))
+
+;; Paid mint -- validates payment via stx-transfer before minting
+(define-public (mint-with-tier (recipient principal) (tier uint))
+  (let (
+    (token-id (+ (var-get last-token-id) u1))
+    (price (unwrap! (get-tier-price tier) ERR_INVALID_TIER))
+  )
+    (try! (stx-transfer? price tx-sender CONTRACT_OWNER))
+    (asserts! (< (var-get last-token-id) COLLECTION_LIMIT) ERR_SOLD_OUT)
+    (try! (nft-mint? plant-nft token-id recipient))
+    (try! (contract-call? .plant-storage initialize-plant token-id recipient))
+    (try! (contract-call? .plant-storage set-extension-data
+      "mint-tier" token-id (unwrap-panic (to-consensus-buff? tier))))
+    (var-set last-token-id token-id)
+    (print { event: "paid-mint", token-id: token-id, tier: tier, price: price })
+    (ok token-id)))
