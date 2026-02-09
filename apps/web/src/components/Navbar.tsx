@@ -48,6 +48,12 @@ export const Navbar = () => {
             <Link href="/my-plants">
               <Box>My Plants</Box>
             </Link>
+            <Link href="/leaderboard">
+              <Box>Leaderboard</Box>
+            </Link>
+            <Link href="/achievements">
+              <Box>Badges</Box>
+            </Link>
             <Link href="/impact">
               <Box>Impact</Box>
             </Link>
