@@ -31,8 +31,18 @@ export async function GET(
   const stageParam = request.nextUrl.searchParams.get('stage');
   const stage = stageParam ? parseInt(stageParam, 10) : 0;
 
+  // Optional tier parameter (1=Basic, 2=Premium, 3=Impact)
+  const tierParam = request.nextUrl.searchParams.get('tier');
+  const tier = tierParam ? parseInt(tierParam, 10) : null;
+
   // Generate metadata
   const metadata = generateMetadata(tokenId, stage, baseUrl);
+
+  // Add tier attribute if provided
+  if (tier && tier >= 1 && tier <= 3) {
+    const tierNames: Record<number, string> = { 1: 'Basic', 2: 'Premium', 3: 'Impact' };
+    metadata.attributes.push({ trait_type: 'Mint Tier', value: tierNames[tier] });
+  }
 
   // Return with appropriate headers for NFT platforms
   return NextResponse.json(metadata, {

@@ -1,6 +1,17 @@
 'use client';
 
-import { Container, VStack, Text, Button, Box, HStack, Tag } from '@chakra-ui/react';
+import {
+  Container,
+  VStack,
+  Text,
+  Button,
+  Box,
+  HStack,
+  Tag,
+  SimpleGrid,
+  Badge,
+} from '@chakra-ui/react';
+import { MINT_TIERS, MintTier } from '@/lib/nft/operations';
 
 export default function HomePage() {
   return (
@@ -31,6 +42,46 @@ export default function HomePage() {
             </Button>
           </HStack>
         </VStack>
+
+        {/* Mint Tiers */}
+        <Box>
+          <Text fontSize="xl" fontWeight="bold" mb={4}>
+            Choose Your Tier
+          </Text>
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+            {([1, 2, 3] as MintTier[]).map((tier) => {
+              const t = MINT_TIERS[tier];
+              return (
+                <Box
+                  key={tier}
+                  as="a"
+                  href="/my-plants"
+                  borderWidth="1px"
+                  borderColor={`${t.colorScheme}.200`}
+                  borderRadius="lg"
+                  p={6}
+                  bg="white"
+                  boxShadow="sm"
+                  _hover={{ shadow: 'md', borderColor: `${t.colorScheme}.400` }}
+                  transition="all 0.2s"
+                  textDecoration="none"
+                >
+                  <VStack spacing={3}>
+                    <Badge colorScheme={t.colorScheme} fontSize="xs">
+                      {t.name}
+                    </Badge>
+                    <Text fontWeight="bold" fontSize="3xl" color={`${t.colorScheme}.600`}>
+                      {t.priceSTX} STX
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" textAlign="center">
+                      {t.description}
+                    </Text>
+                  </VStack>
+                </Box>
+              );
+            })}
+          </SimpleGrid>
+        </Box>
 
         <Box borderWidth="1px" borderRadius="lg" p={{ base: 6, md: 8 }} bg="white" boxShadow="sm">
           <VStack spacing={3} align="start">

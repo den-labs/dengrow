@@ -38,6 +38,7 @@ import { useGetMintTier } from '@/hooks/useGetMintTier';
 import { getPlantImage } from '@/utils/nft-utils';
 import { waterPlant } from '@/lib/game/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
+import { getContractErrorMessage } from '@/lib/contract-errors';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { getExplorerLink } from '@/utils/explorer-links';
 import { generateTraits, calculateRarityScore } from '@/lib/traits';
@@ -162,11 +163,11 @@ export default function PlantDetailPage() {
           },
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error watering plant:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to water plant',
+        title: 'Watering Failed',
+        description: getContractErrorMessage(error),
         status: 'error',
       });
     } finally {
