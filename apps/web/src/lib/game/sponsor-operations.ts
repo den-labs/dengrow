@@ -1,13 +1,7 @@
 import { Pc, PostConditionMode, uintCV, stringAsciiCV } from '@stacks/transactions';
-import { getContractAddress } from '@/constants/contracts';
-import { isTestnetEnvironment } from '@/lib/use-network';
+import { getImpactContract } from '@/constants/contracts';
 import { Network } from '@/lib/network';
 import { ContractCallRegularOptions } from '@stacks/connect';
-
-const getImpactContract = (network: Network) => ({
-  contractAddress: getContractAddress(network),
-  contractName: isTestnetEnvironment(network) ? 'impact-registry' : 'impact-registry',
-});
 
 /** Minimum sponsorship in microSTX (1 STX) */
 export const MIN_SPONSORSHIP_MICROSTX = 1_000_000;

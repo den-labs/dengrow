@@ -2,7 +2,7 @@ import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { hexToCV, cvToValue, cvToHex, uintCV } from '@stacks/transactions';
 import { isTestnetEnvironment, useNetwork } from '@/lib/use-network';
 import { Network } from '@/lib/network';
-import { getContractAddress } from '@/constants/contracts';
+import { getImpactContract } from '@/constants/contracts';
 import { getApi } from '@/lib/stacks-api';
 
 export interface PoolStats {
@@ -30,11 +30,7 @@ export interface BatchInfo {
  * Get impact registry contract info
  */
 const getImpactRegistryContract = (network: Network) => {
-  const isTestnet = isTestnetEnvironment(network);
-  return {
-    contractAddress: getContractAddress(network),
-    contractName: isTestnet ? 'impact-registry' : 'impact-registry',
-  };
+  return getImpactContract(network);
 };
 
 /**
