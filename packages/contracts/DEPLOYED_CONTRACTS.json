@@ -1,28 +1,61 @@
 {
   "network": "testnet",
-  "timestamp": "2026-02-04T17:21:41.000Z",
   "deployer": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ",
   "clarityVersion": 2,
-  "contracts": {
+  "activeContracts": {
+    "plant-storage": {
+      "note": "Immutable data layer (deployed 2026-02-04)",
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-storage"
+    },
+    "plant-nft-v3": {
+      "note": "NFT with mint-with-tier (deployed 2026-02-09)",
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v3",
+      "txid": "0x6b17d4cfa005202c21373849a3c6e457a87250cfffdaf099ecac9bd3555af214"
+    },
+    "plant-game-v3": {
+      "note": "Game logic with water-with-tip + impact-registry-v2 (deployed 2026-02-09)",
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v3",
+      "txid": "0xa0cf376fca69585ef886f13a3258ba1c7d0dded8afd8a226b9706da3adfd5189"
+    },
+    "impact-registry-v2": {
+      "note": "Impact registry with sponsorship (deployed 2026-02-09)",
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry-v2",
+      "txid": "0x8a032b42e61f75b46c47dccf3093e3659fccaf55ea2c114a0f34b5871d57bdef"
+    },
+    "achievement-badges": {
+      "note": "Soulbound badges (deployed 2026-02-09)",
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.achievement-badges",
+      "txid": "0xdcb541a4989290cd560e7ec755890a7fcd83ccd40533b9253260b043cefc69bf"
+    }
+  },
+  "legacyContracts": {
     "plant-game": {
       "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game",
-      "txid": "0x0421847934a956d17da561f0fcb774e711c348dc142fc192a1d969e04af91acd",
-      "nonce": 22,
-      "blockHeight": 3768499,
-      "explorerUrl": "https://explorer.hiro.so/txid/0x0421847934a956d17da561f0fcb774e711c348dc142fc192a1d969e04af91acd?chain=testnet"
+      "note": "Legacy game logic (2026-02-04), superseded by plant-game-v3"
     },
     "plant-nft": {
       "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft",
-      "txid": "0xa2f57bdfb6a4e5c254833c4768410c9b87c96df2497dedf3ab95e614c093b0f1",
-      "nonce": 23,
-      "blockHeight": 3768499,
-      "explorerUrl": "https://explorer.hiro.so/txid/0xa2f57bdfb6a4e5c254833c4768410c9b87c96df2497dedf3ab95e614c093b0f1?chain=testnet"
+      "note": "Legacy NFT (2026-02-04), superseded by plant-nft-v3"
+    },
+    "plant-game-v1": {
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v1",
+      "note": "v1 game logic, superseded by plant-game-v3"
+    },
+    "plant-nft-v2": {
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v2",
+      "note": "v2 NFT without mint-with-tier, superseded by plant-nft-v3"
+    },
+    "plant-game-v2": {
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v2",
+      "note": "v2 game, uses impact-registry v1, superseded by plant-game-v3"
+    },
+    "impact-registry": {
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry",
+      "note": "v1 without sponsorship, superseded by impact-registry-v2"
     }
   },
-  "notes": {
-    "clarityUpgrade": "Upgraded from Clarity 1 to Clarity 2 to support block-height variable",
-    "mintPermission": "Public minting enabled - anyone can mint their own plant",
-    "baseUri": "https://dengrow.app/api/metadata/{id}",
-    "testsPassing": "31/31 tests passing with Clarity 2"
+  "authorizationChain": {
+    "plant-storage": ["plant-nft-v3", "plant-game-v3"],
+    "impact-registry-v2": ["plant-game-v3"]
   }
 }

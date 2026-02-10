@@ -20,8 +20,8 @@ export const getNftContract = (network: Network) => {
   const isTestnet = isTestnetEnvironment(network);
   return {
     contractAddress: getContractAddress(network),
-    // Testnet uses v2 with upgradeable architecture
-    contractName: isTestnet ? 'plant-nft-v2' : 'plant-nft',
+    // Testnet uses v3 with mint-with-tier
+    contractName: isTestnet ? 'plant-nft-v3' : 'plant-nft',
   } as const;
 };
 
@@ -29,8 +29,8 @@ export const getGameContract = (network: Network) => {
   const isTestnet = isTestnetEnvironment(network);
   return {
     contractAddress: getContractAddress(network),
-    // Testnet uses v2 game logic (v1 lacks water-with-tip)
-    contractName: isTestnet ? 'plant-game-v2' : 'plant-game',
+    // Testnet uses v3 game logic (calls impact-registry-v2)
+    contractName: isTestnet ? 'plant-game-v3' : 'plant-game',
   } as const;
 };
 
@@ -40,6 +40,15 @@ export const getStorageContract = (network: Network) => {
     contractAddress: getContractAddress(network),
     // Testnet has separate storage layer, legacy uses plant-game
     contractName: isTestnet ? 'plant-storage' : 'plant-game',
+  } as const;
+};
+
+export const getImpactContract = (network: Network) => {
+  const isTestnet = isTestnetEnvironment(network);
+  return {
+    contractAddress: getContractAddress(network),
+    // Testnet uses v2 with sponsorship
+    contractName: isTestnet ? 'impact-registry-v2' : 'impact-registry',
   } as const;
 };
 
