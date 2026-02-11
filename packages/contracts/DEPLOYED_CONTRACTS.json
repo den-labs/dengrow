@@ -26,6 +26,15 @@
       "note": "Soulbound badges v2 — Early Adopter threshold u200 for v4 offset (deployed 2026-02-11)",
       "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.achievement-badges-v2",
       "txid": "0xb9f1e5e19872327d1f2eb373589711532ce7cca59b7e4ada5d7c8ece2d19156c"
+    },
+    "dengrow-treasury": {
+      "note": "Treasury contract — holds STX, pays partners on redemption (deployed 2026-02-11)",
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.dengrow-treasury",
+      "txid": "0x96648b1dfea0dde507cff781d7a8b44861eacf1e4d032f0f0d26ba7dc347f759",
+      "config": {
+        "partner": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ",
+        "pricePerTree": 500000
+      }
     }
   },
   "legacyContracts": {
