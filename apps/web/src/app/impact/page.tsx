@@ -20,7 +20,6 @@ import {
   CardBody,
   CardHeader,
   Heading,
-  Icon,
   Button,
   Input,
   NumberInput,
@@ -35,11 +34,18 @@ import {
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { usePoolStats, useBatchInfo } from '@/hooks/useImpactRegistry';
+import { useTreasuryStats } from '@/hooks/useTreasury';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { useNetwork } from '@/lib/use-network';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { getContractAddress } from '@/constants/contracts';
-import { recordRedemption, sha256 } from '@/lib/impact/operations';
+import {
+  redeemWithPayout,
+  depositToTreasury,
+  setPartner,
+  setPricePerTree,
+  sha256,
+} from '@/lib/treasury/operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
 import { getContractErrorMessage } from '@/lib/contract-errors';
 import Link from 'next/link';
@@ -334,6 +340,10 @@ interface AdminRedemptionCardProps {
   onSuccess: () => void;
 }
 
+function formatStx(microStx: number): string {
+  return (microStx / 1_000_000).toFixed(6).replace(/\.?0+$/, '');
+}
+
 function AdminRedemptionCard({
   network,
   currentAddress,
@@ -343,14 +353,27 @@ function AdminRedemptionCard({
   onSuccess,
 }: AdminRedemptionCardProps) {
   const toast = useToast();
+  const { data: treasury, refetch: refetchTreasury } = useTreasuryStats();
   const [quantity, setQuantity] = useState(currentPoolSize.toString());
   const [proofUrl, setProofUrl] = useState(
     `https://dengrow.app/proof/batch-${nextBatchId}`
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
+
+  // Config state
+  const [newPartner, setNewPartner] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [isConfigSubmitting, setIsConfigSubmitting] = useState(false);
 
   const qty = parseInt(quantity, 10) || 0;
-  const isValid = qty > 0 && qty <= currentPoolSize && proofUrl.trim().length > 0;
+  const pricePerTree = treasury?.pricePerTree ?? 500000;
+  const payout = qty * pricePerTree;
+  const treasuryBalance = treasury?.balance ?? 0;
+  const hasPartner = !!treasury?.partner;
+  const hasFunds = treasuryBalance >= payout && payout > 0;
+  const isValid = qty > 0 && qty <= currentPoolSize && proofUrl.trim().length > 0 && hasPartner && hasFunds;
 
   const handleSubmit = async () => {
     if (!isValid || isSubmitting) return;
@@ -358,16 +381,17 @@ function AdminRedemptionCard({
     setIsSubmitting(true);
     try {
       const proofHash = await sha256(proofUrl.trim());
-      const txOptions = recordRedemption(network, qty, proofHash, proofUrl.trim());
+      const txOptions = redeemWithPayout(network, qty, proofHash, proofUrl.trim());
 
       if (shouldUseDirectCall()) {
         await executeContractCall(txOptions, currentWallet);
         toast({
-          title: 'Redemption Recorded',
-          description: `${qty} tree(s) redeemed successfully`,
+          title: 'Redemption with Payout',
+          description: `${qty} tree(s) redeemed, ${formatStx(payout)} STX sent to partner`,
           status: 'success',
         });
         onSuccess();
+        refetchTreasury();
       } else {
         await openContractCall({
           ...txOptions,
@@ -377,7 +401,10 @@ function AdminRedemptionCard({
               description: 'Confirming on-chain...',
               status: 'info',
             });
-            setTimeout(() => onSuccess(), 10000);
+            setTimeout(() => {
+              onSuccess();
+              refetchTreasury();
+            }, 10000);
           },
           onCancel: () => {
             toast({ title: 'Cancelled', status: 'info' });
@@ -396,18 +423,100 @@ function AdminRedemptionCard({
     }
   };
 
+  const handleConfigAction = async (
+    action: 'deposit' | 'set-partner' | 'set-price',
+  ) => {
+    setIsConfigSubmitting(true);
+    try {
+      let txOptions;
+      let successMsg = '';
+      if (action === 'deposit') {
+        const amount = Math.floor(parseFloat(depositAmount) * 1_000_000);
+        if (amount <= 0) throw new Error('Invalid deposit amount');
+        txOptions = depositToTreasury(network, amount, currentAddress);
+        successMsg = `Deposited ${depositAmount} STX to treasury`;
+      } else if (action === 'set-partner') {
+        if (!newPartner.trim()) throw new Error('Invalid partner address');
+        txOptions = setPartner(network, newPartner.trim());
+        successMsg = `Partner set to ${newPartner.trim()}`;
+      } else {
+        const price = Math.floor(parseFloat(newPrice) * 1_000_000);
+        if (price <= 0) throw new Error('Invalid price');
+        txOptions = setPricePerTree(network, price);
+        successMsg = `Price set to ${newPrice} STX/tree`;
+      }
+
+      if (shouldUseDirectCall()) {
+        await executeContractCall(txOptions, currentWallet);
+        toast({ title: successMsg, status: 'success' });
+        refetchTreasury();
+      } else {
+        await openContractCall({
+          ...txOptions,
+          onFinish: () => {
+            toast({ title: successMsg, description: 'Confirming on-chain...', status: 'info' });
+            setTimeout(() => refetchTreasury(), 10000);
+          },
+          onCancel: () => toast({ title: 'Cancelled', status: 'info' }),
+        });
+      }
+    } catch (error: unknown) {
+      toast({
+        title: 'Action Failed',
+        description: getContractErrorMessage(error),
+        status: 'error',
+      });
+    } finally {
+      setIsConfigSubmitting(false);
+    }
+  };
+
   return (
     <Card borderColor="orange.300" borderWidth={1}>
       <CardHeader>
         <HStack spacing={3}>
-          <Heading size="md">Record Redemption</Heading>
-          <Badge colorScheme="orange" fontSize="xs">
-            Admin
-          </Badge>
+          <Heading size="md">Redeem with Payout</Heading>
+          <Badge colorScheme="orange" fontSize="xs">Admin</Badge>
         </HStack>
       </CardHeader>
       <CardBody>
         <VStack spacing={5}>
+          {/* Treasury Status */}
+          <Box w="full" p={3} bg="gray.50" borderRadius="md">
+            <SimpleGrid columns={3} spacing={2}>
+              <Box>
+                <Text fontSize="xs" color="gray.500">Treasury Balance</Text>
+                <Text fontWeight="bold" color="green.600">{formatStx(treasuryBalance)} STX</Text>
+              </Box>
+              <Box>
+                <Text fontSize="xs" color="gray.500">Partner</Text>
+                <Text fontWeight="bold" fontSize="sm" isTruncated color={hasPartner ? 'blue.600' : 'red.500'}>
+                  {treasury?.partner ? `${treasury.partner.slice(0, 8)}...` : 'Not set'}
+                </Text>
+              </Box>
+              <Box>
+                <Text fontSize="xs" color="gray.500">Price/Tree</Text>
+                <Text fontWeight="bold">{formatStx(pricePerTree)} STX</Text>
+              </Box>
+            </SimpleGrid>
+          </Box>
+
+          {/* Warnings */}
+          {!hasPartner && (
+            <Box w="full" p={2} bg="red.50" borderRadius="md" borderWidth="1px" borderColor="red.200">
+              <Text fontSize="sm" color="red.600">
+                No partner wallet set. Configure one below before redeeming.
+              </Text>
+            </Box>
+          )}
+          {hasPartner && qty > 0 && !hasFunds && (
+            <Box w="full" p={2} bg="red.50" borderRadius="md" borderWidth="1px" borderColor="red.200">
+              <Text fontSize="sm" color="red.600">
+                Insufficient treasury funds. Need {formatStx(payout)} STX, have {formatStx(treasuryBalance)} STX.
+              </Text>
+            </Box>
+          )}
+
           <FormControl>
             <FormLabel>Quantity</FormLabel>
             <NumberInput
@@ -426,6 +535,25 @@ function AdminRedemptionCard({
               Max: {currentPoolSize} tree{currentPoolSize !== 1 ? 's' : ''} in pool
             </FormHelperText>
           </FormControl>
+
+          {/* STX Flow Preview */}
+          {qty > 0 && hasPartner && (
+            <Box w="full" p={3} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
+              <Text fontSize="sm" fontWeight="bold" color="blue.700" mb={1}>
+                Redeem {qty} tree{qty !== 1 ? 's' : ''}:
+              </Text>
+              <VStack spacing={1} align="stretch" fontSize="sm" color="blue.600">
+                <HStack justify="space-between">
+                  <Text>Partner payout ({qty} x {formatStx(pricePerTree)} STX)</Text>
+                  <Text fontWeight="bold">{formatStx(payout)} STX</Text>
+                </HStack>
+                <HStack justify="space-between">
+                  <Text>Stays in treasury</Text>
+                  <Text fontWeight="bold">{formatStx(Math.max(0, treasuryBalance - payout))} STX</Text>
+                </HStack>
+              </VStack>
+            </Box>
+          )}
 
           <FormControl>
             <FormLabel>Proof URL</FormLabel>
@@ -448,8 +576,103 @@ function AdminRedemptionCard({
             loadingText="Recording..."
             onClick={handleSubmit}
           >
-            Record Redemption ({qty} tree{qty !== 1 ? 's' : ''})
+            Redeem & Pay ({qty} tree{qty !== 1 ? 's' : ''} = {formatStx(payout)} STX)
           </Button>
+
+          {/* Collapsible Config Section */}
+          <Divider />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowConfig(!showConfig)}
+            w="full"
+          >
+            {showConfig ? 'Hide' : 'Show'} Treasury Config
+          </Button>
+
+          {showConfig && (
+            <VStack spacing={4} w="full" p={3} bg="gray.50" borderRadius="md">
+              {/* Set Partner */}
+              <FormControl>
+                <FormLabel fontSize="sm">Partner Wallet</FormLabel>
+                <HStack>
+                  <Input
+                    size="sm"
+                    value={newPartner}
+                    onChange={(e) => setNewPartner(e.target.value)}
+                    placeholder="ST..."
+                  />
+                  <Button
+                    size="sm"
+                    colorScheme="blue"
+                    isLoading={isConfigSubmitting}
+                    onClick={() => handleConfigAction('set-partner')}
+                    isDisabled={!newPartner.trim()}
+                  >
+                    Set
+                  </Button>
+                </HStack>
+              </FormControl>
+
+              {/* Set Price */}
+              <FormControl>
+                <FormLabel fontSize="sm">Price per Tree (STX)</FormLabel>
+                <HStack>
+                  <Input
+                    size="sm"
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
+                    placeholder="0.5"
+                    type="number"
+                    step="0.1"
+                  />
+                  <Button
+                    size="sm"
+                    colorScheme="blue"
+                    isLoading={isConfigSubmitting}
+                    onClick={() => handleConfigAction('set-price')}
+                    isDisabled={!newPrice || parseFloat(newPrice) <= 0}
+                  >
+                    Set
+                  </Button>
+                </HStack>
+              </FormControl>
+
+              {/* Deposit */}
+              <FormControl>
+                <FormLabel fontSize="sm">Deposit STX to Treasury</FormLabel>
+                <HStack>
+                  <Input
+                    size="sm"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    placeholder="1.0"
+                    type="number"
+                    step="0.5"
+                  />
+                  <Button
+                    size="sm"
+                    colorScheme="green"
+                    isLoading={isConfigSubmitting}
+                    onClick={() => handleConfigAction('deposit')}
+                    isDisabled={!depositAmount || parseFloat(depositAmount) <= 0}
+                  >
+                    Deposit
+                  </Button>
+                </HStack>
+              </FormControl>
+
+              {/* Stats */}
+              {treasury && (
+                <Box w="full" fontSize="xs" color="gray.500">
+                  <Text>Total deposited: {formatStx(treasury.totalDeposited)} STX</Text>
+                  <Text>Total paid out: {formatStx(treasury.totalPaidOut)} STX</Text>
+                  <Text>Total withdrawn: {formatStx(treasury.totalWithdrawn)} STX</Text>
+                  <Text>Redemptions via treasury: {treasury.totalRedemptions}</Text>
+                </Box>
+              )}
+            </VStack>
+          )}
         </VStack>
       </CardBody>
     </Card>

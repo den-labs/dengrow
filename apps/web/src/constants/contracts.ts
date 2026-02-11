@@ -68,5 +68,13 @@ export const getBadgeContract = (network: Network) => {
   } as const;
 };
 
+export const getTreasuryContract = (network: Network) => {
+  const isTestnet = isTestnetEnvironment(network);
+  return {
+    contractAddress: getContractAddress(network),
+    contractName: isTestnet ? 'dengrow-treasury' : 'dengrow-treasury',
+  } as const;
+};
+
 // Legacy export for backwards compatibility
 export const getNftContractAddress = getContractAddress;
