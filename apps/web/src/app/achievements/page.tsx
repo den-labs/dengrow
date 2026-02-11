@@ -51,7 +51,7 @@ export default function AchievementsPage() {
   const plants: { tokenId: number }[] = (nftHoldings?.results || [])
     .filter((h: any) => h.asset_identifier?.startsWith(nftContractId))
     .map((h: any) => ({
-      tokenId: Number(formatValue(h.value?.repr)),
+      tokenId: Number(formatValue(h.value?.hex).replace('u', '')),
     }))
     .sort((a: { tokenId: number }, b: { tokenId: number }) => a.tokenId - b.tokenId);
 
