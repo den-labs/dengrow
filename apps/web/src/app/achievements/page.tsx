@@ -23,8 +23,10 @@ import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { useNetwork } from '@/lib/use-network';
 import { useNftHoldings } from '@/hooks/useNftHoldings';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
-import { getNftContract } from '@/constants/contracts';
+import { getNftContract, getStorageContract } from '@/constants/contracts';
 import { formatValue } from '@/lib/clarity-utils';
+import { getApi } from '@/lib/stacks-api';
+import { hexToCV, cvToValue, cvToHex, uintCV } from '@stacks/transactions';
 import {
   claimFirstSeed,
   claimFirstTree,
@@ -81,6 +83,28 @@ export default function AchievementsPage() {
   const earned = badges.filter((b) => b.earned).length;
   const total = badges.length;
 
+  const fetchPlantStage = async (tokenId: number): Promise<number | null> => {
+    if (!network) return null;
+    const contract = getStorageContract(network);
+    const api = getApi(network);
+    try {
+      const result = await api.smartContractsApi.callReadOnlyFunction({
+        contractAddress: contract.contractAddress,
+        contractName: contract.contractName,
+        functionName: 'get-plant',
+        readOnlyFunctionArgs: {
+          sender: contract.contractAddress,
+          arguments: [cvToHex(uintCV(tokenId))],
+        },
+      });
+      if (!result.result) return null;
+      const parsed: any = cvToValue(hexToCV(result.result));
+      return parsed?.value?.stage?.value != null ? Number(parsed.value.stage.value) : null;
+    } catch {
+      return null;
+    }
+  };
+
   const handleClaim = async (badgeId: number) => {
     if (!network || claimingBadge) return;
 
@@ -98,30 +122,36 @@ export default function AchievementsPage() {
         case 1: // First Seed
           txOptions = claimFirstSeed(network, plants[0].tokenId);
           break;
-        case 2: // First Tree - find a tree
-        case 4: { // Early Adopter - find token <= 100
-          // For these we just pass the first suitable plant
-          // The contract will verify eligibility
-          const targetToken = badgeId === 4
-            ? plants.find((p) => p.tokenId <= 200)
-            : plants[0];
-          if (!targetToken) {
-            toast({ title: 'Not eligible', description: badgeId === 4 ? 'No plant with ID <= 200' : 'No suitable plant found', status: 'warning' });
+        case 2: { // First Tree - find a graduated plant (stage >= 4)
+          const stages = await Promise.all(plants.map((p) => fetchPlantStage(p.tokenId)));
+          const treeIdx = stages.findIndex((s) => s !== null && s >= 4);
+          if (treeIdx === -1) {
+            toast({ title: 'Not eligible', description: 'No graduated tree found — grow a plant to stage 4', status: 'warning' });
             setClaimingBadge(null);
             return;
           }
-          txOptions = badgeId === 2
-            ? claimFirstTree(network, targetToken.tokenId)
-            : claimEarlyAdopter(network, targetToken.tokenId);
+          txOptions = claimFirstTree(network, plants[treeIdx].tokenId);
           break;
         }
-        case 3: { // Green Thumb - need 3 plants
-          if (plants.length < 3) {
-            toast({ title: 'Not eligible', description: 'Need at least 3 plants', status: 'warning' });
+        case 3: { // Green Thumb - need 3 graduated plants (stage >= 4)
+          const stages3 = await Promise.all(plants.map((p) => fetchPlantStage(p.tokenId)));
+          const graduatedPlants = plants.filter((_, i) => stages3[i] !== null && stages3[i]! >= 4);
+          if (graduatedPlants.length < 3) {
+            toast({ title: 'Not eligible', description: `Need 3 graduated trees, you have ${graduatedPlants.length}`, status: 'warning' });
             setClaimingBadge(null);
             return;
           }
-          txOptions = claimGreenThumb(network, plants[0].tokenId, plants[1].tokenId, plants[2].tokenId);
+          txOptions = claimGreenThumb(network, graduatedPlants[0].tokenId, graduatedPlants[1].tokenId, graduatedPlants[2].tokenId);
+          break;
+        }
+        case 4: { // Early Adopter - find token <= 200
+          const targetToken = plants.find((p) => p.tokenId <= 200);
+          if (!targetToken) {
+            toast({ title: 'Not eligible', description: 'No plant with ID <= 200', status: 'warning' });
+            setClaimingBadge(null);
+            return;
+          }
+          txOptions = claimEarlyAdopter(network, targetToken.tokenId);
           break;
         }
         default:
