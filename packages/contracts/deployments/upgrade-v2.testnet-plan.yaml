@@ -1,0 +1,52 @@
+---
+id: 0
+name: Testnet deployment - v2 upgrade (achievement-badges, plant-game-v2)
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        # 1. Deploy achievement-badges (reads from plant-storage, already on testnet)
+        - contract-publish:
+            contract-name: achievement-badges
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 277300
+            path: contracts/achievement-badges.clar
+            anchor-block-only: true
+            clarity-version: 2
+        # 2. Deploy plant-game-v2 (reads/writes plant-storage, calls impact-registry)
+        #    Testnet-specific version with .plant-nft-v2 reference
+        - contract-publish:
+            contract-name: plant-game-v2
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 277500
+            path: contracts/testnet/plant-game-v2.clar
+            anchor-block-only: true
+            clarity-version: 2
+      epoch: "2.5"
+
+# ============================================================================
+# NOTE: impact-registry v1.0.0 already deployed on testnet (2026-02-04).
+# The new v1.1.0 sponsorship features require deploying impact-registry-v2
+# separately if needed. Core graduation + redemption works with existing v1.
+# ============================================================================
+#
+# POST-DEPLOY STEPS (manual via Clarinet console or scripts):
+# ============================================================================
+#
+# 1. Authorize plant-game-v2 in storage:
+#    (contract-call? .plant-storage authorize-contract .plant-game-v2)
+#
+# 2. Authorize plant-game-v2 as impact registrar:
+#    (contract-call? .impact-registry authorize-registrar .plant-game-v2)
+#
+# 3. (Optional) Revoke plant-game-v1 from storage if no longer needed:
+#    (contract-call? .plant-storage revoke-contract .plant-game-v1)
+#
+# 4. Update plant-nft-v2 to call plant-game-v2 for transfers:
+#    NOTE: plant-nft-v2 hardcodes .plant-game-v1 for update-owner.
+#    If transfers need v2 logic, deploy plant-nft-v3 referencing .plant-game-v2.
+#    For now, plant-game-v1 can remain authorized for transfers only.
+# ============================================================================

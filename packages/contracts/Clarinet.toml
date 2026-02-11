@@ -40,6 +40,24 @@ path = 'contracts/impact-registry.clar'
 clarity_version = 2
 epoch = 2.5
 
+# 5. Achievement Badges (soulbound, claim-by-evidence)
+[contracts.achievement-badges]
+path = 'contracts/achievement-badges.clar'
+clarity_version = 2
+epoch = 2.5
+
+# 5b. Achievement Badges v2 (Early Adopter threshold fixed for v4 offset)
+[contracts.achievement-badges-v2]
+path = 'contracts/testnet/achievement-badges-v2.clar'
+clarity_version = 2
+epoch = 2.5
+
+# 6. DenGrow Treasury (holds STX, manages partner payouts)
+[contracts.dengrow-treasury]
+path = 'contracts/dengrow-treasury.clar'
+clarity_version = 2
+epoch = 2.5
+
 # ============================================================================
 # LEGACY CONTRACT (for backward compatibility with existing tests)
 # ============================================================================

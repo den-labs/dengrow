@@ -1,0 +1,54 @@
+---
+id: 0
+name: Testnet deployment - v3 upgrade (impact-registry-v2, plant-game-v3, plant-nft-v3)
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        # 1. Deploy impact-registry-v2 (standalone, no inter-contract deps)
+        - contract-publish:
+            contract-name: impact-registry-v2
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 277500
+            path: contracts/testnet/impact-registry-v2.clar
+            anchor-block-only: true
+            clarity-version: 2
+        # 2. Deploy plant-nft-v3 (calls plant-storage + plant-game-v3)
+        - contract-publish:
+            contract-name: plant-nft-v3
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 277500
+            path: contracts/testnet/plant-nft-v3.clar
+            anchor-block-only: true
+            clarity-version: 2
+        # 3. Deploy plant-game-v3 (calls plant-storage + impact-registry-v2)
+        - contract-publish:
+            contract-name: plant-game-v3
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 277500
+            path: contracts/testnet/plant-game-v3.clar
+            anchor-block-only: true
+            clarity-version: 2
+      epoch: "2.5"
+
+# ============================================================================
+# POST-DEPLOY STEPS:
+# ============================================================================
+#
+# 1. Authorize plant-nft-v3 in storage:
+#    (contract-call? .plant-storage authorize-contract .plant-nft-v3)
+#
+# 2. Authorize plant-game-v3 in storage:
+#    (contract-call? .plant-storage authorize-contract .plant-game-v3)
+#
+# 3. Authorize plant-game-v3 as impact registrar:
+#    (contract-call? .impact-registry-v2 authorize-registrar .plant-game-v3)
+#
+# 4. Update frontend contracts.ts:
+#    - getNftContract testnet -> 'plant-nft-v3'
+#    - getGameContract testnet -> 'plant-game-v3'
+#    - Add getImpactContract testnet -> 'impact-registry-v2'
+# ============================================================================
