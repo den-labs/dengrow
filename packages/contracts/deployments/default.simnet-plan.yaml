@@ -97,6 +97,11 @@ plan:
             path: contracts/impact-registry.clar
             clarity-version: 2
         - emulated-contract-publish:
+            contract-name: dengrow-treasury
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: contracts/dengrow-treasury.clar
+            clarity-version: 2
+        - emulated-contract-publish:
             contract-name: plant-game
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: contracts/plant-game.clar
