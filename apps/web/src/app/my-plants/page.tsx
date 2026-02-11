@@ -20,6 +20,7 @@ import { mintPlantNFTWithTier, MINT_TIERS, MintTier } from '@/lib/nft/operations
 import { getNftContract } from '@/constants/contracts';
 import { useNetwork } from '@/lib/use-network';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
+import { useAccountBalance } from '@/hooks/useAccountBalance';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { useState, useEffect } from 'react';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
@@ -35,8 +36,18 @@ export default function MyPlantsPage() {
   const network = useNetwork();
   const { currentWallet } = useDevnetWallet();
   const { data: nftHoldings, isLoading: nftHoldingsLoading } = useNftHoldings(currentAddress || '');
+  const { data: balance } = useAccountBalance(currentAddress || undefined);
   const { data: txData } = useGetTxId(lastTxId || '');
   const toast = useToast();
+
+  // Fee buffer: 0.05 STX (50,000 microSTX) to cover gas
+  const FEE_BUFFER_MICRO = 50_000;
+  const tierInfo = MINT_TIERS[selectedTier];
+  const requiredMicro = tierInfo.priceMicroSTX + FEE_BUFFER_MICRO;
+  const hasEnoughBalance = balance ? Number(balance.stx) >= requiredMicro : true;
+  const balanceShortfall = balance
+    ? Math.max(0, (requiredMicro - Number(balance.stx)) / 1_000_000)
+    : 0;
 
   useEffect(() => {
     // @ts-ignore
@@ -61,7 +72,16 @@ export default function MyPlantsPage() {
   const handleMintPlant = async () => {
     if (!network || !currentAddress || isMinting) return;
 
-    const tierInfo = MINT_TIERS[selectedTier];
+    if (!hasEnoughBalance) {
+      toast({
+        title: 'Insufficient Balance',
+        description: `You need at least ${(requiredMicro / 1_000_000).toFixed(2)} STX (${tierInfo.priceSTX} STX + gas). You're short ~${balanceShortfall.toFixed(2)} STX.`,
+        status: 'warning',
+        duration: 8000,
+      });
+      return;
+    }
+
     setIsMinting(true);
 
     try {
@@ -107,8 +127,6 @@ export default function MyPlantsPage() {
       setIsMinting(false);
     }
   };
-
-  const tierInfo = MINT_TIERS[selectedTier];
 
   if (!currentAddress) {
     return (
@@ -174,14 +192,24 @@ export default function MyPlantsPage() {
             </SimpleGrid>
 
             <Button
-              colorScheme={tierInfo.colorScheme}
+              colorScheme={hasEnoughBalance ? tierInfo.colorScheme : 'gray'}
               onClick={handleMintPlant}
               size="lg"
               isLoading={isMinting}
+              isDisabled={!hasEnoughBalance}
               loadingText="Minting..."
             >
-              Mint {tierInfo.name} Plant — {tierInfo.priceSTX} STX
+              {hasEnoughBalance
+                ? `Mint ${tierInfo.name} Plant — ${tierInfo.priceSTX} STX`
+                : `Insufficient balance (need ${(requiredMicro / 1_000_000).toFixed(2)} STX)`}
             </Button>
+
+            {balance && (
+              <Text fontSize="xs" color={hasEnoughBalance ? 'gray.500' : 'red.500'} textAlign="center">
+                Balance: {balance.stxDecimal.toFixed(2)} STX
+                {!hasEnoughBalance && ` — need ~${balanceShortfall.toFixed(2)} more STX`}
+              </Text>
+            )}
 
             {lastTxId && (
               <Link

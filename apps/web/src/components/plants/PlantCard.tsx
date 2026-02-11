@@ -11,6 +11,8 @@ import {
   Button,
   Spinner,
   Progress,
+  Skeleton,
+  SkeletonText,
   useToast,
 } from '@chakra-ui/react';
 import { useNetwork } from '@/lib/use-network';
@@ -212,9 +214,13 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
           )}
 
           {!plantState && !isLoading && (
-            <Text fontSize="xs" color="red.500">
-              Plant not initialized
-            </Text>
+            <VStack spacing={2} align="stretch">
+              <SkeletonText noOfLines={1} skeletonHeight="3" />
+              <Skeleton height="8px" borderRadius="full" />
+              <Text fontSize="xs" color="gray.400" textAlign="center">
+                Loading plant data...
+              </Text>
+            </VStack>
           )}
         </VStack>
       </Box>
