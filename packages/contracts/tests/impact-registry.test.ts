@@ -606,4 +606,206 @@ describe("Impact Registry Contract", () => {
       );
     });
   });
+
+  describe("Batch Sponsorship", () => {
+    const proofHash = Cl.bufferFromHex(
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    );
+
+    beforeEach(() => {
+      // Graduate 5 plants and record a batch so we have something to sponsor
+      for (let i = 1; i <= 5; i++) {
+        simnet.callPublicFn(
+          "impact-registry",
+          "register-graduation",
+          [Cl.uint(i), Cl.principal(wallet1)],
+          deployer
+        );
+      }
+      simnet.callPublicFn(
+        "impact-registry",
+        "record-redemption",
+        [Cl.uint(3), proofHash, Cl.stringAscii("https://example.com/proof1.pdf")],
+        deployer
+      );
+    });
+
+    it("should allow anyone to sponsor an existing batch", () => {
+      const { result } = simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(1), Cl.stringAscii("Acme Corp"), Cl.uint(1000000)],
+        wallet1
+      );
+
+      expect(result).toBeOk(
+        Cl.tuple({
+          "batch-id": Cl.uint(1),
+          amount: Cl.uint(1000000),
+        })
+      );
+    });
+
+    it("should transfer STX to deployer on sponsorship", () => {
+      const balanceBefore = simnet.getAssetsMap().get("STX")?.get(deployer) ?? 0n;
+
+      simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(1), Cl.stringAscii("Acme Corp"), Cl.uint(2000000)],
+        wallet1
+      );
+
+      const balanceAfter = simnet.getAssetsMap().get("STX")?.get(deployer) ?? 0n;
+      expect(balanceAfter - balanceBefore).toBe(2000000n);
+    });
+
+    it("should reject sponsoring non-existent batch", () => {
+      const { result } = simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(999), Cl.stringAscii("Acme"), Cl.uint(1000000)],
+        wallet1
+      );
+
+      expect(result).toBeErr(Cl.uint(107)); // ERR-BATCH-NOT-FOUND
+    });
+
+    it("should reject amount below minimum (1 STX)", () => {
+      const { result } = simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(1), Cl.stringAscii("Cheapo"), Cl.uint(500000)],
+        wallet1
+      );
+
+      expect(result).toBeErr(Cl.uint(106)); // ERR-BELOW-MINIMUM
+    });
+
+    it("should reject duplicate sponsorship on same batch", () => {
+      simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(1), Cl.stringAscii("First Sponsor"), Cl.uint(1000000)],
+        wallet1
+      );
+
+      const { result } = simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(1), Cl.stringAscii("Second Sponsor"), Cl.uint(1000000)],
+        wallet2
+      );
+
+      expect(result).toBeErr(Cl.uint(108)); // ERR-ALREADY-SPONSORED
+    });
+
+    it("should return sponsor info via get-batch-sponsor", () => {
+      simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(1), Cl.stringAscii("GreenCo"), Cl.uint(5000000)],
+        wallet1
+      );
+
+      const { result } = simnet.callReadOnlyFn(
+        "impact-registry",
+        "get-batch-sponsor",
+        [Cl.uint(1)],
+        deployer
+      );
+
+      expect(result).toBeSome(
+        Cl.tuple({
+          sponsor: Cl.principal(wallet1),
+          "sponsor-name": Cl.stringAscii("GreenCo"),
+          amount: Cl.uint(5000000),
+          "sponsored-at": Cl.uint(simnet.blockHeight),
+        })
+      );
+    });
+
+    it("should return none for unsponsored batch", () => {
+      const { result } = simnet.callReadOnlyFn(
+        "impact-registry",
+        "get-batch-sponsor",
+        [Cl.uint(1)],
+        deployer
+      );
+
+      expect(result).toBeNone();
+    });
+
+    it("should check is-batch-sponsored correctly", () => {
+      let { result } = simnet.callReadOnlyFn(
+        "impact-registry",
+        "is-batch-sponsored",
+        [Cl.uint(1)],
+        deployer
+      );
+      expect(result).toBeBool(false);
+
+      simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(1), Cl.stringAscii("Test"), Cl.uint(1000000)],
+        wallet1
+      );
+
+      ({ result } = simnet.callReadOnlyFn(
+        "impact-registry",
+        "is-batch-sponsored",
+        [Cl.uint(1)],
+        deployer
+      ));
+      expect(result).toBeBool(true);
+    });
+
+    it("should track global sponsorship stats", () => {
+      // Record a second batch to sponsor
+      simnet.callPublicFn(
+        "impact-registry",
+        "record-redemption",
+        [Cl.uint(2), proofHash, Cl.stringAscii("https://example.com/proof2.pdf")],
+        deployer
+      );
+
+      simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(1), Cl.stringAscii("Sponsor A"), Cl.uint(1000000)],
+        wallet1
+      );
+      simnet.callPublicFn(
+        "impact-registry",
+        "sponsor-batch",
+        [Cl.uint(2), Cl.stringAscii("Sponsor B"), Cl.uint(3000000)],
+        wallet2
+      );
+
+      const { result } = simnet.callReadOnlyFn(
+        "impact-registry",
+        "get-sponsorship-stats",
+        [],
+        deployer
+      );
+
+      expect(result).toBeTuple({
+        "total-sponsored-amount": Cl.uint(4000000),
+        "total-sponsorships": Cl.uint(2),
+        "min-sponsorship": Cl.uint(1000000),
+      });
+    });
+
+    it("should return minimum sponsorship amount", () => {
+      const { result } = simnet.callReadOnlyFn(
+        "impact-registry",
+        "get-min-sponsorship",
+        [],
+        deployer
+      );
+
+      expect(result).toBeUint(1000000);
+    });
+  });
 });

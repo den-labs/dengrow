@@ -1,0 +1,18 @@
+---
+id: 0
+name: Authorize plant-nft-v4 in plant-storage
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-call:
+            contract-id: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-storage
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            method: authorize-contract
+            parameters:
+              - "'ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v4"
+            cost: 10000
+      epoch: "2.5"

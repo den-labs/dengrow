@@ -1,0 +1,18 @@
+---
+id: 0
+name: Testnet deployment - plant-nft-v3 only (retry after plant-game-v3 confirmed)
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-publish:
+            contract-name: plant-nft-v3
+            expected-sender: ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
+            cost: 277500
+            path: contracts/testnet/plant-nft-v3.clar
+            anchor-block-only: true
+            clarity-version: 2
+      epoch: "2.5"

@@ -20,10 +20,8 @@ import {
 } from '@chakra-ui/react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useBatchInfo, usePoolStats } from '@/hooks/useImpactRegistry';
+import { useBatchInfo, usePoolStats, useBatchSponsor } from '@/hooks/useImpactRegistry';
 import { useNetwork } from '@/lib/use-network';
-import { getContractAddress } from '@/constants/contracts';
-import { isTestnetEnvironment } from '@/lib/use-network';
 
 function truncateAddress(address: string): string {
   if (address.length <= 12) return address;
@@ -41,6 +39,7 @@ export default function BatchDetailPage() {
   const network = useNetwork();
   const { data: batch, isLoading, isError } = useBatchInfo(batchId);
   const { data: poolStats } = usePoolStats();
+  const { data: sponsor } = useBatchSponsor(batchId);
 
   if (!network) {
     return (
@@ -109,11 +108,16 @@ export default function BatchDetailPage() {
         {/* Header */}
         <HStack justify="space-between" align="center">
           <VStack align="start" spacing={1}>
-            <HStack>
+            <HStack flexWrap="wrap">
               <Heading size="lg">Batch #{batchId}</Heading>
               <Badge colorScheme="orange" fontSize="sm" px={2} py={1}>
                 Verified
               </Badge>
+              {sponsor && (
+                <Badge colorScheme="teal" fontSize="sm" px={2} py={1}>
+                  Sponsored
+                </Badge>
+              )}
             </HStack>
             <Text color="gray.600" fontSize="sm">
               Redemption proof recorded on-chain
@@ -213,6 +217,82 @@ export default function BatchDetailPage() {
             </VStack>
           </CardBody>
         </Card>
+
+        {/* Sponsor Card */}
+        {sponsor && (
+          <Card borderColor="teal.200" borderWidth={1} bg="teal.50">
+            <CardHeader>
+              <HStack>
+                <Heading size="md" color="teal.700">Sponsored By</Heading>
+                <Badge colorScheme="teal">Verified</Badge>
+              </HStack>
+            </CardHeader>
+            <CardBody>
+              <VStack spacing={3} align="stretch">
+                <DetailRow
+                  label="Sponsor"
+                  value={
+                    <Text fontWeight="bold" color="teal.700">
+                      {sponsor.sponsorName}
+                    </Text>
+                  }
+                />
+                <Divider borderColor="teal.200" />
+                <DetailRow
+                  label="Amount"
+                  value={
+                    <Text fontWeight="bold" color="teal.600">
+                      {(sponsor.amount / 1_000_000).toFixed(1)} STX
+                    </Text>
+                  }
+                />
+                <Divider borderColor="teal.200" />
+                <DetailRow
+                  label="Address"
+                  value={
+                    <Text fontFamily="mono" fontSize="sm" title={sponsor.sponsor}>
+                      {truncateAddress(sponsor.sponsor)}
+                    </Text>
+                  }
+                />
+                <Divider borderColor="teal.200" />
+                <DetailRow
+                  label="Block"
+                  value={
+                    <Code px={2} py={1} borderRadius="md">
+                      {sponsor.sponsoredAt}
+                    </Code>
+                  }
+                />
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Sponsor CTA if not sponsored */}
+        {!sponsor && (
+          <Link href={`/impact/sponsor`}>
+            <Card
+              borderWidth="1px"
+              borderStyle="dashed"
+              borderColor="teal.300"
+              _hover={{ borderColor: 'teal.400', bg: 'teal.50' }}
+              transition="all 0.2s"
+              cursor="pointer"
+            >
+              <CardBody>
+                <HStack justify="center" spacing={3}>
+                  <Text color="teal.600" fontWeight="medium">
+                    Sponsor this batch
+                  </Text>
+                  <Badge colorScheme="teal" variant="outline">
+                    Min 1 STX
+                  </Badge>
+                </HStack>
+              </CardBody>
+            </Card>
+          </Link>
+        )}
 
         {/* Navigation */}
         <HStack justify="space-between">
