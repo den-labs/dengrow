@@ -84,6 +84,9 @@ async function waitForTransaction(txId: string, maxAttempts = 60) {
       } else if (data.tx_status === "abort_by_response") {
         console.error(`❌ Transaction aborted:`, data.tx_result);
         return false;
+      } else if (data.tx_status === "abort_by_post_condition") {
+        console.error(`❌ Transaction failed post-condition check`);
+        return false;
       }
     } catch (e) {
       // API might not have the tx yet
@@ -100,7 +103,7 @@ async function waitForTransaction(txId: string, maxAttempts = 60) {
 async function getPoolStats() {
   const result = await fetchCallReadOnlyFunction({
     contractAddress: DEPLOYER,
-    contractName: "impact-registry",
+    contractName: "impact-registry-v2",
     functionName: "get-pool-stats",
     functionArgs: [],
     senderAddress: DEPLOYER,
@@ -128,7 +131,7 @@ async function main() {
 
   const txOptions = {
     contractAddress: DEPLOYER,
-    contractName: "impact-registry",
+    contractName: "impact-registry-v2",
     functionName: "record-redemption",
     functionArgs: [
       uintCV(quantity),
