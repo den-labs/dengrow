@@ -59,5 +59,14 @@ export const getImpactContract = (network: Network) => {
   } as const;
 };
 
+export const getBadgeContract = (network: Network) => {
+  const isTestnet = isTestnetEnvironment(network);
+  return {
+    contractAddress: getContractAddress(network),
+    // Testnet uses v2 with fixed Early Adopter threshold for v4 offset
+    contractName: isTestnet ? 'achievement-badges-v2' : 'achievement-badges',
+  } as const;
+};
+
 // Legacy export for backwards compatibility
 export const getNftContractAddress = getContractAddress;

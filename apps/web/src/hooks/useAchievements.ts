@@ -1,7 +1,7 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { hexToCV, cvToValue, cvToHex, uintCV, principalCV } from '@stacks/transactions';
-import { useNetwork, isTestnetEnvironment } from '@/lib/use-network';
-import { getContractAddress } from '@/constants/contracts';
+import { useNetwork } from '@/lib/use-network';
+import { getBadgeContract } from '@/constants/contracts';
 import { getApi } from '@/lib/stacks-api';
 import { Network } from '@/lib/network';
 
@@ -34,20 +34,12 @@ const BADGE_META: Record<number, { name: string; description: string }> = {
   4: { name: 'Early Adopter', description: 'Minted in the first 100' },
 };
 
-const getAchievementContract = (network: Network) => {
-  const isTestnet = isTestnetEnvironment(network);
-  return {
-    contractAddress: getContractAddress(network),
-    contractName: isTestnet ? 'achievement-badges' : 'achievement-badges',
-  };
-};
-
 async function checkBadge(
   network: Network,
   owner: string,
   badgeId: number
 ): Promise<{ earned: boolean; earnedAt: number | null }> {
-  const contract = getAchievementContract(network);
+  const contract = getBadgeContract(network);
   const api = getApi(network);
 
   try {

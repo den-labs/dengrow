@@ -87,6 +87,11 @@ plan:
             path: contracts/achievement-badges.clar
             clarity-version: 2
         - emulated-contract-publish:
+            contract-name: achievement-badges-v2
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: contracts/testnet/achievement-badges-v2.clar
+            clarity-version: 2
+        - emulated-contract-publish:
             contract-name: impact-registry
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: contracts/impact-registry.clar

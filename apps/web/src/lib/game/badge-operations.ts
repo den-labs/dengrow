@@ -1,16 +1,7 @@
 import { PostConditionMode, uintCV } from '@stacks/transactions';
-import { getContractAddress } from '@/constants/contracts';
-import { isTestnetEnvironment } from '@/lib/use-network';
+import { getBadgeContract } from '@/constants/contracts';
 import { Network } from '@/lib/network';
 import { ContractCallRegularOptions } from '@stacks/connect';
-
-const getBadgeContract = (network: Network) => {
-  const isTestnet = isTestnetEnvironment(network);
-  return {
-    contractAddress: getContractAddress(network),
-    contractName: isTestnet ? 'achievement-badges' : 'achievement-badges',
-  };
-};
 
 export const claimFirstSeed = (network: Network, tokenId: number): ContractCallRegularOptions => ({
   ...getBadgeContract(network),
