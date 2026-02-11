@@ -21,14 +21,35 @@ import {
   CardHeader,
   Heading,
   Icon,
+  Button,
+  Input,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+  FormControl,
+  FormLabel,
+  FormHelperText,
+  useToast,
 } from '@chakra-ui/react';
+import { useState } from 'react';
 import { usePoolStats, useBatchInfo } from '@/hooks/useImpactRegistry';
+import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { useNetwork } from '@/lib/use-network';
+import { useDevnetWallet } from '@/lib/devnet-wallet-context';
+import { getContractAddress } from '@/constants/contracts';
+import { recordRedemption, sha256 } from '@/lib/impact/operations';
+import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
+import { getContractErrorMessage } from '@/lib/contract-errors';
 import Link from 'next/link';
 
 export default function ImpactDashboardPage() {
   const network = useNetwork();
-  const { data: poolStats, isLoading, isError } = usePoolStats();
+  const currentAddress = useCurrentAddress();
+  const { currentWallet } = useDevnetWallet();
+  const toast = useToast();
+  const { data: poolStats, isLoading, isError, refetch } = usePoolStats();
 
   if (!network) {
     return (
@@ -68,6 +89,10 @@ export default function ImpactDashboardPage() {
 
   // Calculate progress percentage for the visual
   const progressPercent = totalGraduated > 0 ? (totalRedeemed / totalGraduated) * 100 : 0;
+
+  // Admin detection: deployer address matches connected wallet
+  const deployerAddress = network ? getContractAddress(network) : null;
+  const isAdmin = !!currentAddress && !!deployerAddress && currentAddress === deployerAddress;
 
   return (
     <Container maxW="container.xl" py={8}>
@@ -143,6 +168,18 @@ export default function ImpactDashboardPage() {
             </VStack>
           </CardBody>
         </Card>
+
+        {/* Admin: Record Redemption */}
+        {isAdmin && currentPoolSize > 0 && (
+          <AdminRedemptionCard
+            network={network!}
+            currentAddress={currentAddress!}
+            currentPoolSize={currentPoolSize}
+            nextBatchId={totalBatches + 1}
+            currentWallet={currentWallet}
+            onSuccess={() => refetch()}
+          />
+        )}
 
         {/* How It Works Section */}
         <Card>
@@ -283,6 +320,137 @@ function StatCard({ label, value, helpText, colorScheme, icon }: StatCardProps) 
             <StatHelpText>{helpText}</StatHelpText>
           </Stat>
         </HStack>
+      </CardBody>
+    </Card>
+  );
+}
+
+interface AdminRedemptionCardProps {
+  network: NonNullable<ReturnType<typeof useNetwork>>;
+  currentAddress: string;
+  currentPoolSize: number;
+  nextBatchId: number;
+  currentWallet: ReturnType<typeof useDevnetWallet>['currentWallet'];
+  onSuccess: () => void;
+}
+
+function AdminRedemptionCard({
+  network,
+  currentAddress,
+  currentPoolSize,
+  nextBatchId,
+  currentWallet,
+  onSuccess,
+}: AdminRedemptionCardProps) {
+  const toast = useToast();
+  const [quantity, setQuantity] = useState(currentPoolSize.toString());
+  const [proofUrl, setProofUrl] = useState(
+    `https://dengrow.app/proof/batch-${nextBatchId}`
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const qty = parseInt(quantity, 10) || 0;
+  const isValid = qty > 0 && qty <= currentPoolSize && proofUrl.trim().length > 0;
+
+  const handleSubmit = async () => {
+    if (!isValid || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const proofHash = await sha256(proofUrl.trim());
+      const txOptions = recordRedemption(network, qty, proofHash, proofUrl.trim());
+
+      if (shouldUseDirectCall()) {
+        await executeContractCall(txOptions, currentWallet);
+        toast({
+          title: 'Redemption Recorded',
+          description: `${qty} tree(s) redeemed successfully`,
+          status: 'success',
+        });
+        onSuccess();
+      } else {
+        await openContractCall({
+          ...txOptions,
+          onFinish: () => {
+            toast({
+              title: 'Redemption Submitted',
+              description: 'Confirming on-chain...',
+              status: 'info',
+            });
+            setTimeout(() => onSuccess(), 10000);
+          },
+          onCancel: () => {
+            toast({ title: 'Cancelled', status: 'info' });
+          },
+        });
+      }
+    } catch (error: unknown) {
+      console.error('Error recording redemption:', error);
+      toast({
+        title: 'Redemption Failed',
+        description: getContractErrorMessage(error),
+        status: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card borderColor="orange.300" borderWidth={1}>
+      <CardHeader>
+        <HStack spacing={3}>
+          <Heading size="md">Record Redemption</Heading>
+          <Badge colorScheme="orange" fontSize="xs">
+            Admin
+          </Badge>
+        </HStack>
+      </CardHeader>
+      <CardBody>
+        <VStack spacing={5}>
+          <FormControl>
+            <FormLabel>Quantity</FormLabel>
+            <NumberInput
+              min={1}
+              max={currentPoolSize}
+              value={quantity}
+              onChange={(val) => setQuantity(val)}
+            >
+              <NumberInputField />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
+            <FormHelperText>
+              Max: {currentPoolSize} tree{currentPoolSize !== 1 ? 's' : ''} in pool
+            </FormHelperText>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Proof URL</FormLabel>
+            <Input
+              value={proofUrl}
+              onChange={(e) => setProofUrl(e.target.value)}
+              placeholder="https://dengrow.app/proof/batch-1"
+            />
+            <FormHelperText>
+              URL to the proof document (SHA-256 hash computed automatically)
+            </FormHelperText>
+          </FormControl>
+
+          <Button
+            colorScheme="orange"
+            size="lg"
+            w="full"
+            isDisabled={!isValid}
+            isLoading={isSubmitting}
+            loadingText="Recording..."
+            onClick={handleSubmit}
+          >
+            Record Redemption ({qty} tree{qty !== 1 ? 's' : ''})
+          </Button>
+        </VStack>
       </CardBody>
     </Card>
   );
