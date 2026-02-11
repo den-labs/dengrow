@@ -103,10 +103,10 @@ export default function AchievementsPage() {
           // For these we just pass the first suitable plant
           // The contract will verify eligibility
           const targetToken = badgeId === 4
-            ? plants.find((p) => p.tokenId <= 100)
+            ? plants.find((p) => p.tokenId <= 200)
             : plants[0];
           if (!targetToken) {
-            toast({ title: 'Not eligible', description: badgeId === 4 ? 'No plant with ID <= 100' : 'No suitable plant found', status: 'warning' });
+            toast({ title: 'Not eligible', description: badgeId === 4 ? 'No plant with ID <= 200' : 'No suitable plant found', status: 'warning' });
             setClaimingBadge(null);
             return;
           }
