@@ -1,7 +1,7 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { hexToCV, cvToValue, cvToHex, uintCV } from '@stacks/transactions';
 import { useNetwork } from '@/lib/use-network';
-import { getNftContract, getStorageContract } from '@/constants/contracts';
+import { getNftContract, getStorageContract, TOKEN_ID_OFFSET } from '@/constants/contracts';
 import { getApi } from '@/lib/stacks-api';
 import { Network } from '@/lib/network';
 
@@ -91,7 +91,9 @@ export const useLeaderboard = (): UseQueryResult<LeaderboardData> => {
     queryFn: async () => {
       if (!network) throw new Error('Network is required');
 
-      const totalMinted = await fetchLastTokenId(network);
+      const lastTokenId = await fetchLastTokenId(network);
+      // Subtract offset — plant-nft-v4 starts at TOKEN_ID_OFFSET
+      const totalMinted = Math.max(0, lastTokenId - TOKEN_ID_OFFSET);
 
       if (totalMinted === 0) {
         return { entries: [], totalMinted: 0 };
@@ -99,7 +101,8 @@ export const useLeaderboard = (): UseQueryResult<LeaderboardData> => {
 
       // Fetch all plants in parallel (batch of up to 50 to avoid overload)
       const limit = Math.min(totalMinted, 50);
-      const ids = Array.from({ length: limit }, (_, i) => totalMinted - i);
+      // Use raw token IDs (lastTokenId down) for on-chain lookups
+      const ids = Array.from({ length: limit }, (_, i) => lastTokenId - i);
 
       const results = await Promise.all(
         ids.map((id) => fetchPlant(network, id))

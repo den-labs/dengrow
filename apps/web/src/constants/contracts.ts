@@ -16,12 +16,19 @@ export const getContractAddress = (network: Network) => {
   return 'SP30VANCWST2Y0RY3EYGJ4ZK6D22GJQRR7H5YD8J8';
 };
 
+/**
+ * Token ID offset for plant-nft-v4 — last-token-id starts at 100
+ * to avoid collision with 8 legacy plant-storage entries.
+ * Subtract this from get-last-token-id() to get actual minted count.
+ */
+export const TOKEN_ID_OFFSET = 100;
+
 export const getNftContract = (network: Network) => {
   const isTestnet = isTestnetEnvironment(network);
   return {
     contractAddress: getContractAddress(network),
-    // Testnet uses v3 with mint-with-tier
-    contractName: isTestnet ? 'plant-nft-v3' : 'plant-nft',
+    // Testnet uses v4 with token ID offset (v3 collides with legacy entries)
+    contractName: isTestnet ? 'plant-nft-v4' : 'plant-nft',
   } as const;
 };
 
