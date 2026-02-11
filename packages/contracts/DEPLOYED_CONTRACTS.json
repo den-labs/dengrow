@@ -22,10 +22,10 @@
       "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry-v2",
       "txid": "0x8a032b42e61f75b46c47dccf3093e3659fccaf55ea2c114a0f34b5871d57bdef"
     },
-    "achievement-badges": {
-      "note": "Soulbound badges (deployed 2026-02-09)",
-      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.achievement-badges",
-      "txid": "0xdcb541a4989290cd560e7ec755890a7fcd83ccd40533b9253260b043cefc69bf"
+    "achievement-badges-v2": {
+      "note": "Soulbound badges v2 — Early Adopter threshold u200 for v4 offset (deployed 2026-02-11)",
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.achievement-badges-v2",
+      "txid": "0xb9f1e5e19872327d1f2eb373589711532ce7cca59b7e4ada5d7c8ece2d19156c"
     }
   },
   "legacyContracts": {
@@ -56,6 +56,10 @@
     "impact-registry": {
       "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry",
       "note": "v1 without sponsorship, superseded by impact-registry-v2"
+    },
+    "achievement-badges": {
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.achievement-badges",
+      "note": "v1 badges, Early Adopter threshold u100 incompatible with v4 offset, superseded by achievement-badges-v2"
     }
   },
   "authorizationChain": {

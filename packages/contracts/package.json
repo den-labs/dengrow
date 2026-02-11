@@ -11,6 +11,7 @@
     "smoke:testnet": "tsx scripts/smoke-test-v4.ts",
     "derive-key": "tsx scripts/derive-key.ts",
     "deploy:impact-registry": "tsx scripts/deploy-impact-registry.ts",
+    "deploy:achievement-badges-v2": "tsx scripts/deploy-achievement-badges-v2.ts",
     "register:graduated": "tsx scripts/register-graduated-plants.ts",
     "redeem": "tsx scripts/record-redemption.ts"
   },
