@@ -7,10 +7,10 @@
       "note": "Immutable data layer (deployed 2026-02-04)",
       "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-storage"
     },
-    "plant-nft-v3": {
-      "note": "NFT with mint-with-tier (deployed 2026-02-09)",
-      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v3",
-      "txid": "0x6b17d4cfa005202c21373849a3c6e457a87250cfffdaf099ecac9bd3555af214"
+    "plant-nft-v4": {
+      "note": "NFT with token ID offset u100 to avoid legacy collision (deployed 2026-02-10)",
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v4",
+      "txid": "0x487085316992bd887ef50ba617e1393ccb66a4c9eb828ad4ec663d3d0a754168"
     },
     "plant-game-v3": {
       "note": "Game logic with water-with-tip + impact-registry-v2 (deployed 2026-02-09)",
@@ -41,6 +41,10 @@
       "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v1",
       "note": "v1 game logic, superseded by plant-game-v3"
     },
+    "plant-nft-v3": {
+      "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v3",
+      "note": "v3 NFT, token ID collision with legacy entries, superseded by plant-nft-v4"
+    },
     "plant-nft-v2": {
       "address": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v2",
       "note": "v2 NFT without mint-with-tier, superseded by plant-nft-v3"
@@ -55,7 +59,7 @@
     }
   },
   "authorizationChain": {
-    "plant-storage": ["plant-nft-v3", "plant-game-v3"],
+    "plant-storage": ["plant-nft-v4", "plant-nft-v3", "plant-game-v3"],
     "impact-registry-v2": ["plant-game-v3"]
   }
 }
