@@ -2,14 +2,17 @@
 
 **Grow a plant. Graduate a tree. Plant real impact.**
 
-DenGrow is an on-chain plant NFT game built on [Stacks](https://www.stacks.co/). Users mint a virtual plant, nurture it daily through watering, and watch it evolve through 5 growth stages. When a plant graduates to a Tree, it enters a global **Impact Pool** — a transparent mechanism for converting virtual achievements into real-world tree planting.
+DenGrow is an on-chain plant NFT game built on [Stacks](https://www.stacks.co/) (Bitcoin L2). Users mint a virtual plant, nurture it daily through watering, and watch it evolve through 5 growth stages. When a plant graduates to a Tree, it enters a global **Impact Pool** — a transparent mechanism for converting virtual achievements into real-world tree planting.
 
 ## Features
 
-- **Mint & Grow**: Each plant starts as a Seed and progresses through Sprout → Plant → Bloom → Tree
+- **Mint & Grow**: Choose from 3 seed tiers (Common, Premium, Legendary) and grow through Seed → Sprout → Plant → Bloom → Tree
 - **Daily Care**: Water your plant once per day to earn growth points (7 points per stage)
 - **Unique Traits**: 5 trait categories with rarity weighting generate unique visual combinations
 - **Impact Pool**: Graduated trees enter a verifiable pool for batch redemption
+- **Achievement Badges**: Earn on-chain badges for streaks, graduations, and collection milestones
+- **Sponsored Batches**: Partners can sponsor impact batches with on-chain attribution
+- **Treasury**: Dedicated on-chain treasury for managing Impact Pool funds
 - **On-Chain Transparency**: All game state, graduations, and redemptions recorded on Stacks blockchain
 
 ## Live Demo
@@ -29,23 +32,27 @@ DenGrow is an on-chain plant NFT game built on [Stacks](https://www.stacks.co/).
 DenGrow uses an **upgradeable architecture** separating data from logic:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      CONTRACTS                          │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌──────────────┐    ┌──────────────┐                  │
-│  │ plant-nft-v2 │───▶│plant-storage │◀── Data Layer   │
-│  └──────────────┘    └──────────────┘    (Immutable)   │
-│         │                   ▲                           │
-│         │                   │                           │
-│         ▼                   │                           │
-│  ┌──────────────┐    ┌──────────────┐                  │
-│  │plant-game-v1 │───▶│impact-registry│◀── Impact Pool  │
-│  └──────────────┘    └──────────────┘                  │
-│   Logic Layer                                           │
-│   (Versionable)                                         │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                          CONTRACTS (7)                           │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐    ┌──────────────┐                           │
+│  │ plant-nft-v2 │───▶│plant-storage │◀── Data Layer (Immutable)│
+│  └──────────────┘    └──────────────┘                           │
+│         │                   ▲                                    │
+│         │                   │                                    │
+│         ▼                   │                                    │
+│  ┌──────────────┐    ┌──────────────┐    ┌───────────────────┐  │
+│  │plant-game-v1 │───▶│impact-registry│───▶│dengrow-treasury  │  │
+│  └──────────────┘    └──────────────┘    └───────────────────┘  │
+│   Logic Layer              │              Treasury (STX mgmt)    │
+│   (Versionable)            ▼                                     │
+│                    ┌───────────────────┐                         │
+│                    │achievement-badges │                         │
+│                    └───────────────────┘                         │
+│                     Gamification Layer                            │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 | Contract | Purpose | Upgradeable |
@@ -54,6 +61,9 @@ DenGrow uses an **upgradeable architecture** separating data from logic:
 | `plant-game-v1` | Game logic (water, cooldowns, progression) | Yes |
 | `plant-nft-v2` | SIP-009 NFT standard with game hooks | Yes |
 | `impact-registry` | Tracks graduated trees & batch redemptions | No |
+| `achievement-badges` | On-chain badges for streaks and milestones | No |
+| `dengrow-treasury` | Impact Pool treasury (holds/disburses STX) | No |
+| `plant-game` | Legacy backward compatibility wrapper | No |
 
 ## Quick Start
 
@@ -67,7 +77,7 @@ DenGrow uses an **upgradeable architecture** separating data from logic:
 
 ```bash
 # Clone the repository
-git clone https://github.com/anthropics/dengrow.git
+git clone https://github.com/den-labs/dengrow.git
 cd dengrow
 
 # Install dependencies
@@ -97,7 +107,7 @@ pnpm dev
 ```bash
 cd packages/contracts
 
-# Run all 103 tests
+# Run all 187 tests
 pnpm test
 
 # Run with coverage report
@@ -112,6 +122,8 @@ pnpm test:reports
 | plant-game-v1 | [`ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v1`](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-game-v1?chain=testnet) |
 | plant-nft-v2 | [`ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v2`](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-nft-v2?chain=testnet) |
 | impact-registry | [`ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry`](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.impact-registry?chain=testnet) |
+| achievement-badges | [`ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.achievement-badges`](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.achievement-badges?chain=testnet) |
+| dengrow-treasury | [`ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.dengrow-treasury`](https://explorer.hiro.so/txid/ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.dengrow-treasury?chain=testnet) |
 
 **Deployer**: `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ`
 
@@ -147,14 +159,15 @@ When a plant reaches Tree stage:
 ```
 dengrow/
 ├── apps/
-│   └── web/                 # Next.js frontend
-│       ├── src/app/         # App routes (/, /my-plants, /impact)
-│       ├── src/components/  # React components
-│       └── src/hooks/       # Custom hooks for contract calls
+│   └── web/                 # Next.js 14 frontend (App Router)
+│       ├── src/app/         # Routes (/, /my-plants, /leaderboard, /achievements, /impact)
+│       ├── src/components/  # React components (plants/, ui/ via shadcn)
+│       ├── src/hooks/       # Custom hooks for contract calls
+│       └── src/lib/         # Utilities (game/, nft/, network)
 ├── packages/
-│   └── contracts/           # Clarity smart contracts
+│   └── contracts/           # Clarity 2.0 smart contracts (7 contracts)
 │       ├── contracts/       # .clar files
-│       ├── tests/           # Vitest + Clarinet SDK tests
+│       ├── tests/           # 187 tests (Vitest + Clarinet SDK)
 │       └── scripts/         # Deployment & admin scripts
 └── docs/                    # Documentation
 ```
@@ -182,15 +195,19 @@ pnpm redeem -- --quantity 5 --proof-url "https://example.com/proof.pdf"
 - [Master Plan & Milestones](docs/MASTER_PLAN.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
 - [Task Backlog](docs/TASKS.md)
+- [Roadmap](docs/ROADMAP.md)
 - [Security Considerations](docs/SECURITY.md)
+- [Impact Policy](docs/IMPACT_POLICY.md)
 
 ## Tech Stack
 
 - **Blockchain**: [Stacks](https://www.stacks.co/) (Bitcoin L2)
-- **Smart Contracts**: [Clarity](https://docs.stacks.co/clarity)
-- **Frontend**: Next.js 14, React, TailwindCSS
-- **Testing**: Vitest, Clarinet SDK
-- **Wallet**: Hiro Wallet via @stacks/connect
+- **Smart Contracts**: [Clarity 2.0](https://docs.stacks.co/clarity) — 7 contracts, 187 tests
+- **Frontend**: Next.js 14 (App Router), React 18, shadcn/ui, Tailwind CSS 3
+- **Design System**: Outfit font, DenGrow color palette, custom shadows and gradients
+- **Testing**: Vitest + Clarinet SDK (contracts), Next.js build (web)
+- **Wallet**: Hiro Wallet via @stacks/connect v8
+- **Package Manager**: pnpm 9 + Turborepo
 
 ## Contributing
 

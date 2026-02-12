@@ -1,6 +1,6 @@
 # DenGrow — Task Backlog
 
-**Last Updated:** 2026-02-05
+**Last Updated:** 2026-02-12
 
 ---
 
@@ -33,7 +33,7 @@
 - [x] Read-only endpoints: get-plant, can-water, get-stage
 - [x] Emit events on stage changes and graduation
 - [x] Testnet deployment complete
-- [x] 103 tests passing
+- [x] 103 tests passing (now 187 with M7 additions)
 
 **Deployed Contracts (Testnet):**
 - `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.plant-storage`
@@ -102,7 +102,7 @@
 
 ## Milestone 5 — Production Readiness 🟡 IN PROGRESS
 
-- [x] Testnet deployment complete (all 4 contracts)
+- [x] Testnet deployment complete (all 7 contracts)
 - [x] Contract addresses configured in web app
 - [x] Basic error handling
 - [x] Security checks (ownership, authorization)
@@ -129,14 +129,46 @@
 
 ---
 
-## Milestone 7 — Growth Hooks ❌ FUTURE (Post-MVP)
+## Milestone 7 — Growth Hooks ✅ COMPLETE
 
-- [ ] Leaderboard (most trees graduated)
-- [ ] Weekly streak badges
+- [x] Leaderboard page (most trees graduated, XP ranking, pagination)
+- [x] Achievement badges contract (`achievement-badges.clar`) with on-chain badge minting
+- [x] Achievement badges UI at `/achievements` with badge grid and progress
+- [x] Admin panel for redemption recording (in Impact Dashboard)
+- [x] Sponsored batches (`dengrow-treasury.clar`) with on-chain attribution
+- [x] Sponsor page at `/impact/sponsor` with form and stats
+- [x] Treasury contract for Impact Pool fund management
+- [ ] Weekly streak badges (badge types defined, claiming not yet automated)
 - [ ] Social share card for each Tree
-- [ ] Admin panel for redemption recording
 - [ ] Limited events (seasonal traits)
-- [ ] Sponsored batches (partners)
+
+**New Contracts Deployed (Testnet):**
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.achievement-badges`
+- `ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.dengrow-treasury`
+
+**Tests**: 187 total (103 core + 84 new for badges, treasury, and sponsorship)
+
+---
+
+## Milestone 8 — Visual Redesign ✅ COMPLETE
+
+- [x] Design system foundation: Outfit font, DenGrow color palette (50-900), custom shadows
+- [x] Tailwind config: extended colors, glow/card shadows, gradient backgrounds
+- [x] Navbar: plant logo, backdrop-blur, improved wallet button
+- [x] PlantCard: gradient placeholders, hover effects, stage-colored badges
+- [x] Shared UI states: EmptyState component (wallet, loading, error, empty variants)
+- [x] Footer component
+- [x] Home page: hero section, tier cards, daily care loop
+- [x] My Plants page: improved mint section, garden grid
+- [x] Plant Detail page: 2-column layout, growth journey, traits grid
+- [x] Leaderboard page: stats cards, styled table, pagination
+- [x] Achievements page: badge grid, progress bar, "How Badges Work" section
+- [x] Impact Dashboard: stats cards, admin panel, sponsor CTA
+- [x] Batch Detail page: hero visual, proof section, sponsor card
+- [x] Sponsor page: stats overview, styled form, "How Sponsorship Works"
+- [x] Plant SVG favicon replacing default Next.js favicon
+
+**PR**: #17 merged to main
 
 ---
 
