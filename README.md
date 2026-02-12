@@ -17,7 +17,9 @@ DenGrow is an on-chain plant NFT game built on [Stacks](https://www.stacks.co/) 
 
 ## Live Demo
 
-**Testnet**: [https://dengrow.xyz](https://dengrow.xyz) *(coming soon)*
+**Testnet**: [https://dengrow.vercel.app](https://dengrow.vercel.app)
+
+**Repository**: [https://github.com/den-labs/dengrow](https://github.com/den-labs/dengrow)
 
 ## Screenshots
 
