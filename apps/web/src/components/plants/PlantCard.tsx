@@ -103,47 +103,68 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
 
   const stageColors = getColorClasses(getStageColor(stage));
   const tierColors = tierInfo ? getColorClasses(tierInfo.colorScheme) : null;
-  const buttonColors = getColorClasses(txPending ? 'orange' : 'blue');
 
   return (
     <Link href={`/my-plants/${tokenId}`} style={{ textDecoration: 'none' }}>
-      <div className="cursor-pointer overflow-hidden rounded-lg border bg-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
-        <div className="relative pt-[100%]">
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+      <div className="group cursor-pointer overflow-hidden rounded-xl border bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-dengrow-500/30 hover:shadow-card-hover">
+        <div className="relative aspect-square">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-dengrow-50 to-green-100">
             {imageSrc ? (
-              <img src={imageSrc} alt={`Plant #${tokenId}`} className="object-cover" />
+              <img
+                src={imageSrc}
+                alt={`Plant #${tokenId}`}
+                className="h-full w-full object-contain p-4 drop-shadow-lg transition-transform duration-500 group-hover:scale-110"
+              />
             ) : (
-              <span className="text-sm text-gray-500">
-                Plant #{tokenId}
-              </span>
+              <svg
+                className="h-16 w-16 text-dengrow-300"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M7 20h10" />
+                <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+                <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
+                <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
+              </svg>
             )}
           </div>
           {tierInfo && tierColors && (
-            <span className={cn('absolute left-2 top-2 rounded px-2 py-0.5 text-xs font-medium', tierColors.badge)}>
+            <span
+              className={cn(
+                'absolute left-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                tierColors.badge
+              )}
+            >
               {tierInfo.name}
             </span>
           )}
         </div>
         <div className="flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-lg font-bold">
+            <span className="truncate text-sm font-bold">
               Plant #{tokenId}
             </span>
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin text-dengrow-500" />
             ) : (
-              <Badge className={stageColors.badge}>{getStageName(stage)}</Badge>
+              <Badge className={cn('text-xs', stageColors.badge)}>
+                {getStageName(stage)}
+              </Badge>
             )}
           </div>
 
           {plantState && (
             <>
               <div>
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-xs text-gray-600">
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
                     Growth Progress
                   </span>
-                  <span className="text-xs font-medium">
+                  <span className="text-xs font-semibold text-dengrow-600">
                     {growthPoints}/7
                   </span>
                 </div>
@@ -155,7 +176,16 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
 
               <Button
                 size="sm"
-                className={cn(buttonColors.button)}
+                className={cn(
+                  'w-full transition-all',
+                  isTree
+                    ? 'bg-orange-500 text-white hover:bg-orange-600'
+                    : canWater
+                      ? 'bg-dengrow-500 text-white hover:bg-dengrow-600 shadow-sm hover:shadow-glow'
+                      : txPending
+                        ? 'bg-orange-500 text-white'
+                        : ''
+                )}
                 disabled={isTree || !canWater || !!txPending || isWatering}
                 onClick={(e) => {
                   e.preventDefault();
@@ -164,7 +194,7 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
                 }}
               >
                 {(isWatering || !!txPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isWatering ? 'Watering...' : txPending ? 'Confirming...' : isTree ? 'Graduated 🌳' : canWater ? 'Water Plant 💧' : 'Cooldown Active ⏳'}
+                {isWatering ? 'Watering...' : txPending ? 'Confirming...' : isTree ? 'Graduated' : canWater ? 'Water Plant' : 'Cooldown Active'}
               </Button>
             </>
           )}
@@ -173,7 +203,7 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
             <div className="flex flex-col gap-2">
               <Skeleton className="h-3 w-full" />
               <Skeleton className="h-2 w-full rounded-full" />
-              <span className="text-center text-xs text-gray-400">
+              <span className="text-center text-xs text-muted-foreground">
                 Loading plant data...
               </span>
             </div>

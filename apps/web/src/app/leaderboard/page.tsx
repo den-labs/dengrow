@@ -40,6 +40,46 @@ function getRankColor(rank: number): string {
   return 'text-gray-200';
 }
 
+function PlantSvgIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M24 40V26"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M24 26C24 20 18 16 12 16C12 22 18 26 24 26Z"
+        fill="currentColor"
+        opacity="0.2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M24 22C24 16 30 12 36 12C36 18 30 22 24 22Z"
+        fill="currentColor"
+        opacity="0.2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20 40H28"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default function LeaderboardPage() {
   const network = useNetwork();
   const { data: leaderboard, isLoading, isError } = useLeaderboard();
@@ -57,8 +97,8 @@ export default function LeaderboardPage() {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-green-500" />
-          <p className="text-gray-600">Loading leaderboard...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-dengrow-500" />
+          <p className="text-muted-foreground">Loading leaderboard...</p>
         </div>
       </div>
     );
@@ -69,7 +109,7 @@ export default function LeaderboardPage() {
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center space-y-4">
           <p className="text-xl text-red-500">Unable to load leaderboard</p>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             The contracts may not be deployed on this network yet.
           </p>
         </div>
@@ -100,28 +140,35 @@ export default function LeaderboardPage() {
     });
 
   return (
-    <div className="container mx-auto max-w-7xl py-8">
+    <div className="mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col space-y-8">
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-green-600">Leaderboard</h1>
-          <p className="text-gray-600 mt-2">
-            See who's growing the most impact in the DenGrow community
+        <div className="text-center space-y-3">
+          <div className="flex items-center justify-center gap-3">
+            <h1 className="font-display text-3xl font-bold tracking-tight">
+              Global Leaderboard
+            </h1>
+            <Badge className="bg-dengrow-50 text-dengrow-600 border border-dengrow-500/20 hover:bg-dengrow-50">
+              Season Live
+            </Badge>
+          </div>
+          <p className="text-muted-foreground">
+            See who&apos;s growing the most impact in the DenGrow community
           </p>
         </div>
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="rounded-xl shadow-card border-t-4 border-t-dengrow-500">
             <CardContent className="py-4">
               <Stat>
                 <StatLabel>Total Minted</StatLabel>
-                <StatNumber className="text-green-600">{totalMinted}</StatNumber>
+                <StatNumber className="text-dengrow-500">{totalMinted}</StatNumber>
                 <StatHelpText>plants</StatHelpText>
               </Stat>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-xl shadow-card border-t-4 border-t-orange-500">
             <CardContent className="py-4">
               <Stat>
                 <StatLabel>Graduated</StatLabel>
@@ -130,7 +177,7 @@ export default function LeaderboardPage() {
               </Stat>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-xl shadow-card border-t-4 border-t-blue-500">
             <CardContent className="py-4">
               <Stat>
                 <StatLabel>Active Growers</StatLabel>
@@ -139,7 +186,7 @@ export default function LeaderboardPage() {
               </Stat>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-xl shadow-card border-t-4 border-t-purple-500">
             <CardContent className="py-4">
               <Stat>
                 <StatLabel>Unique Growers</StatLabel>
@@ -152,7 +199,7 @@ export default function LeaderboardPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="top-plants">
-          <TabsList>
+          <TabsList className="rounded-lg bg-muted p-1">
             <TabsTrigger value="top-plants">Top Plants</TabsTrigger>
             <TabsTrigger value="top-growers">Top Growers</TabsTrigger>
             <TabsTrigger value="recent-activity">Recent Activity</TabsTrigger>
@@ -160,13 +207,13 @@ export default function LeaderboardPage() {
 
           {/* Top Plants Tab */}
           <TabsContent value="top-plants">
-            <Card>
+            <Card className="rounded-xl shadow-card">
               <CardContent className="p-0">
                 {entries.length === 0 ? (
-                  <div className="flex items-center justify-center py-12">
+                  <div className="flex items-center justify-center py-16 bg-dengrow-50 rounded-xl">
                     <div className="flex flex-col items-center space-y-3">
-                      <span className="text-3xl">🌱</span>
-                      <p className="text-gray-500">No plants minted yet</p>
+                      <PlantSvgIcon className="h-10 w-10 text-dengrow-500" />
+                      <p className="text-muted-foreground">No plants minted yet</p>
                     </div>
                   </div>
                 ) : (
@@ -194,13 +241,13 @@ export default function LeaderboardPage() {
 
           {/* Top Growers Tab */}
           <TabsContent value="top-growers">
-            <Card>
+            <Card className="rounded-xl shadow-card">
               <CardContent className="p-0">
                 {topGrowers.length === 0 ? (
-                  <div className="flex items-center justify-center py-12">
+                  <div className="flex items-center justify-center py-16 bg-dengrow-50 rounded-xl">
                     <div className="flex flex-col items-center space-y-3">
-                      <span className="text-3xl">🌱</span>
-                      <p className="text-gray-500">No growers yet</p>
+                      <PlantSvgIcon className="h-10 w-10 text-dengrow-500" />
+                      <p className="text-muted-foreground">No growers yet</p>
                     </div>
                   </div>
                 ) : (
@@ -225,7 +272,7 @@ export default function LeaderboardPage() {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <span className="font-mono text-sm" title={grower.owner}>
+                            <span className="font-mono-addr text-sm" title={grower.owner}>
                               {truncateAddress(grower.owner)}
                             </span>
                           </TableCell>
@@ -254,13 +301,13 @@ export default function LeaderboardPage() {
 
           {/* Recent Activity Tab */}
           <TabsContent value="recent-activity">
-            <Card>
+            <Card className="rounded-xl shadow-card">
               <CardContent className="p-0">
                 {entries.length === 0 ? (
-                  <div className="flex items-center justify-center py-12">
+                  <div className="flex items-center justify-center py-16 bg-dengrow-50 rounded-xl">
                     <div className="flex flex-col items-center space-y-3">
-                      <span className="text-3xl">🌱</span>
-                      <p className="text-gray-500">No activity yet</p>
+                      <PlantSvgIcon className="h-10 w-10 text-dengrow-500" />
+                      <p className="text-muted-foreground">No activity yet</p>
                     </div>
                   </div>
                 ) : (
@@ -283,13 +330,13 @@ export default function LeaderboardPage() {
                             <TableCell>
                               <Link
                                 href={`/my-plants/${entry.tokenId}`}
-                                className="text-green-500 font-medium hover:underline"
+                                className="text-dengrow-500 font-medium hover:underline"
                               >
                                 Plant #{entry.tokenId}
                               </Link>
                             </TableCell>
                             <TableCell>
-                              <span className="font-mono text-sm" title={entry.owner}>
+                              <span className="font-mono-addr text-sm" title={entry.owner}>
                                 {truncateAddress(entry.owner)}
                               </span>
                             </TableCell>
@@ -299,7 +346,7 @@ export default function LeaderboardPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <span className="text-sm text-gray-600">
+                              <span className="text-sm text-muted-foreground">
                                 Block {entry.lastWaterBlock}
                               </span>
                             </TableCell>
@@ -314,9 +361,11 @@ export default function LeaderboardPage() {
         </Tabs>
 
         {totalMinted > 50 && (
-          <p className="text-sm text-gray-500 text-center">
-            Showing top 50 of {totalMinted} minted plants
-          </p>
+          <div className="text-center py-4">
+            <p className="text-sm font-medium text-dengrow-600 bg-dengrow-50 inline-block px-4 py-2 rounded-full border border-dengrow-500/20">
+              Showing top 50 of {totalMinted} minted plants
+            </p>
+          </div>
         )}
       </div>
     </div>
@@ -342,13 +391,13 @@ function PlantRow({ entry, rank }: PlantRowProps) {
       <TableCell>
         <Link
           href={`/my-plants/${entry.tokenId}`}
-          className="text-green-500 font-medium hover:underline"
+          className="text-dengrow-500 font-medium hover:underline"
         >
           Plant #{entry.tokenId}
         </Link>
       </TableCell>
       <TableCell>
-        <span className="font-mono text-sm" title={entry.owner}>
+        <span className="font-mono-addr text-sm" title={entry.owner}>
           {truncateAddress(entry.owner)}
         </span>
       </TableCell>
