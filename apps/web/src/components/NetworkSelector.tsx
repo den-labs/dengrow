@@ -1,26 +1,19 @@
 'use client';
 import { FC, useContext } from 'react';
 import { HiroWalletContext } from './HiroWalletProvider';
-import {
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  Button,
-  Text,
-  Box,
-  Flex,
-  Badge,
-  Icon,
-  useColorModeValue,
-} from '@chakra-ui/react';
-import { ChevronDownIcon } from '@chakra-ui/icons';
+import { ChevronDown } from 'lucide-react';
 import { Network } from '@/lib/network';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const NetworkSelector: FC = () => {
   const { network, setNetwork } = useContext(HiroWalletContext);
-  const menuBg = useColorModeValue('white', 'gray.800');
-  const menuHoverBg = useColorModeValue('gray.50', 'gray.700');
 
   const networks = [
     {
@@ -46,40 +39,34 @@ export const NetworkSelector: FC = () => {
   if (!network) return null;
 
   return (
-    <Menu>
-      <MenuButton
-        as={Button}
-        rightIcon={<ChevronDownIcon />}
-        variant="outline"
-        colorScheme="purple"
-        size="md"
-      >
-        {network.charAt(0).toUpperCase() + network.slice(1)}
-      </MenuButton>
-      <MenuList bg={menuBg}>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
+          {network.charAt(0).toUpperCase() + network.slice(1)}
+          <ChevronDown className="ml-2 h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
         {networks.map((net) => (
-          <MenuItem
+          <DropdownMenuItem
             key={net.value}
             onClick={() => setNetwork(net.value)}
-            bg={menuBg}
-            _hover={{ bg: menuHoverBg }}
+            className="flex flex-col items-start"
           >
-            <Flex direction="column" w="full">
-              <Text fontWeight="medium">{net.name}</Text>
-              <Flex justify="space-between" align="center">
-                <Text fontSize="sm" color="gray.500">
-                  {net.endpoint}
-                </Text>
-                {net.status === 'offline' && (
-                  <Badge colorScheme="red" ml={2}>
-                    Offline
-                  </Badge>
-                )}
-              </Flex>
-            </Flex>
-          </MenuItem>
+            <span className="font-medium">{net.name}</span>
+            <div className="flex w-full items-center justify-between">
+              <span className="text-sm text-gray-500">
+                {net.endpoint}
+              </span>
+              {net.status === 'offline' && (
+                <Badge className="ml-2 bg-red-100 text-red-800">
+                  Offline
+                </Badge>
+              )}
+            </div>
+          </DropdownMenuItem>
         ))}
-      </MenuList>
-    </Menu>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

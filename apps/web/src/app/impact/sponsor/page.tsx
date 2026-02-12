@@ -1,36 +1,7 @@
 'use client';
 
-import {
-  Container,
-  VStack,
-  Text,
-  Box,
-  HStack,
-  Card,
-  CardBody,
-  CardHeader,
-  Heading,
-  Badge,
-  Spinner,
-  Center,
-  Button,
-  Input,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  FormControl,
-  FormLabel,
-  FormHelperText,
-  SimpleGrid,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  useToast,
-  Link as ChakraLink,
-} from '@chakra-ui/react';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePoolStats, useSponsorshipStats } from '@/hooks/useImpactRegistry';
@@ -40,12 +11,17 @@ import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { sponsorBatch, MIN_SPONSORSHIP_STX } from '@/lib/game/sponsor-operations';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
 import { getContractErrorMessage } from '@/lib/contract-errors';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NumberInput } from '@/components/ui/number-input';
+import { Stat, StatLabel, StatNumber, StatHelpText } from '@/components/ui/stat';
 
 export default function SponsorPage() {
   const currentAddress = useCurrentAddress();
   const network = useNetwork();
   const { currentWallet } = useDevnetWallet();
-  const toast = useToast();
   const { data: poolStats, isLoading: poolLoading } = usePoolStats();
   const { data: sponsorStats, isLoading: statsLoading, refetch } = useSponsorshipStats();
 
@@ -56,12 +32,12 @@ export default function SponsorPage() {
 
   if (!currentAddress) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Text fontSize="3xl">🤝</Text>
-          <Text>Connect your wallet to sponsor a batch</Text>
-        </VStack>
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <span className="text-3xl">🤝</span>
+          <p>Connect your wallet to sponsor a batch</p>
+        </div>
+      </div>
     );
   }
 
@@ -86,177 +62,165 @@ export default function SponsorPage() {
 
       if (shouldUseDirectCall()) {
         await executeContractCall(txOptions, currentWallet);
-        toast({ title: 'Sponsorship Submitted!', description: 'Transaction confirmed', status: 'success' });
+        toast.success('Sponsorship Submitted!', { description: 'Transaction confirmed' });
         refetch();
       } else {
         await openContractCall({
           ...txOptions,
           onFinish: () => {
-            toast({ title: 'Sponsorship Submitted!', description: 'Confirming on-chain...', status: 'info' });
+            toast.info('Sponsorship Submitted!', { description: 'Confirming on-chain...' });
             setTimeout(() => refetch(), 10000);
           },
           onCancel: () => {
-            toast({ title: 'Cancelled', status: 'info' });
+            toast.info('Cancelled');
           },
         });
       }
     } catch (error: unknown) {
       console.error('Error sponsoring batch:', error);
-      toast({ title: 'Sponsorship Failed', description: getContractErrorMessage(error), status: 'error' });
+      toast.error('Sponsorship Failed', { description: getContractErrorMessage(error) });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Container maxW="container.md" py={8}>
-      <VStack spacing={8} align="stretch">
+    <div className="mx-auto max-w-screen-md px-4 py-8">
+      <div className="flex flex-col gap-8">
         {/* Breadcrumb */}
-        <HStack spacing={2} fontSize="sm" color="gray.500">
-          <Link href="/impact">
-            <ChakraLink color="green.500">Impact Dashboard</ChakraLink>
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Link href="/impact" className="text-green-500 hover:underline">
+            Impact Dashboard
           </Link>
-          <Text>/</Text>
-          <Text>Sponsor a Batch</Text>
-        </HStack>
+          <span>/</span>
+          <span>Sponsor a Batch</span>
+        </div>
 
         {/* Header */}
-        <Box textAlign="center">
-          <Text fontSize="3xl" fontWeight="bold" color="teal.600">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-teal-600">
             Sponsor a Batch
-          </Text>
-          <Text color="gray.600" mt={2}>
+          </h1>
+          <p className="mt-2 text-gray-600">
             Fund real-world tree planting with on-chain attribution
-          </Text>
-        </Box>
+          </p>
+        </div>
 
         {/* Stats */}
         {!isLoading && sponsorStats && (
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Card>
-              <CardBody py={4}>
-                <Stat size="sm">
+              <CardContent className="py-4">
+                <Stat>
                   <StatLabel>Total Sponsored</StatLabel>
-                  <StatNumber color="teal.600">
+                  <StatNumber className="text-teal-600">
                     {(sponsorStats.totalSponsoredAmount / 1_000_000).toFixed(1)} STX
                   </StatNumber>
                   <StatHelpText>from {sponsorStats.totalSponsorships} sponsors</StatHelpText>
                 </Stat>
-              </CardBody>
+              </CardContent>
             </Card>
             <Card>
-              <CardBody py={4}>
-                <Stat size="sm">
+              <CardContent className="py-4">
+                <Stat>
                   <StatLabel>Available Batches</StatLabel>
-                  <StatNumber color="orange.500">{totalBatches}</StatNumber>
+                  <StatNumber className="text-orange-500">{totalBatches}</StatNumber>
                   <StatHelpText>recorded on-chain</StatHelpText>
                 </Stat>
-              </CardBody>
+              </CardContent>
             </Card>
             <Card>
-              <CardBody py={4}>
-                <Stat size="sm">
+              <CardContent className="py-4">
+                <Stat>
                   <StatLabel>Minimum</StatLabel>
-                  <StatNumber color="blue.500">{MIN_SPONSORSHIP_STX} STX</StatNumber>
+                  <StatNumber className="text-blue-500">{MIN_SPONSORSHIP_STX} STX</StatNumber>
                   <StatHelpText>per sponsorship</StatHelpText>
                 </Stat>
-              </CardBody>
+              </CardContent>
             </Card>
-          </SimpleGrid>
+          </div>
         )}
 
         {/* Sponsor Form */}
         <Card>
           <CardHeader>
-            <Heading size="md">Sponsorship Details</Heading>
+            <CardTitle>Sponsorship Details</CardTitle>
           </CardHeader>
-          <CardBody>
-            <VStack spacing={5}>
-              <FormControl isRequired>
-                <FormLabel>Batch ID</FormLabel>
+          <CardContent>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <Label>Batch ID *</Label>
                 <NumberInput
                   min={1}
                   max={totalBatches}
-                  value={batchId}
-                  onChange={(val) => setBatchId(val)}
-                >
-                  <NumberInputField placeholder={`1 - ${totalBatches}`} />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-                <FormHelperText>
+                  value={batchId ? Number(batchId) : 0}
+                  onChange={(val) => setBatchId(val.toString())}
+                />
+                <p className="text-sm text-muted-foreground">
                   Select a batch to sponsor (1 to {totalBatches}).{' '}
-                  <Link href="/impact">
-                    <ChakraLink color="green.500">View batches</ChakraLink>
+                  <Link href="/impact" className="text-green-500 hover:underline">
+                    View batches
                   </Link>
-                </FormHelperText>
-              </FormControl>
+                </p>
+              </div>
 
-              <FormControl isRequired>
-                <FormLabel>Sponsor Name</FormLabel>
+              <div className="flex flex-col gap-2">
+                <Label>Sponsor Name *</Label>
                 <Input
                   placeholder="Your name or organization"
                   value={sponsorName}
                   onChange={(e) => setSponsorName(e.target.value.slice(0, 64))}
                   maxLength={64}
                 />
-                <FormHelperText>
+                <p className="text-sm text-muted-foreground">
                   Displayed on the batch proof page (max 64 characters)
-                </FormHelperText>
-              </FormControl>
+                </p>
+              </div>
 
-              <FormControl isRequired>
-                <FormLabel>Amount (STX)</FormLabel>
+              <div className="flex flex-col gap-2">
+                <Label>Amount (STX) *</Label>
                 <NumberInput
                   min={MIN_SPONSORSHIP_STX}
                   step={1}
-                  value={amount}
-                  onChange={(val) => setAmount(val)}
-                >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-                <FormHelperText>
+                  value={parseFloat(amount) || 0}
+                  onChange={(val) => setAmount(val.toString())}
+                />
+                <p className="text-sm text-muted-foreground">
                   Minimum {MIN_SPONSORSHIP_STX} STX. Funds go directly to the Impact Pool treasury.
-                </FormHelperText>
-              </FormControl>
+                </p>
+              </div>
 
               <Button
-                colorScheme="teal"
+                className="w-full bg-teal-600 text-white hover:bg-teal-700"
                 size="lg"
-                w="full"
-                isDisabled={!isValid}
-                isLoading={isSubmitting}
-                loadingText="Submitting..."
+                disabled={!isValid || isSubmitting}
                 onClick={handleSubmit}
               >
-                Sponsor Batch #{batchId || '...'} for {stxAmount} STX
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting
+                  ? 'Submitting...'
+                  : `Sponsor Batch #${batchId || '...'} for ${stxAmount} STX`}
               </Button>
-            </VStack>
-          </CardBody>
+            </div>
+          </CardContent>
         </Card>
 
         {/* How it works */}
-        <Card bg="teal.50" borderColor="teal.200" borderWidth={1}>
-          <CardBody>
-            <VStack spacing={2}>
-              <Text fontWeight="bold" color="teal.700">
+        <Card className="border-teal-200 bg-teal-50">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-bold text-teal-700">
                 How Sponsorship Works
-              </Text>
-              <Text fontSize="sm" color="teal.600" textAlign="center">
+              </span>
+              <p className="text-center text-sm text-teal-600">
                 Your STX is transferred to the Impact Pool treasury and your name is permanently
                 recorded on-chain alongside the batch. The batch proof page will display your
                 sponsorship for anyone to verify.
-              </Text>
-            </VStack>
-          </CardBody>
+              </p>
+            </div>
+          </CardContent>
         </Card>
-      </VStack>
-    </Container>
+      </div>
+    </div>
   );
 }

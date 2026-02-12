@@ -1,23 +1,7 @@
 'use client';
 
-import {
-  Container,
-  VStack,
-  Text,
-  Box,
-  HStack,
-  Card,
-  CardBody,
-  CardHeader,
-  Heading,
-  Badge,
-  Spinner,
-  Center,
-  SimpleGrid,
-  Button,
-  Progress,
-  useToast,
-} from '@chakra-ui/react';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAchievements, BadgeInfo } from '@/hooks/useAchievements';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { useNetwork } from '@/lib/use-network';
@@ -36,6 +20,10 @@ import {
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
 import { getContractErrorMessage } from '@/lib/contract-errors';
 import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 export default function AchievementsPage() {
   const currentAddress = useCurrentAddress();
@@ -43,7 +31,6 @@ export default function AchievementsPage() {
   const { data: achievements, isLoading, refetch } = useAchievements(currentAddress || undefined);
   const { data: nftHoldings } = useNftHoldings(currentAddress || '');
   const { currentWallet } = useDevnetWallet();
-  const toast = useToast();
   const [claimingBadge, setClaimingBadge] = useState<number | null>(null);
 
   // Extract user's plant token IDs from holdings
@@ -59,23 +46,23 @@ export default function AchievementsPage() {
 
   if (!currentAddress) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Text fontSize="3xl">🏅</Text>
-          <Text>Connect your wallet to view achievements</Text>
-        </VStack>
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <span className="text-3xl">🏅</span>
+          <p>Connect your wallet to view achievements</p>
+        </div>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Spinner size="xl" color="purple.500" />
-          <Text color="gray.600">Loading achievements...</Text>
-        </VStack>
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+          <p className="text-gray-600">Loading achievements...</p>
+        </div>
+      </div>
     );
   }
 
@@ -108,9 +95,8 @@ export default function AchievementsPage() {
   const handleClaim = async (badgeId: number) => {
     if (!network || claimingBadge) return;
 
-    // Find a suitable plant for the claim
     if (plants.length === 0) {
-      toast({ title: 'No plants found', description: 'You need at least one plant to claim badges', status: 'warning' });
+      toast.warning('No plants found', { description: 'You need at least one plant to claim badges' });
       return;
     }
 
@@ -119,35 +105,35 @@ export default function AchievementsPage() {
       let txOptions;
 
       switch (badgeId) {
-        case 1: // First Seed
+        case 1:
           txOptions = claimFirstSeed(network, plants[0].tokenId);
           break;
-        case 2: { // First Tree - find a graduated plant (stage >= 4)
+        case 2: {
           const stages = await Promise.all(plants.map((p) => fetchPlantStage(p.tokenId)));
           const treeIdx = stages.findIndex((s) => s !== null && s >= 4);
           if (treeIdx === -1) {
-            toast({ title: 'Not eligible', description: 'No graduated tree found — grow a plant to stage 4', status: 'warning' });
+            toast.warning('Not eligible', { description: 'No graduated tree found — grow a plant to stage 4' });
             setClaimingBadge(null);
             return;
           }
           txOptions = claimFirstTree(network, plants[treeIdx].tokenId);
           break;
         }
-        case 3: { // Green Thumb - need 3 graduated plants (stage >= 4)
+        case 3: {
           const stages3 = await Promise.all(plants.map((p) => fetchPlantStage(p.tokenId)));
           const graduatedPlants = plants.filter((_, i) => stages3[i] !== null && stages3[i]! >= 4);
           if (graduatedPlants.length < 3) {
-            toast({ title: 'Not eligible', description: `Need 3 graduated trees, you have ${graduatedPlants.length}`, status: 'warning' });
+            toast.warning('Not eligible', { description: `Need 3 graduated trees, you have ${graduatedPlants.length}` });
             setClaimingBadge(null);
             return;
           }
           txOptions = claimGreenThumb(network, graduatedPlants[0].tokenId, graduatedPlants[1].tokenId, graduatedPlants[2].tokenId);
           break;
         }
-        case 4: { // Early Adopter - find token <= 200
+        case 4: {
           const targetToken = plants.find((p) => p.tokenId <= 200);
           if (!targetToken) {
-            toast({ title: 'Not eligible', description: 'No plant with ID <= 200', status: 'warning' });
+            toast.warning('Not eligible', { description: 'No plant with ID <= 200' });
             setClaimingBadge(null);
             return;
           }
@@ -161,64 +147,61 @@ export default function AchievementsPage() {
 
       if (shouldUseDirectCall()) {
         await executeContractCall(txOptions, currentWallet);
-        toast({ title: 'Badge Claimed!', description: 'Transaction submitted', status: 'success' });
+        toast.success('Badge Claimed!', { description: 'Transaction submitted' });
         setTimeout(() => refetch(), 3000);
       } else {
         await openContractCall({
           ...txOptions,
           onFinish: () => {
-            toast({ title: 'Badge Claimed!', description: 'Confirming on-chain...', status: 'info' });
+            toast.info('Badge Claimed!', { description: 'Confirming on-chain...' });
             setTimeout(() => refetch(), 10000);
           },
           onCancel: () => {
-            toast({ title: 'Cancelled', status: 'info' });
+            toast.info('Cancelled');
           },
         });
       }
     } catch (error: unknown) {
       console.error('Error claiming badge:', error);
-      toast({ title: 'Claim Failed', description: getContractErrorMessage(error), status: 'error' });
+      toast.error('Claim Failed', { description: getContractErrorMessage(error) });
     } finally {
       setClaimingBadge(null);
     }
   };
 
   return (
-    <Container maxW="container.xl" py={8}>
-      <VStack spacing={8} align="stretch">
+    <div className="mx-auto max-w-screen-xl px-4 py-8">
+      <div className="flex flex-col gap-8">
         {/* Header */}
-        <Box textAlign="center">
-          <Text fontSize="3xl" fontWeight="bold" color="purple.600">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-purple-600">
             Achievements
-          </Text>
-          <Text color="gray.600" mt={2}>
+          </h1>
+          <p className="mt-2 text-gray-600">
             Earn badges by growing your plants and contributing to the community
-          </Text>
-        </Box>
+          </p>
+        </div>
 
         {/* Progress */}
         <Card>
-          <CardBody>
-            <VStack spacing={3}>
-              <HStack justify="space-between" w="full">
-                <Text fontWeight="medium">Badge Progress</Text>
-                <Badge colorScheme="purple" fontSize="md" px={3} py={1}>
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Badge Progress</span>
+                <Badge className="bg-purple-100 px-3 py-1 text-base text-purple-800">
                   {earned}/{total}
                 </Badge>
-              </HStack>
+              </div>
               <Progress
                 value={total > 0 ? (earned / total) * 100 : 0}
-                colorScheme="purple"
-                size="lg"
-                borderRadius="full"
-                w="full"
+                className="h-3 rounded-full"
               />
-            </VStack>
-          </CardBody>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Badge Grid */}
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {badges.map((badge) => (
             <BadgeCard
               key={badge.id}
@@ -227,25 +210,25 @@ export default function AchievementsPage() {
               onClaim={() => handleClaim(badge.id)}
             />
           ))}
-        </SimpleGrid>
+        </div>
 
         {/* Info */}
-        <Card bg="purple.50" borderColor="purple.200" borderWidth={1}>
-          <CardBody>
-            <VStack spacing={2}>
-              <Text fontWeight="bold" color="purple.700">
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-bold text-purple-700">
                 How Badges Work
-              </Text>
-              <Text fontSize="sm" color="purple.600" textAlign="center">
+              </span>
+              <p className="text-center text-sm text-purple-600">
                 Badges are soulbound achievements recorded on-chain. Claim them by proving your
                 eligibility - the smart contract verifies your plants and progress before granting
                 each badge.
-              </Text>
-            </VStack>
-          </CardBody>
+              </p>
+            </div>
+          </CardContent>
         </Card>
-      </VStack>
-    </Container>
+      </div>
+    </div>
   );
 }
 
@@ -256,66 +239,57 @@ interface BadgeCardProps {
 }
 
 function BadgeCard({ badge, isClaiming, onClaim }: BadgeCardProps) {
-  const earned = badge.earned;
+  const isEarned = badge.earned;
 
   return (
     <Card
-      opacity={earned ? 1 : 0.7}
-      borderWidth={earned ? '2px' : '1px'}
-      borderColor={earned ? 'purple.300' : 'gray.200'}
-      bg={earned ? 'white' : 'gray.50'}
-      transition="all 0.2s"
-      _hover={earned ? {} : { borderColor: 'purple.200', opacity: 0.9 }}
+      className={`transition-all duration-200 ${
+        isEarned
+          ? 'border-2 border-purple-300 bg-white'
+          : 'border opacity-70 hover:border-purple-200 hover:opacity-90'
+      }`}
     >
-      <CardBody>
-        <HStack spacing={4} align="start">
-          <Box
-            w={16}
-            h={16}
-            borderRadius="xl"
-            bg={earned ? 'purple.100' : 'gray.100'}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            fontSize="3xl"
-            flexShrink={0}
-            filter={earned ? 'none' : 'grayscale(100%)'}
+      <CardContent className="pt-6">
+        <div className="flex items-start gap-4">
+          <div
+            className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-3xl ${
+              isEarned ? 'bg-purple-100' : 'bg-gray-100 grayscale'
+            }`}
           >
             {badge.icon}
-          </Box>
-          <VStack align="start" spacing={1} flex={1}>
-            <HStack>
-              <Text fontWeight="bold">{badge.name}</Text>
-              {earned && (
-                <Badge colorScheme="purple" fontSize="xs">
+          </div>
+          <div className="flex flex-1 flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{badge.name}</span>
+              {isEarned && (
+                <Badge className="bg-purple-100 text-xs text-purple-800">
                   Earned
                 </Badge>
               )}
-            </HStack>
-            <Text fontSize="sm" color="gray.600">
+            </div>
+            <p className="text-sm text-gray-600">
               {badge.description}
-            </Text>
-            {earned && badge.earnedAt && (
-              <Text fontSize="xs" color="gray.400">
+            </p>
+            {isEarned && badge.earnedAt && (
+              <p className="text-xs text-gray-400">
                 Earned at block {badge.earnedAt}
-              </Text>
+              </p>
             )}
-            {!earned && (
+            {!isEarned && (
               <Button
                 size="sm"
-                colorScheme="purple"
                 variant="outline"
-                mt={1}
-                isLoading={isClaiming}
-                loadingText="Claiming..."
+                className="mt-1 w-fit border-purple-600 text-purple-600 hover:bg-purple-50"
+                disabled={isClaiming}
                 onClick={onClaim}
               >
-                Claim Badge
+                {isClaiming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isClaiming ? 'Claiming...' : 'Claim Badge'}
               </Button>
             )}
-          </VStack>
-        </HStack>
-      </CardBody>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }

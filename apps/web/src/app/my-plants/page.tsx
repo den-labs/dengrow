@@ -1,18 +1,7 @@
 'use client';
 
-import {
-  Container,
-  SimpleGrid,
-  VStack,
-  Text,
-  Heading,
-  Center,
-  Spinner,
-  Button,
-  useToast,
-  Link,
-  Box,
-} from '@chakra-ui/react';
+import { ExternalLink, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { PlantCard } from '@/components/plants/PlantCard';
 import { useNftHoldings, useGetTxId } from '@/hooks/useNftHoldings';
 import { formatValue } from '@/lib/clarity-utils';
@@ -21,12 +10,14 @@ import { getNftContract } from '@/constants/contracts';
 import { useNetwork } from '@/lib/use-network';
 import { useCurrentAddress } from '@/hooks/useCurrentAddress';
 import { useAccountBalance } from '@/hooks/useAccountBalance';
-import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { useState, useEffect } from 'react';
 import { shouldUseDirectCall, executeContractCall, openContractCall } from '@/lib/contract-utils';
 import { getContractErrorMessage } from '@/lib/contract-errors';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { getExplorerLink } from '@/utils/explorer-links';
+import { Button } from '@/components/ui/button';
+import { getColorClasses } from '@/lib/color-variants';
+import { cn } from '@/lib/utils';
 
 export default function MyPlantsPage() {
   const [lastTxId, setLastTxId] = useState<string | null>(null);
@@ -38,7 +29,6 @@ export default function MyPlantsPage() {
   const { data: nftHoldings, isLoading: nftHoldingsLoading } = useNftHoldings(currentAddress || '');
   const { data: balance } = useAccountBalance(currentAddress || undefined);
   const { data: txData } = useGetTxId(lastTxId || '');
-  const toast = useToast();
 
   // Fee buffer: 0.05 STX (50,000 microSTX) to cover gas
   const FEE_BUFFER_MICRO = 50_000;
@@ -52,31 +42,21 @@ export default function MyPlantsPage() {
   useEffect(() => {
     // @ts-ignore
     if (txData && txData.tx_status === 'success') {
-      toast({
-        title: 'Minting Confirmed',
-        description: 'Your plant has been minted successfully',
-        status: 'success',
-      });
+      toast.success('Minting Confirmed', { description: 'Your plant has been minted successfully' });
       setLastTxId(null);
-      // @ts-ignore
+    // @ts-ignore
     } else if (txData && txData.tx_status === 'abort_by_response') {
-      toast({
-        title: 'Minting Failed',
-        description: 'The transaction was aborted',
-        status: 'error',
-      });
+      toast.error('Minting Failed', { description: 'The transaction was aborted' });
       setLastTxId(null);
     }
-  }, [txData, toast]);
+  }, [txData]);
 
   const handleMintPlant = async () => {
     if (!network || !currentAddress || isMinting) return;
 
     if (!hasEnoughBalance) {
-      toast({
-        title: 'Insufficient Balance',
+      toast.warning('Insufficient Balance', {
         description: `You need at least ${(requiredMicro / 1_000_000).toFixed(2)} STX (${tierInfo.priceSTX} STX + gas). You're short ~${balanceShortfall.toFixed(2)} STX.`,
-        status: 'warning',
         duration: 8000,
       });
       return;
@@ -90,10 +70,8 @@ export default function MyPlantsPage() {
       if (shouldUseDirectCall()) {
         const { txid } = await executeContractCall(txOptions, currentWallet);
         setLastTxId(txid);
-        toast({
-          title: `${tierInfo.name} Mint Submitted`,
+        toast.info(`${tierInfo.name} Mint Submitted`, {
           description: `Transaction broadcast with ID: ${txid}`,
-          status: 'info',
         });
         return;
       }
@@ -102,27 +80,15 @@ export default function MyPlantsPage() {
         ...txOptions,
         onFinish: (data) => {
           setLastTxId(data.txId);
-          toast({
-            title: 'Success',
-            description: `${tierInfo.name} plant minting submitted!`,
-            status: 'success',
-          });
+          toast.success('Success', { description: `${tierInfo.name} plant minting submitted!` });
         },
         onCancel: () => {
-          toast({
-            title: 'Cancelled',
-            description: 'Transaction was cancelled',
-            status: 'info',
-          });
+          toast.info('Cancelled', { description: 'Transaction was cancelled' });
         },
       });
     } catch (error: unknown) {
       console.error('Error minting plant:', error);
-      toast({
-        title: 'Minting Failed',
-        description: getContractErrorMessage(error),
-        status: 'error',
-      });
+      toast.error('Minting Failed', { description: getContractErrorMessage(error) });
     } finally {
       setIsMinting(false);
     }
@@ -130,103 +96,105 @@ export default function MyPlantsPage() {
 
   if (!currentAddress) {
     return (
-      <Center h="50vh">
-        <Text>Please connect your wallet to view your plants</Text>
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <p>Please connect your wallet to view your plants</p>
+      </div>
     );
   }
 
   if (nftHoldingsLoading) {
     return (
-      <Center h="50vh">
-        <Spinner />
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     );
   }
+
+  const mintButtonColors = getColorClasses(hasEnoughBalance ? tierInfo.colorScheme : 'gray');
+
   return (
-    <Container maxW="container.xl" py={8}>
-      <VStack spacing={6} align="stretch">
-        <Text fontSize="2xl" fontWeight="bold">
+    <div className="mx-auto max-w-screen-xl px-4 py-8">
+      <div className="flex flex-col gap-6">
+        <h1 className="text-2xl font-bold">
           My Plants
-        </Text>
+        </h1>
 
         {/* Tier Selection */}
-        <Box borderWidth="1px" borderRadius="lg" p={6} bg="white" boxShadow="md">
-          <VStack spacing={4} align="stretch">
-            <Heading size="md">Mint a Plant NFT</Heading>
-            <Text fontSize="sm" color="gray.600">
+        <div className="rounded-lg border bg-white p-6 shadow-md">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-lg font-bold">Mint a Plant NFT</h2>
+            <p className="text-sm text-gray-600">
               Choose your tier and start growing
-            </Text>
+            </p>
 
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {([1, 2, 3] as MintTier[]).map((tier) => {
                 const t = MINT_TIERS[tier];
                 const isSelected = selectedTier === tier;
+                const colors = getColorClasses(t.colorScheme);
                 return (
-                  <Box
+                  <div
                     key={tier}
-                    borderWidth={isSelected ? '2px' : '1px'}
-                    borderColor={isSelected ? `${t.colorScheme}.500` : 'gray.200'}
-                    borderRadius="lg"
-                    p={4}
-                    cursor="pointer"
+                    className={cn(
+                      'cursor-pointer rounded-lg border p-4 transition-all duration-200 hover:shadow-md',
+                      isSelected
+                        ? `border-2 ${colors.border500} ${colors.bg50}`
+                        : `border-gray-200 bg-white hover:${colors.border300}`
+                    )}
                     onClick={() => setSelectedTier(tier)}
-                    _hover={{ shadow: 'md', borderColor: `${t.colorScheme}.300` }}
-                    transition="all 0.2s"
-                    bg={isSelected ? `${t.colorScheme}.50` : 'white'}
                   >
-                    <VStack spacing={2}>
-                      <Text fontWeight="bold" fontSize="lg" color={`${t.colorScheme}.600`}>
+                    <div className="flex flex-col items-center gap-2">
+                      <span className={cn('text-lg font-bold', colors.text600)}>
                         {t.name}
-                      </Text>
-                      <Text fontWeight="bold" fontSize="2xl">
+                      </span>
+                      <span className="text-2xl font-bold">
                         {t.priceSTX} STX
-                      </Text>
-                      <Text fontSize="sm" color="gray.600" textAlign="center">
+                      </span>
+                      <span className="text-center text-sm text-gray-600">
                         {t.description}
-                      </Text>
-                    </VStack>
-                  </Box>
+                      </span>
+                    </div>
+                  </div>
                 );
               })}
-            </SimpleGrid>
+            </div>
 
             <Button
-              colorScheme={hasEnoughBalance ? tierInfo.colorScheme : 'gray'}
+              className={cn(mintButtonColors.button)}
               onClick={handleMintPlant}
               size="lg"
-              isLoading={isMinting}
-              isDisabled={!hasEnoughBalance}
-              loadingText="Minting..."
+              disabled={!hasEnoughBalance || isMinting}
             >
-              {hasEnoughBalance
-                ? `Mint ${tierInfo.name} Plant — ${tierInfo.priceSTX} STX`
-                : `Insufficient balance (need ${(requiredMicro / 1_000_000).toFixed(2)} STX)`}
+              {isMinting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isMinting
+                ? 'Minting...'
+                : hasEnoughBalance
+                  ? `Mint ${tierInfo.name} Plant — ${tierInfo.priceSTX} STX`
+                  : `Insufficient balance (need ${(requiredMicro / 1_000_000).toFixed(2)} STX)`}
             </Button>
 
             {balance && (
-              <Text fontSize="xs" color={hasEnoughBalance ? 'gray.500' : 'red.500'} textAlign="center">
+              <p className={cn('text-center text-xs', hasEnoughBalance ? 'text-gray-500' : 'text-red-500')}>
                 Balance: {balance.stxDecimal.toFixed(2)} STX
                 {!hasEnoughBalance && ` — need ~${balanceShortfall.toFixed(2)} more STX`}
-              </Text>
+              </p>
             )}
 
             {lastTxId && (
-              <Link
+              <a
                 href={getExplorerLink(lastTxId, network)}
-                isExternal
-                color="blue.500"
-                fontSize="sm"
-                textAlign="center"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1 text-center text-sm text-blue-500 hover:underline"
               >
-                View your latest transaction <ExternalLinkIcon mx="2px" />
-              </Link>
+                View your latest transaction <ExternalLink className="h-3 w-3" />
+              </a>
             )}
-          </VStack>
-        </Box>
+          </div>
+        </div>
 
         {/* Plant Grid */}
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {nftHoldings?.results && nftHoldings.results.length > 0
             ? nftHoldings.results
                 .filter((holding: any) => {
@@ -249,8 +217,8 @@ export default function MyPlantsPage() {
                   );
                 })
             : null}
-        </SimpleGrid>
-      </VStack>
-    </Container>
+        </div>
+      </div>
+    </div>
   );
 }

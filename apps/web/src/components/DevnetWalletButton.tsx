@@ -1,22 +1,23 @@
 'use client';
 
-import {
-  Box,
-  Button,
-  Flex,
-  Tooltip,
-  Tag,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  IconButton,
-  Link,
-} from '@chakra-ui/react';
-import { ChevronDownIcon } from '@chakra-ui/icons';
+import { ChevronDown } from 'lucide-react';
 import { DevnetWallet } from '@/lib/devnet-wallet-context';
 import { formatStxAddress } from '@/lib/address-utils';
 import { DEVNET_STACKS_BLOCKCHAIN_API_URL } from '@/constants/devnet';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface DevnetWalletButtonProps {
   currentWallet: DevnetWallet | null;
@@ -30,62 +31,54 @@ export const DevnetWalletButton = ({
   onWalletSelect,
 }: DevnetWalletButtonProps) => {
   return (
-    <Menu>
-      <Flex align="center">
-        <Link
+    <DropdownMenu>
+      <div className="flex items-center">
+        <a
           href={`https://explorer.hiro.so/address/${currentWallet?.stxAddress}?chain=testnet&api=${DEVNET_STACKS_BLOCKCHAIN_API_URL}`}
           target="_blank"
-          _hover={{ textDecoration: 'none' }}
+          rel="noopener noreferrer"
+          className="no-underline"
         >
-          <Button variant="ghost" rightIcon={<ChevronDownIcon visibility="hidden" />}>
-            <Tooltip label="Devnet connection detected, click to view in explorer" bg="gray.800">
-              <Flex align="center" gap={2}>
-                <Box
-                  fontSize="sm"
-                  fontFamily="mono"
-                  width="140px"
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                >
-                  {formatStxAddress(currentWallet?.stxAddress || '')}
-                </Box>
-                <Tag size="sm" colorScheme="purple" borderRadius="full">
-                  devnet
-                </Tag>
-              </Flex>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost">
+                  <div className="flex items-center gap-2">
+                    <span className="w-[140px] overflow-hidden text-ellipsis font-mono text-sm">
+                      {formatStxAddress(currentWallet?.stxAddress || '')}
+                    </span>
+                    <Badge className="rounded-full bg-purple-100 text-purple-800">
+                      devnet
+                    </Badge>
+                  </div>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Devnet connection detected, click to view in explorer</TooltipContent>
             </Tooltip>
+          </TooltipProvider>
+        </a>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Select wallet">
+            <ChevronDown className="h-4 w-4" />
           </Button>
-        </Link>
-        <MenuButton
-          as={IconButton}
-          variant="ghost"
-          icon={<ChevronDownIcon />}
-          aria-label="Select wallet"
-          size="md"
-        />
-      </Flex>
-      <MenuList width={'100%'}>
+        </DropdownMenuTrigger>
+      </div>
+      <DropdownMenuContent className="w-full">
         {wallets.map((wallet) => (
-          <MenuItem key={wallet.stxAddress} onClick={() => onWalletSelect(wallet)}>
-            <Flex align="center" gap={2}>
-              <Box
-                fontSize="sm"
-                fontFamily="mono"
-                width="140px"
-                overflow="hidden"
-                textOverflow="ellipsis"
-              >
+          <DropdownMenuItem key={wallet.stxAddress} onClick={() => onWalletSelect(wallet)}>
+            <div className="flex items-center gap-2">
+              <span className="w-[140px] overflow-hidden text-ellipsis font-mono text-sm">
                 {formatStxAddress(wallet.stxAddress)}
-              </Box>
+              </span>
               {wallet.label && (
-                <Tag size="sm" colorScheme="gray" borderRadius="full">
+                <Badge variant="secondary" className="rounded-full">
                   {wallet.label}
-                </Tag>
+                </Badge>
               )}
-            </Flex>
-          </MenuItem>
+            </div>
+          </DropdownMenuItem>
         ))}
-      </MenuList>
-    </Menu>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

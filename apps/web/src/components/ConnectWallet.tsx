@@ -1,16 +1,20 @@
 'use client';
-import { Box, Button, Flex, Icon, Text, Tooltip, IconButton } from '@chakra-ui/react';
 import { useContext, useState } from 'react';
 import { HiroWalletContext } from './HiroWalletProvider';
 import { RiFileCopyLine, RiCloseLine } from 'react-icons/ri';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ConnectWalletButtonProps {
   children?: React.ReactNode;
-  [key: string]: any;
 }
 
-export const ConnectWalletButton = (buttonProps: ConnectWalletButtonProps) => {
-  const { children } = buttonProps;
+export const ConnectWalletButton = ({ children }: ConnectWalletButtonProps) => {
   const [didCopyAddress, setDidCopyAddress] = useState(false);
   const { authenticate, isWalletConnected, mainnetAddress, testnetAddress, network, disconnect } =
     useContext(HiroWalletContext);
@@ -34,36 +38,44 @@ export const ConnectWalletButton = (buttonProps: ConnectWalletButtonProps) => {
   };
 
   return isWalletConnected ? (
-    <Flex align="center" gap={2} p={2} borderRadius="md" bg="gray.200">
-      <Text color="gray.800" fontSize="sm">
+    <div className="flex items-center gap-2 rounded-md bg-gray-200 p-2">
+      <span className="text-sm text-gray-800">
         {truncateMiddle(currentAddress)}
-      </Text>
-      <Tooltip label="Copy address" isOpen={didCopyAddress ? true : undefined}>
-        <IconButton
-          aria-label="Copy address"
-          icon={<Icon as={RiFileCopyLine} />}
-          size="sm"
-          variant="ghost"
-          onClick={copyAddress}
-          minW="8"
-          p="1"
-        />
-      </Tooltip>
-      <Tooltip label="Disconnect wallet">
-        <IconButton
-          aria-label="Disconnect wallet"
-          icon={<Icon as={RiCloseLine} />}
-          size="sm"
-          variant="ghost"
-          onClick={disconnect}
-          data-testid="disconnect-wallet-address-button"
-          minW="8"
-          p="1"
-        />
-      </Tooltip>
-    </Flex>
+      </span>
+      <TooltipProvider>
+        <Tooltip open={didCopyAddress ? true : undefined}>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label="Copy address"
+              onClick={copyAddress}
+            >
+              <RiFileCopyLine className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Copy address</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label="Disconnect wallet"
+              onClick={disconnect}
+              data-testid="disconnect-wallet-address-button"
+            >
+              <RiCloseLine className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Disconnect wallet</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   ) : (
-    <Button size="sm" onClick={authenticate} data-testid="wallet-connect-button" {...buttonProps}>
+    <Button size="sm" onClick={authenticate} data-testid="wallet-connect-button">
       {children || 'Connect Wallet'}
     </Button>
   );

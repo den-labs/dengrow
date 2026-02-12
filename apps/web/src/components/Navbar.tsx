@@ -1,28 +1,21 @@
 'use client';
 
-import {
-  Box,
-  Container,
-  Flex,
-  Link,
-  IconButton,
-  Drawer,
-  DrawerBody,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
-  VStack,
-  useDisclosure,
-} from '@chakra-ui/react';
-import { HamburgerIcon } from '@chakra-ui/icons';
-import { useContext } from 'react';
+import { useState, useContext } from 'react';
+import { Menu } from 'lucide-react';
 import { HiroWalletContext } from './HiroWalletProvider';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { DevnetWalletButton } from './DevnetWalletButton';
 import { ConnectWalletButton } from './ConnectWallet';
 import { NetworkSelector } from './NetworkSelector';
 import { isDevnetEnvironment, useNetwork } from '@/lib/use-network';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 const NAV_LINKS = [
   { href: '/my-plants', label: 'My Plants' },
@@ -35,7 +28,7 @@ export const Navbar = () => {
   const { isWalletConnected } = useContext(HiroWalletContext);
   const { currentWallet, wallets, setCurrentWallet } = useDevnetWallet();
   const network = useNetwork();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
 
   const walletButton = isDevnetEnvironment() ? (
     <DevnetWalletButton
@@ -48,82 +41,70 @@ export const Navbar = () => {
   );
 
   return (
-    <Box as="nav" bg="white" boxShadow="sm">
-      <Container maxW="container.xl">
-        <Flex justify="space-between" h={16} align="center">
+    <nav className="bg-white shadow-sm">
+      <div className="mx-auto max-w-screen-xl px-4">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Flex align="center">
-            <Flex
-              bg="white"
-              borderRadius="md"
-              border="2px"
-              borderColor="gray.700"
-              letterSpacing="-.05em"
-              fontSize="xl"
-              fontWeight="bold"
-              w="52px"
-              h="52px"
-              justify="center"
-              align="center"
-              color="gray.900"
-              shrink="0"
-            >
+          <div className="flex items-center">
+            <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-md border-2 border-gray-700 bg-white text-xl font-bold tracking-tighter text-gray-900">
               /-/
-            </Flex>
-            <Link href="/" textDecoration="none">
-              <Box fontSize="lg" fontWeight="bold" color="gray.900" ml={4}>
+            </div>
+            <a href="/" className="no-underline">
+              <span className="ml-4 text-lg font-bold text-gray-900">
                 DenGrow
-              </Box>
-            </Link>
-          </Flex>
+              </span>
+            </a>
+          </div>
 
           {/* Desktop nav */}
-          <Flex align="center" gap={4} display={{ base: 'none', md: 'flex' }}>
+          <div className="hidden items-center gap-4 md:flex">
             {NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <Box>{link.label}</Box>
-              </Link>
+              <a key={link.href} href={link.href}>
+                {link.label}
+              </a>
             ))}
             <NetworkSelector />
             {walletButton}
-          </Flex>
+          </div>
 
           {/* Mobile hamburger */}
-          <IconButton
-            aria-label="Open menu"
-            icon={<HamburgerIcon />}
-            variant="ghost"
-            display={{ base: 'flex', md: 'none' }}
-            onClick={onOpen}
-          />
-        </Flex>
-      </Container>
-
-      {/* Mobile drawer */}
-      <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
-        <DrawerOverlay />
-        <DrawerContent>
-          <DrawerCloseButton />
-          <DrawerHeader>DenGrow</DrawerHeader>
-          <DrawerBody>
-            <VStack spacing={4} align="stretch">
-              {NAV_LINKS.map((link) => (
-                <Link key={link.href} href={link.href} onClick={onClose}>
-                  <Box py={2} fontSize="lg" fontWeight="medium">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>DenGrow</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-4 pt-4">
+                {NAV_LINKS.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="py-2 text-lg font-medium"
+                  >
                     {link.label}
-                  </Box>
-                </Link>
-              ))}
-              <Box pt={4} borderTopWidth="1px">
-                <NetworkSelector />
-              </Box>
-              <Box>
-                {walletButton}
-              </Box>
-            </VStack>
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
-    </Box>
+                  </a>
+                ))}
+                <div className="border-t pt-4">
+                  <NetworkSelector />
+                </div>
+                <div>
+                  {walletButton}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </nav>
   );
 };

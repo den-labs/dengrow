@@ -1,41 +1,25 @@
 'use client';
 
-import {
-  Container,
-  VStack,
-  Text,
-  Box,
-  HStack,
-  Card,
-  CardBody,
-  CardHeader,
-  Heading,
-  Badge,
-  Spinner,
-  Center,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Progress,
-  SimpleGrid,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-} from '@chakra-ui/react';
 import { useLeaderboard, LeaderboardEntry } from '@/hooks/useLeaderboard';
 import { usePoolStats } from '@/hooks/useImpactRegistry';
 import { useNetwork } from '@/lib/use-network';
 import { getStageName, getStageColor } from '@/hooks/useGetPlant';
+import { getColorClasses } from '@/lib/color-variants';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Stat, StatLabel, StatNumber, StatHelpText } from '@/components/ui/stat';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 function truncateAddress(address: string): string {
   if (address.length <= 12) return address;
@@ -50,10 +34,10 @@ function getRankDisplay(rank: number): string {
 }
 
 function getRankColor(rank: number): string {
-  if (rank === 1) return 'yellow.400';
-  if (rank === 2) return 'gray.400';
-  if (rank === 3) return 'orange.400';
-  return 'gray.200';
+  if (rank === 1) return 'text-yellow-400';
+  if (rank === 2) return 'text-gray-400';
+  if (rank === 3) return 'text-orange-400';
+  return 'text-gray-200';
 }
 
 export default function LeaderboardPage() {
@@ -63,35 +47,33 @@ export default function LeaderboardPage() {
 
   if (!network) {
     return (
-      <Center h="50vh">
-        <Text>Please connect your wallet to view the leaderboard</Text>
-      </Center>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <p>Please connect your wallet to view the leaderboard</p>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Spinner size="xl" color="green.500" />
-          <Text color="gray.600">Loading leaderboard...</Text>
-        </VStack>
-      </Center>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-green-500" />
+          <p className="text-gray-600">Loading leaderboard...</p>
+        </div>
+      </div>
     );
   }
 
   if (isError || !leaderboard) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Text fontSize="xl" color="red.500">
-            Unable to load leaderboard
-          </Text>
-          <Text color="gray.600">
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center space-y-4">
+          <p className="text-xl text-red-500">Unable to load leaderboard</p>
+          <p className="text-gray-600">
             The contracts may not be deployed on this network yet.
-          </Text>
-        </VStack>
-      </Center>
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -118,229 +100,226 @@ export default function LeaderboardPage() {
     });
 
   return (
-    <Container maxW="container.xl" py={8}>
-      <VStack spacing={8} align="stretch">
+    <div className="container mx-auto max-w-7xl py-8">
+      <div className="flex flex-col space-y-8">
         {/* Header */}
-        <Box textAlign="center">
-          <Text fontSize="3xl" fontWeight="bold" color="green.600">
-            Leaderboard
-          </Text>
-          <Text color="gray.600" mt={2}>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-green-600">Leaderboard</h1>
+          <p className="text-gray-600 mt-2">
             See who's growing the most impact in the DenGrow community
-          </Text>
-        </Box>
+          </p>
+        </div>
 
         {/* Summary Stats */}
-        <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
-            <CardBody py={4}>
-              <Stat size="sm">
+            <CardContent className="py-4">
+              <Stat>
                 <StatLabel>Total Minted</StatLabel>
-                <StatNumber color="green.600">{totalMinted}</StatNumber>
+                <StatNumber className="text-green-600">{totalMinted}</StatNumber>
                 <StatHelpText>plants</StatHelpText>
               </Stat>
-            </CardBody>
+            </CardContent>
           </Card>
           <Card>
-            <CardBody py={4}>
-              <Stat size="sm">
+            <CardContent className="py-4">
+              <Stat>
                 <StatLabel>Graduated</StatLabel>
-                <StatNumber color="orange.500">{graduated.length}</StatNumber>
+                <StatNumber className="text-orange-500">{graduated.length}</StatNumber>
                 <StatHelpText>trees</StatHelpText>
               </Stat>
-            </CardBody>
+            </CardContent>
           </Card>
           <Card>
-            <CardBody py={4}>
-              <Stat size="sm">
+            <CardContent className="py-4">
+              <Stat>
                 <StatLabel>Active Growers</StatLabel>
-                <StatNumber color="blue.500">{active.length}</StatNumber>
+                <StatNumber className="text-blue-500">{active.length}</StatNumber>
                 <StatHelpText>in progress</StatHelpText>
               </Stat>
-            </CardBody>
+            </CardContent>
           </Card>
           <Card>
-            <CardBody py={4}>
-              <Stat size="sm">
+            <CardContent className="py-4">
+              <Stat>
                 <StatLabel>Unique Growers</StatLabel>
-                <StatNumber color="purple.500">{topGrowers.length}</StatNumber>
+                <StatNumber className="text-purple-500">{topGrowers.length}</StatNumber>
                 <StatHelpText>addresses</StatHelpText>
               </Stat>
-            </CardBody>
+            </CardContent>
           </Card>
-        </SimpleGrid>
+        </div>
 
         {/* Tabs */}
-        <Tabs colorScheme="green" variant="enclosed">
-          <TabList>
-            <Tab>Top Plants</Tab>
-            <Tab>Top Growers</Tab>
-            <Tab>Recent Activity</Tab>
-          </TabList>
+        <Tabs defaultValue="top-plants">
+          <TabsList>
+            <TabsTrigger value="top-plants">Top Plants</TabsTrigger>
+            <TabsTrigger value="top-growers">Top Growers</TabsTrigger>
+            <TabsTrigger value="recent-activity">Recent Activity</TabsTrigger>
+          </TabsList>
 
-          <TabPanels>
-            {/* Top Plants Tab */}
-            <TabPanel px={0}>
-              <Card>
-                <CardBody p={0}>
-                  {entries.length === 0 ? (
-                    <Center py={12}>
-                      <VStack spacing={3}>
-                        <Text fontSize="3xl">🌱</Text>
-                        <Text color="gray.500">No plants minted yet</Text>
-                      </VStack>
-                    </Center>
-                  ) : (
-                    <Table variant="simple" size="sm">
-                      <Thead>
-                        <Tr>
-                          <Th w="60px">Rank</Th>
-                          <Th>Plant</Th>
-                          <Th>Owner</Th>
-                          <Th>Stage</Th>
-                          <Th isNumeric>Growth</Th>
-                          <Th w="120px">Progress</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {entries.map((entry, index) => (
-                          <PlantRow key={entry.tokenId} entry={entry} rank={index + 1} />
-                        ))}
-                      </Tbody>
-                    </Table>
-                  )}
-                </CardBody>
-              </Card>
-            </TabPanel>
+          {/* Top Plants Tab */}
+          <TabsContent value="top-plants">
+            <Card>
+              <CardContent className="p-0">
+                {entries.length === 0 ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center space-y-3">
+                      <span className="text-3xl">🌱</span>
+                      <p className="text-gray-500">No plants minted yet</p>
+                    </div>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[60px]">Rank</TableHead>
+                        <TableHead>Plant</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Stage</TableHead>
+                        <TableHead className="text-right">Growth</TableHead>
+                        <TableHead className="w-[120px]">Progress</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {entries.map((entry, index) => (
+                        <PlantRow key={entry.tokenId} entry={entry} rank={index + 1} />
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            {/* Top Growers Tab */}
-            <TabPanel px={0}>
-              <Card>
-                <CardBody p={0}>
-                  {topGrowers.length === 0 ? (
-                    <Center py={12}>
-                      <VStack spacing={3}>
-                        <Text fontSize="3xl">🌱</Text>
-                        <Text color="gray.500">No growers yet</Text>
-                      </VStack>
-                    </Center>
-                  ) : (
-                    <Table variant="simple" size="sm">
-                      <Thead>
-                        <Tr>
-                          <Th w="60px">Rank</Th>
-                          <Th>Grower</Th>
-                          <Th isNumeric>Plants</Th>
-                          <Th isNumeric>Trees</Th>
-                          <Th isNumeric>Total Points</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {topGrowers.map((grower, index) => (
-                          <Tr key={grower.owner}>
-                            <Td>
-                              <Text
-                                fontWeight={index < 3 ? 'bold' : 'normal'}
-                                color={getRankColor(index + 1)}
+          {/* Top Growers Tab */}
+          <TabsContent value="top-growers">
+            <Card>
+              <CardContent className="p-0">
+                {topGrowers.length === 0 ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center space-y-3">
+                      <span className="text-3xl">🌱</span>
+                      <p className="text-gray-500">No growers yet</p>
+                    </div>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[60px]">Rank</TableHead>
+                        <TableHead>Grower</TableHead>
+                        <TableHead className="text-right">Plants</TableHead>
+                        <TableHead className="text-right">Trees</TableHead>
+                        <TableHead className="text-right">Total Points</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {topGrowers.map((grower, index) => (
+                        <TableRow key={grower.owner}>
+                          <TableCell>
+                            <span
+                              className={`${index < 3 ? 'font-bold' : 'font-normal'} ${getRankColor(index + 1)}`}
+                            >
+                              {getRankDisplay(index + 1)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-mono text-sm" title={grower.owner}>
+                              {truncateAddress(grower.owner)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">{grower.plantCount}</TableCell>
+                          <TableCell className="text-right">
+                            {grower.trees > 0 && (
+                              <Badge className={getColorClasses('orange').badge}>
+                                {grower.trees}
+                              </Badge>
+                            )}
+                            {grower.trees === 0 && (
+                              <span className="text-gray-400">0</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {grower.totalPoints}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Recent Activity Tab */}
+          <TabsContent value="recent-activity">
+            <Card>
+              <CardContent className="p-0">
+                {entries.length === 0 ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center space-y-3">
+                      <span className="text-3xl">🌱</span>
+                      <p className="text-gray-500">No activity yet</p>
+                    </div>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Plant</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Stage</TableHead>
+                        <TableHead className="text-right">Last Watered</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[...entries]
+                        .filter((e) => e.lastWaterBlock > 0)
+                        .sort((a, b) => b.lastWaterBlock - a.lastWaterBlock)
+                        .slice(0, 20)
+                        .map((entry) => (
+                          <TableRow key={entry.tokenId}>
+                            <TableCell>
+                              <Link
+                                href={`/my-plants/${entry.tokenId}`}
+                                className="text-green-500 font-medium hover:underline"
                               >
-                                {getRankDisplay(index + 1)}
-                              </Text>
-                            </Td>
-                            <Td>
-                              <Text fontFamily="mono" fontSize="sm" title={grower.owner}>
-                                {truncateAddress(grower.owner)}
-                              </Text>
-                            </Td>
-                            <Td isNumeric>{grower.plantCount}</Td>
-                            <Td isNumeric>
-                              {grower.trees > 0 && (
-                                <Badge colorScheme="orange">{grower.trees}</Badge>
-                              )}
-                              {grower.trees === 0 && (
-                                <Text color="gray.400">0</Text>
-                              )}
-                            </Td>
-                            <Td isNumeric fontWeight="medium">{grower.totalPoints}</Td>
-                          </Tr>
+                                Plant #{entry.tokenId}
+                              </Link>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-mono text-sm" title={entry.owner}>
+                                {truncateAddress(entry.owner)}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getColorClasses(getStageColor(entry.stage)).badge}>
+                                {getStageName(entry.stage)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="text-sm text-gray-600">
+                                Block {entry.lastWaterBlock}
+                              </span>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </Tbody>
-                    </Table>
-                  )}
-                </CardBody>
-              </Card>
-            </TabPanel>
-
-            {/* Recent Activity Tab */}
-            <TabPanel px={0}>
-              <Card>
-                <CardBody p={0}>
-                  {entries.length === 0 ? (
-                    <Center py={12}>
-                      <VStack spacing={3}>
-                        <Text fontSize="3xl">🌱</Text>
-                        <Text color="gray.500">No activity yet</Text>
-                      </VStack>
-                    </Center>
-                  ) : (
-                    <Table variant="simple" size="sm">
-                      <Thead>
-                        <Tr>
-                          <Th>Plant</Th>
-                          <Th>Owner</Th>
-                          <Th>Stage</Th>
-                          <Th isNumeric>Last Watered</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {[...entries]
-                          .filter((e) => e.lastWaterBlock > 0)
-                          .sort((a, b) => b.lastWaterBlock - a.lastWaterBlock)
-                          .slice(0, 20)
-                          .map((entry) => (
-                            <Tr key={entry.tokenId}>
-                              <Td>
-                                <Link
-                                  href={`/my-plants/${entry.tokenId}`}
-                                  style={{ textDecoration: 'none' }}
-                                >
-                                  <Text color="green.500" fontWeight="medium" _hover={{ textDecoration: 'underline' }}>
-                                    Plant #{entry.tokenId}
-                                  </Text>
-                                </Link>
-                              </Td>
-                              <Td>
-                                <Text fontFamily="mono" fontSize="sm" title={entry.owner}>
-                                  {truncateAddress(entry.owner)}
-                                </Text>
-                              </Td>
-                              <Td>
-                                <Badge colorScheme={getStageColor(entry.stage)}>
-                                  {getStageName(entry.stage)}
-                                </Badge>
-                              </Td>
-                              <Td isNumeric>
-                                <Text fontSize="sm" color="gray.600">
-                                  Block {entry.lastWaterBlock}
-                                </Text>
-                              </Td>
-                            </Tr>
-                          ))}
-                      </Tbody>
-                    </Table>
-                  )}
-                </CardBody>
-              </Card>
-            </TabPanel>
-          </TabPanels>
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         {totalMinted > 50 && (
-          <Text fontSize="sm" color="gray.500" textAlign="center">
+          <p className="text-sm text-gray-500 text-center">
             Showing top 50 of {totalMinted} minted plants
-          </Text>
+          </p>
         )}
-      </VStack>
-    </Container>
+      </div>
+    </div>
   );
 }
 
@@ -350,39 +329,41 @@ interface PlantRowProps {
 }
 
 function PlantRow({ entry, rank }: PlantRowProps) {
+  const stageColorScheme = getStageColor(entry.stage);
+  const colorClasses = getColorClasses(stageColorScheme);
+
   return (
-    <Tr>
-      <Td>
-        <Text fontWeight={rank <= 3 ? 'bold' : 'normal'} color={getRankColor(rank)}>
+    <TableRow>
+      <TableCell>
+        <span className={`${rank <= 3 ? 'font-bold' : 'font-normal'} ${getRankColor(rank)}`}>
           {getRankDisplay(rank)}
-        </Text>
-      </Td>
-      <Td>
-        <Link href={`/my-plants/${entry.tokenId}`} style={{ textDecoration: 'none' }}>
-          <Text color="green.500" fontWeight="medium" _hover={{ textDecoration: 'underline' }}>
-            Plant #{entry.tokenId}
-          </Text>
+        </span>
+      </TableCell>
+      <TableCell>
+        <Link
+          href={`/my-plants/${entry.tokenId}`}
+          className="text-green-500 font-medium hover:underline"
+        >
+          Plant #{entry.tokenId}
         </Link>
-      </Td>
-      <Td>
-        <Text fontFamily="mono" fontSize="sm" title={entry.owner}>
+      </TableCell>
+      <TableCell>
+        <span className="font-mono text-sm" title={entry.owner}>
           {truncateAddress(entry.owner)}
-        </Text>
-      </Td>
-      <Td>
-        <Badge colorScheme={getStageColor(entry.stage)}>{getStageName(entry.stage)}</Badge>
-      </Td>
-      <Td isNumeric fontWeight="medium">
+        </span>
+      </TableCell>
+      <TableCell>
+        <Badge className={colorClasses.badge}>{getStageName(entry.stage)}</Badge>
+      </TableCell>
+      <TableCell className="text-right font-medium">
         {entry.growthPoints}/7
-      </Td>
-      <Td>
+      </TableCell>
+      <TableCell>
         <Progress
           value={(entry.growthPoints / 7) * 100}
-          size="sm"
-          colorScheme={getStageColor(entry.stage)}
-          borderRadius="full"
+          className={`h-2 rounded-full ${colorClasses.bg50}`}
         />
-      </Td>
-    </Tr>
+      </TableCell>
+    </TableRow>
   );
 }
