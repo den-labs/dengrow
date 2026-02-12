@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { ExternalLink, Loader2, Wallet, Sprout } from 'lucide-react';
 import { toast } from 'sonner';
 import { PlantCard } from '@/components/plants/PlantCard';
 import { useNftHoldings, useGetTxId } from '@/hooks/useNftHoldings';
@@ -16,8 +16,15 @@ import { getContractErrorMessage } from '@/lib/contract-errors';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { getExplorerLink } from '@/utils/explorer-links';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { getColorClasses } from '@/lib/color-variants';
 import { cn } from '@/lib/utils';
+
+const TIER_FEATURES: Record<MintTier, string[]> = {
+  1: ['1x Growth Speed'],
+  2: ['1.5x Growth Speed', 'High Yield'],
+  3: ['2x Growth Speed', 'Real Tree Planted'],
+};
 
 export default function MyPlantsPage() {
   const [lastTxId, setLastTxId] = useState<string | null>(null);
@@ -96,8 +103,13 @@ export default function MyPlantsPage() {
 
   if (!currentAddress) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <p>Please connect your wallet to view your plants</p>
+      <div className="flex h-[50vh] items-center justify-center px-4">
+        <EmptyState
+          variant="wallet"
+          title="Wallet Not Connected"
+          description="Connect your Stacks wallet to view your DenGrow garden and mint new plants."
+          className="max-w-md"
+        />
       </div>
     );
   }
@@ -105,62 +117,109 @@ export default function MyPlantsPage() {
   if (nftHoldingsLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <EmptyState
+          variant="loading"
+          title="Loading your garden..."
+          description="Fetching plant data from Stacks"
+          className="border-none bg-transparent shadow-none"
+        />
       </div>
     );
   }
 
   const mintButtonColors = getColorClasses(hasEnoughBalance ? tierInfo.colorScheme : 'gray');
 
+  const filteredPlants = nftHoldings?.results
+    ? nftHoldings.results.filter((holding: any) => {
+        if (!network) return false;
+        const expectedContract = getNftContract(network);
+        const fullContractId = `${expectedContract.contractAddress}.${expectedContract.contractName}`;
+        const holdingContract = holding.asset_identifier.split('::')[0];
+        return holdingContract === fullContractId;
+      })
+    : [];
+
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-8">
-      <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-bold">
-          My Plants
-        </h1>
+    <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Gradient background overlay */}
+      <div className="absolute left-0 top-0 h-96 w-full bg-gradient-to-b from-dengrow-500/10 to-transparent pointer-events-none" />
 
-        {/* Tier Selection */}
-        <div className="rounded-lg border bg-white p-6 shadow-md">
-          <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-bold">Mint a Plant NFT</h2>
-            <p className="text-sm text-gray-600">
-              Choose your tier and start growing
-            </p>
+      <div className="relative flex flex-col gap-8">
+        {/* Page Header */}
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight">
+            My Plants
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            Manage your collection and mint new seeds.
+          </p>
+        </div>
 
+        {/* Mint Section Card */}
+        <div className="rounded-2xl border bg-white p-6 shadow-card sm:p-8">
+          <div className="flex flex-col gap-6">
+            <div>
+              <h2 className="font-display text-xl font-bold">Mint a Plant NFT</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Choose your tier and start growing
+              </p>
+            </div>
+
+            {/* Tier Selection Cards */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {([1, 2, 3] as MintTier[]).map((tier) => {
                 const t = MINT_TIERS[tier];
                 const isSelected = selectedTier === tier;
                 const colors = getColorClasses(t.colorScheme);
+                const isPopular = tier === 2;
                 return (
                   <div
                     key={tier}
                     className={cn(
-                      'cursor-pointer rounded-lg border p-4 transition-all duration-200 hover:shadow-md',
+                      'relative cursor-pointer rounded-xl border p-5 transition-all duration-200 hover:shadow-lg',
                       isSelected
-                        ? `border-2 ${colors.border500} ${colors.bg50}`
-                        : `border-gray-200 bg-white hover:${colors.border300}`
+                        ? 'border-2 border-dengrow-500 bg-dengrow-50 shadow-glow'
+                        : 'border-gray-200 bg-white',
+                      isPopular && !isSelected && 'shadow-glow'
                     )}
                     onClick={() => setSelectedTier(tier)}
                   >
-                    <div className="flex flex-col items-center gap-2">
+                    {isPopular && (
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-dengrow-500 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        Popular
+                      </span>
+                    )}
+                    <div className="flex flex-col items-center gap-3">
                       <span className={cn('text-lg font-bold', colors.text600)}>
                         {t.name}
                       </span>
-                      <span className="text-2xl font-bold">
+                      <span className="text-3xl font-bold">
                         {t.priceSTX} STX
                       </span>
-                      <span className="text-center text-sm text-gray-600">
+                      <span className="text-center text-sm text-muted-foreground">
                         {t.description}
                       </span>
+                      {/* Features list */}
+                      <ul className="mt-1 flex flex-col gap-1">
+                        {TIER_FEATURES[tier].map((feature) => (
+                          <li key={feature} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Sprout className="h-3 w-3 text-dengrow-500" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 );
               })}
             </div>
 
+            {/* Mint Button */}
             <Button
-              className={cn(mintButtonColors.button)}
+              className={cn(
+                'bg-dengrow-500 text-white hover:bg-dengrow-600 shadow-sm hover:shadow-glow',
+                !hasEnoughBalance && mintButtonColors.button
+              )}
               onClick={handleMintPlant}
               size="lg"
               disabled={!hasEnoughBalance || isMinting}
@@ -173,11 +232,28 @@ export default function MyPlantsPage() {
                   : `Insufficient balance (need ${(requiredMicro / 1_000_000).toFixed(2)} STX)`}
             </Button>
 
+            {/* Balance Display */}
             {balance && (
-              <p className={cn('text-center text-xs', hasEnoughBalance ? 'text-gray-500' : 'text-red-500')}>
-                Balance: {balance.stxDecimal.toFixed(2)} STX
-                {!hasEnoughBalance && ` — need ~${balanceShortfall.toFixed(2)} more STX`}
-              </p>
+              <div className={cn(
+                'flex items-center justify-center gap-2 rounded-lg px-4 py-2',
+                hasEnoughBalance ? 'bg-dengrow-50' : 'bg-red-50'
+              )}>
+                <Wallet className={cn(
+                  'h-4 w-4',
+                  hasEnoughBalance ? 'text-dengrow-500' : 'text-red-500'
+                )} />
+                <p className={cn(
+                  'text-sm font-medium',
+                  hasEnoughBalance ? 'text-dengrow-700' : 'text-red-600'
+                )}>
+                  {balance.stxDecimal.toFixed(2)} STX
+                  {!hasEnoughBalance && (
+                    <span className="ml-1 font-normal text-red-500">
+                      — need ~{balanceShortfall.toFixed(2)} more STX
+                    </span>
+                  )}
+                </p>
+              </div>
             )}
 
             {lastTxId && (
@@ -185,7 +261,7 @@ export default function MyPlantsPage() {
                 href={getExplorerLink(lastTxId, network)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1 text-center text-sm text-blue-500 hover:underline"
+                className="flex items-center justify-center gap-1 text-center text-sm text-dengrow-600 hover:text-dengrow-700 hover:underline"
               >
                 View your latest transaction <ExternalLink className="h-3 w-3" />
               </a>
@@ -193,30 +269,38 @@ export default function MyPlantsPage() {
           </div>
         </div>
 
-        {/* Plant Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {nftHoldings?.results && nftHoldings.results.length > 0
-            ? nftHoldings.results
-                .filter((holding: any) => {
-                  if (!network) return false;
-                  const expectedContract = getNftContract(network);
-                  const fullContractId = `${expectedContract.contractAddress}.${expectedContract.contractName}`;
-                  const holdingContract = holding.asset_identifier.split('::')[0];
-                  return holdingContract === fullContractId;
-                })
-                .map((holding: any) => {
-                  const tokenId = +formatValue(holding.value.hex).replace('u', '');
-                  return (
-                    <PlantCard
-                      key={`${holding.asset_identifier}-${tokenId}`}
-                      plant={{
-                        nftAssetContract: holding.asset_identifier.split('::')[0],
-                        tokenId,
-                      }}
-                    />
-                  );
-                })
-            : null}
+        {/* Plant Grid Section */}
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+            <h2 className="font-display text-xl font-bold tracking-tight">Your Garden</h2>
+            <span className="rounded-full bg-dengrow-50 px-2.5 py-0.5 text-sm font-semibold text-dengrow-600">
+              {filteredPlants.length}
+            </span>
+          </div>
+
+          {filteredPlants.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {filteredPlants.map((holding: any) => {
+                const tokenId = +formatValue(holding.value.hex).replace('u', '');
+                return (
+                  <PlantCard
+                    key={`${holding.asset_identifier}-${tokenId}`}
+                    plant={{
+                      nftAssetContract: holding.asset_identifier.split('::')[0],
+                      tokenId,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              variant="empty"
+              title="No plants yet"
+              description="Mint your first seed above to start your garden."
+              className="min-h-[200px]"
+            />
+          )}
         </div>
       </div>
     </div>

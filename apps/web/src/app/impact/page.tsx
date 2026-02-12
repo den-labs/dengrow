@@ -49,8 +49,8 @@ export default function ImpactDashboardPage() {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-green-500" />
-          <p className="text-gray-600">Loading impact data...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-dengrow-500" />
+          <p className="text-muted-foreground">Loading impact data...</p>
         </div>
       </div>
     );
@@ -61,7 +61,7 @@ export default function ImpactDashboardPage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <p className="text-xl text-red-500">Unable to load impact data</p>
-          <p className="text-gray-600">The impact registry contract may not be deployed on this network yet.</p>
+          <p className="text-muted-foreground">The impact registry contract may not be deployed on this network yet.</p>
         </div>
       </div>
     );
@@ -73,12 +73,20 @@ export default function ImpactDashboardPage() {
   const isAdmin = !!currentAddress && !!deployerAddress && currentAddress === deployerAddress;
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-8">
-      <div className="flex flex-col gap-8">
+    <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Gradient background */}
+      <div className="absolute left-0 top-0 h-96 w-full bg-gradient-to-b from-dengrow-500/10 to-transparent pointer-events-none" />
+
+      <div className="relative flex flex-col gap-8">
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-green-600">Impact Dashboard</h1>
-          <p className="mt-2 text-gray-600">Track the real-world impact of graduated DenGrow plants</p>
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Impact Dashboard</h1>
+            <p className="mt-2 text-muted-foreground text-lg">Track real-world reforestation efforts funded by your NFTs.</p>
+          </div>
+          <Badge className="bg-dengrow-50 text-dengrow-600 border border-dengrow-500/20 px-4 py-2 text-sm font-medium">
+            Current Cycle: Q1 2025
+          </Badge>
         </div>
 
         {/* Main Stats Grid */}
@@ -90,20 +98,20 @@ export default function ImpactDashboardPage() {
         </div>
 
         {/* Progress Section */}
-        <Card>
+        <Card className="rounded-xl shadow-card">
           <CardHeader>
-            <CardTitle>Impact Progress</CardTitle>
+            <CardTitle className="font-display">Impact Progress</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Redemption Progress</span>
-                <Badge className="bg-green-100 px-3 py-1 text-base text-green-800">
+                <span className="text-muted-foreground">Redemption Progress</span>
+                <Badge className="bg-dengrow-50 px-3 py-1 text-base text-dengrow-700 border border-dengrow-500/20">
                   {progressPercent.toFixed(1)}% Redeemed
                 </Badge>
               </div>
               <Progress value={progressPercent} className="h-3 rounded-full" />
-              <div className="flex justify-between text-sm text-gray-500">
+              <div className="flex justify-between text-sm text-muted-foreground">
                 <span>{totalRedeemed} redeemed</span>
                 <span>{currentPoolSize} in pool</span>
                 <span>{totalGraduated} total</span>
@@ -125,9 +133,9 @@ export default function ImpactDashboardPage() {
         )}
 
         {/* How It Works */}
-        <Card>
+        <Card className="rounded-xl shadow-card">
           <CardHeader>
-            <CardTitle>How Impact Works</CardTitle>
+            <CardTitle className="font-display">How Impact Works</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -139,13 +147,13 @@ export default function ImpactDashboardPage() {
         </Card>
 
         {/* Mint Tiers */}
-        <Card>
+        <Card className="rounded-xl shadow-card">
           <CardHeader>
-            <CardTitle>Mint Tiers & Impact</CardTitle>
+            <CardTitle className="font-display">Mint Tiers & Impact</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Every mint directly funds real-world tree planting. Higher tiers contribute more to the Impact Pool.
               </p>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -159,13 +167,13 @@ export default function ImpactDashboardPage() {
 
         {/* Recent Redemptions */}
         {totalBatches > 0 && (
-          <Card>
+          <Card className="rounded-xl shadow-card">
             <CardHeader>
-              <CardTitle>Recent Redemptions</CardTitle>
+              <CardTitle className="font-display">Recent Redemptions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {totalBatches} batch{totalBatches !== 1 ? 'es' : ''} recorded with proof of real-world impact.
                 </p>
                 {Array.from({ length: Math.min(totalBatches, 5) }, (_, i) => totalBatches - i).map(
@@ -174,7 +182,7 @@ export default function ImpactDashboardPage() {
                   )
                 )}
                 {totalBatches > 5 && (
-                  <p className="text-center text-sm text-gray-500">
+                  <p className="text-center text-sm text-muted-foreground">
                     Showing latest 5 of {totalBatches} batches
                   </p>
                 )}
@@ -186,12 +194,16 @@ export default function ImpactDashboardPage() {
         {/* Sponsor CTA */}
         {totalBatches > 0 && (
           <Link href="/impact/sponsor" style={{ textDecoration: 'none' }}>
-            <Card className="cursor-pointer border-dashed border-teal-300 transition-all duration-200 hover:border-teal-400 hover:bg-teal-50">
-              <CardContent className="py-4">
+            <Card className="cursor-pointer rounded-xl border-2 border-dashed border-dengrow-300 transition-all duration-200 hover:border-dengrow-500 hover:bg-dengrow-50 hover:shadow-glow">
+              <CardContent className="py-5">
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-xl">🤝</span>
-                  <span className="font-medium text-teal-600">
-                    Sponsor a batch - fund real-world tree planting with on-chain attribution
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-dengrow-100">
+                    <svg className="h-5 w-5 text-dengrow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <span className="font-semibold text-dengrow-600">
+                    Sponsor a Batch &mdash; fund real-world tree planting with on-chain attribution
                   </span>
                 </div>
               </CardContent>
@@ -201,12 +213,16 @@ export default function ImpactDashboardPage() {
 
         {/* Empty State */}
         {totalGraduated === 0 && (
-          <Card className="border-green-200 bg-green-50">
+          <Card className="rounded-xl border-dengrow-200 bg-dengrow-50">
             <CardContent className="py-12">
               <div className="flex flex-col items-center gap-4">
-                <span className="text-4xl">🌱</span>
-                <h2 className="text-xl font-bold text-green-700">No trees graduated yet</h2>
-                <p className="text-center text-green-600">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-dengrow-100">
+                  <svg className="h-8 w-8 text-dengrow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21c0 0-7-4-7-10a5 5 0 0 1 10 0h-3c0-3 7-3 7 0 0 6-7 10-7 10z" />
+                  </svg>
+                </div>
+                <h2 className="font-display text-xl font-bold text-dengrow-700">No trees graduated yet</h2>
+                <p className="text-center text-dengrow-600">
                   Be the first to grow a plant to Tree stage and contribute to the Impact Pool!
                 </p>
               </div>
@@ -229,13 +245,15 @@ interface StatCardProps {
 function StatCard({ label, value, helpText, colorScheme, icon }: StatCardProps) {
   const colors = getColorClasses(colorScheme);
   return (
-    <Card>
+    <Card className="rounded-xl shadow-card border-t-4 border-t-dengrow-500 hover:shadow-card-hover transition-shadow">
       <CardContent className="pt-6">
         <div className="flex items-center gap-4">
-          <span className="text-3xl">{icon}</span>
+          <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl text-2xl', colors.bg50)}>
+            {icon}
+          </div>
           <Stat>
             <StatLabel>{label}</StatLabel>
-            <StatNumber className={colors.text600}>{value}</StatNumber>
+            <StatNumber className={cn('text-2xl', colors.text600)}>{value}</StatNumber>
             <StatHelpText>{helpText}</StatHelpText>
           </Stat>
         </div>
@@ -360,29 +378,29 @@ function AdminRedemptionCard({
   };
 
   return (
-    <Card className="border-orange-300">
-      <CardHeader>
+    <Card className="rounded-xl border-orange-300 shadow-card">
+      <CardHeader className="bg-orange-50/50 border-b border-orange-100">
         <div className="flex items-center gap-3">
-          <CardTitle>Redeem with Payout</CardTitle>
-          <Badge className="bg-orange-100 text-xs text-orange-800">Admin</Badge>
+          <CardTitle className="font-display">Redeem with Payout</CardTitle>
+          <Badge className="bg-orange-100 text-xs text-orange-800 border border-orange-200">Admin</Badge>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div className="flex flex-col gap-5">
           {/* Treasury Status */}
-          <div className="grid grid-cols-3 gap-2 rounded-md bg-gray-50 p-3">
+          <div className="grid grid-cols-3 gap-3 rounded-xl bg-gray-50 p-4">
             <div>
-              <span className="block text-xs text-gray-500">Treasury Balance</span>
-              <span className="font-bold text-green-600">{formatStx(treasuryBalance)} STX</span>
+              <span className="block text-xs text-muted-foreground">Treasury Balance</span>
+              <span className="font-bold text-dengrow-600">{formatStx(treasuryBalance)} STX</span>
             </div>
             <div>
-              <span className="block text-xs text-gray-500">Partner</span>
+              <span className="block text-xs text-muted-foreground">Partner</span>
               <span className={cn('truncate text-sm font-bold', hasPartner ? 'text-blue-600' : 'text-red-500')}>
                 {treasury?.partner ? `${treasury.partner.slice(0, 8)}...` : 'Not set'}
               </span>
             </div>
             <div>
-              <span className="block text-xs text-gray-500">Price/Tree</span>
+              <span className="block text-xs text-muted-foreground">Price/Tree</span>
               <span className="font-bold">{formatStx(pricePerTree)} STX</span>
             </div>
           </div>
@@ -450,7 +468,7 @@ function AdminRedemptionCard({
           </Button>
 
           {showConfig && (
-            <div className="flex flex-col gap-4 rounded-md bg-gray-50 p-3">
+            <div className="flex flex-col gap-4 rounded-xl bg-gray-50 p-4">
               {/* Set Partner */}
               <div className="flex flex-col gap-1">
                 <Label className="text-sm">Partner Wallet</Label>
@@ -489,7 +507,7 @@ function AdminRedemptionCard({
 
               {/* Stats */}
               {treasury && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   <p>Total deposited: {formatStx(treasury.totalDeposited)} STX</p>
                   <p>Total paid out: {formatStx(treasury.totalPaidOut)} STX</p>
                   <p>Total withdrawn: {formatStx(treasury.totalWithdrawn)} STX</p>
@@ -521,13 +539,13 @@ interface TierCardProps {
 function TierCard({ name, price, color, description }: TierCardProps) {
   const colors = getColorClasses(color);
   return (
-    <div className={cn('rounded-lg border p-4', colors.border200, colors.bg50)}>
+    <div className={cn('rounded-xl border p-5 transition-shadow hover:shadow-lg', colors.border200, colors.bg50)}>
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <Badge className={colors.badge}>{name}</Badge>
-          <span className={cn('font-bold', colors.text600)}>{price}</span>
+          <span className={cn('text-lg font-bold', colors.text600)}>{price}</span>
         </div>
-        <p className="text-sm text-gray-600">{description}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
     </div>
   );
@@ -538,20 +556,20 @@ function BatchRow({ batchId }: { batchId: number }) {
 
   return (
     <Link href={`/impact/batch/${batchId}`} style={{ textDecoration: 'none' }}>
-      <div className="flex cursor-pointer items-center justify-between rounded-md border p-3 transition-all duration-200 hover:border-orange-300 hover:bg-gray-50">
+      <div className="flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all duration-200 hover:border-dengrow-500/30 hover:bg-dengrow-50 hover:shadow-sm">
         <div className="flex items-center gap-3">
-          <Badge className="bg-orange-100 text-orange-800">#{batchId}</Badge>
+          <Badge className="bg-orange-50 text-orange-700 border border-orange-200">#{batchId}</Badge>
           {isLoading ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
+            <Loader2 className="h-3 w-3 animate-spin text-dengrow-500" />
           ) : batch ? (
-            <span className="text-sm text-gray-700">
+            <span className="text-sm">
               {batch.quantity} tree{batch.quantity !== 1 ? 's' : ''} redeemed
             </span>
           ) : (
-            <span className="text-sm text-gray-400">No data</span>
+            <span className="text-sm text-muted-foreground">No data</span>
           )}
         </div>
-        <span className="text-sm text-gray-400">View details</span>
+        <span className="text-sm text-dengrow-500">View details &rarr;</span>
       </div>
     </Link>
   );
@@ -559,13 +577,13 @@ function BatchRow({ batchId }: { batchId: number }) {
 
 function StepCard({ step, title, description, icon }: StepCardProps) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg bg-gray-50 p-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-xl">
+    <div className="flex flex-col items-center gap-3 rounded-xl bg-dengrow-50 p-6 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-dengrow-100 text-xl">
         {icon}
       </div>
-      <Badge className="bg-green-100 text-green-800">Step {step}</Badge>
+      <Badge className="bg-dengrow-100 text-dengrow-700">Step {step}</Badge>
       <span className="font-bold">{title}</span>
-      <p className="text-sm text-gray-600">{description}</p>
+      <p className="text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }

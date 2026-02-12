@@ -17,6 +17,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NumberInput } from '@/components/ui/number-input';
 import { Stat, StatLabel, StatNumber, StatHelpText } from '@/components/ui/stat';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { cn } from '@/lib/utils';
 
 export default function SponsorPage() {
   const currentAddress = useCurrentAddress();
@@ -32,11 +35,13 @@ export default function SponsorPage() {
 
   if (!currentAddress) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <span className="text-3xl">🤝</span>
-          <p>Connect your wallet to sponsor a batch</p>
-        </div>
+      <div className="flex h-[50vh] items-center justify-center px-4">
+        <EmptyState
+          variant="wallet"
+          title="Wallet Not Connected"
+          description="Connect your Stacks wallet to sponsor an impact batch."
+          className="max-w-md"
+        />
       </div>
     );
   }
@@ -85,11 +90,14 @@ export default function SponsorPage() {
   };
 
   return (
-    <div className="mx-auto max-w-screen-md px-4 py-8">
-      <div className="flex flex-col gap-8">
+    <div className="relative mx-auto max-w-screen-md px-4 py-8 sm:px-6">
+      {/* Gradient background */}
+      <div className="absolute left-0 top-0 h-64 w-full bg-gradient-to-b from-teal-500/10 to-transparent pointer-events-none" />
+
+      <div className="relative flex flex-col gap-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/impact" className="text-green-500 hover:underline">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/impact" className="text-dengrow-500 hover:underline">
             Impact Dashboard
           </Link>
           <span>/</span>
@@ -98,10 +106,10 @@ export default function SponsorPage() {
 
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-teal-600">
-            Sponsor a Batch
+          <h1 className="font-display text-3xl font-bold tracking-tight">
+            Sponsor an <span className="text-teal-600">Impact Batch</span>
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-muted-foreground">
             Fund real-world tree planting with on-chain attribution
           </p>
         </div>
@@ -109,8 +117,8 @@ export default function SponsorPage() {
         {/* Stats */}
         {!isLoading && sponsorStats && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Card>
-              <CardContent className="py-4">
+            <Card className="rounded-xl shadow-card border-t-4 border-t-teal-500">
+              <CardContent className="py-5">
                 <Stat>
                   <StatLabel>Total Sponsored</StatLabel>
                   <StatNumber className="text-teal-600">
@@ -120,8 +128,8 @@ export default function SponsorPage() {
                 </Stat>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="py-4">
+            <Card className="rounded-xl shadow-card border-t-4 border-t-orange-500">
+              <CardContent className="py-5">
                 <Stat>
                   <StatLabel>Available Batches</StatLabel>
                   <StatNumber className="text-orange-500">{totalBatches}</StatNumber>
@@ -129,8 +137,8 @@ export default function SponsorPage() {
                 </Stat>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="py-4">
+            <Card className="rounded-xl shadow-card border-t-4 border-t-blue-500">
+              <CardContent className="py-5">
                 <Stat>
                   <StatLabel>Minimum</StatLabel>
                   <StatNumber className="text-blue-500">{MIN_SPONSORSHIP_STX} STX</StatNumber>
@@ -142,9 +150,9 @@ export default function SponsorPage() {
         )}
 
         {/* Sponsor Form */}
-        <Card>
+        <Card className="rounded-xl shadow-card">
           <CardHeader>
-            <CardTitle>Sponsorship Details</CardTitle>
+            <CardTitle className="font-display">Sponsorship Details</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-5">
@@ -158,7 +166,7 @@ export default function SponsorPage() {
                 />
                 <p className="text-sm text-muted-foreground">
                   Select a batch to sponsor (1 to {totalBatches}).{' '}
-                  <Link href="/impact" className="text-green-500 hover:underline">
+                  <Link href="/impact" className="text-dengrow-500 hover:underline">
                     View batches
                   </Link>
                 </p>
@@ -206,13 +214,13 @@ export default function SponsorPage() {
         </Card>
 
         {/* How it works */}
-        <Card className="border-teal-200 bg-teal-50">
+        <Card className="rounded-xl border-teal-200 bg-teal-50">
           <CardContent className="pt-6">
-            <div className="flex flex-col items-center gap-2">
-              <span className="font-bold text-teal-700">
+            <div className="flex flex-col items-center gap-3">
+              <span className="font-display text-lg font-bold text-teal-700">
                 How Sponsorship Works
               </span>
-              <p className="text-center text-sm text-teal-600">
+              <p className="text-center text-sm text-teal-600 leading-relaxed max-w-lg">
                 Your STX is transferred to the Impact Pool treasury and your name is permanently
                 recorded on-chain alongside the batch. The batch proof page will display your
                 sponsorship for anyone to verify.

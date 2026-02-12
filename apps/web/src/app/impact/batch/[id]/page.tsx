@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 function truncateAddress(address: string): string {
   if (address.length <= 12) return address;
@@ -42,7 +43,7 @@ export default function BatchDetailPage() {
         <div className="flex flex-col items-center gap-4">
           <p className="text-xl text-red-500">Invalid batch ID</p>
           <Link href="/impact">
-            <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">Back to Impact Dashboard</Button>
+            <Button variant="outline" className="border-dengrow-500 text-dengrow-600 hover:bg-dengrow-50">Back to Impact Dashboard</Button>
           </Link>
         </div>
       </div>
@@ -53,8 +54,8 @@ export default function BatchDetailPage() {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-          <p className="text-gray-600">Loading batch #{batchId}...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-dengrow-500" />
+          <p className="text-muted-foreground">Loading batch #{batchId}...</p>
         </div>
       </div>
     );
@@ -65,11 +66,11 @@ export default function BatchDetailPage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <p className="text-xl text-red-500">Batch #{batchId} not found</p>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             This batch may not exist yet or the contract is not deployed on this network.
           </p>
           <Link href="/impact">
-            <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">Back to Impact Dashboard</Button>
+            <Button variant="outline" className="border-dengrow-500 text-dengrow-600 hover:bg-dengrow-50">Back to Impact Dashboard</Button>
           </Link>
         </div>
       </div>
@@ -81,11 +82,14 @@ export default function BatchDetailPage() {
   const hasNext = batchId < totalBatches;
 
   return (
-    <div className="mx-auto max-w-screen-md px-4 py-8">
-      <div className="flex flex-col gap-6">
+    <div className="relative mx-auto max-w-screen-md px-4 py-8 sm:px-6">
+      {/* Gradient background */}
+      <div className="absolute left-0 top-0 h-64 w-full bg-gradient-to-b from-dengrow-500/10 to-transparent pointer-events-none" />
+
+      <div className="relative flex flex-col gap-6">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/impact" className="text-green-500 hover:underline">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/impact" className="text-dengrow-500 hover:underline">
             Impact Dashboard
           </Link>
           <span>/</span>
@@ -96,27 +100,31 @@ export default function BatchDetailPage() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold">Batch #{batchId}</h1>
-              <Badge className="bg-orange-100 text-orange-800 px-2 py-1 text-sm">
+              <h1 className="font-display text-2xl font-bold tracking-tight">Batch #{batchId}</h1>
+              <Badge className="bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 text-sm">
                 Verified
               </Badge>
               {sponsor && (
-                <Badge className="bg-teal-100 text-teal-800 px-2 py-1 text-sm">
+                <Badge className="bg-teal-50 text-teal-700 border border-teal-200 px-2 py-1 text-sm">
                   Sponsored
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Redemption proof recorded on-chain
             </p>
           </div>
-          <span className="text-3xl">📦</span>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-dengrow-50 text-2xl">
+            <svg className="h-6 w-6 text-dengrow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+          </div>
         </div>
 
         {/* Main Details Card */}
-        <Card>
+        <Card className="rounded-xl shadow-card">
           <CardHeader>
-            <CardTitle>Batch Details</CardTitle>
+            <CardTitle className="font-display">Batch Details</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">
@@ -124,10 +132,10 @@ export default function BatchDetailPage() {
                 label="Trees Redeemed"
                 value={
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-green-600">
+                    <span className="text-lg font-bold text-dengrow-600">
                       {batch.quantity}
                     </span>
-                    <span className="text-gray-500">trees</span>
+                    <span className="text-muted-foreground">trees</span>
                   </div>
                 }
               />
@@ -144,7 +152,7 @@ export default function BatchDetailPage() {
               <DetailRow
                 label="Recorded By"
                 value={
-                  <span className="font-mono text-sm" title={batch.recordedBy}>
+                  <span className="font-mono-addr text-sm" title={batch.recordedBy}>
                     {truncateAddress(batch.recordedBy)}
                   </span>
                 }
@@ -154,9 +162,9 @@ export default function BatchDetailPage() {
         </Card>
 
         {/* Proof Card */}
-        <Card>
+        <Card className="rounded-xl shadow-card">
           <CardHeader>
-            <CardTitle>Proof of Impact</CardTitle>
+            <CardTitle className="font-display">Proof of Impact</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">
@@ -169,7 +177,7 @@ export default function BatchDetailPage() {
                         href={batch.proofUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="break-all text-sm text-blue-500 hover:underline"
+                        className="break-all text-sm text-dengrow-500 hover:underline"
                       >
                         {batch.proofUrl}
                       </a>
@@ -192,7 +200,7 @@ export default function BatchDetailPage() {
                 />
               )}
               {!batch.proofUrl && !batch.proofHash && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   No proof data attached to this batch.
                 </p>
               )}
@@ -202,11 +210,11 @@ export default function BatchDetailPage() {
 
         {/* Sponsor Card */}
         {sponsor && (
-          <Card className="border-teal-200 bg-teal-50">
+          <Card className="rounded-xl border-teal-200 bg-teal-50 shadow-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <CardTitle className="text-teal-700">Sponsored By</CardTitle>
-                <Badge className="bg-teal-100 text-teal-800">Verified</Badge>
+                <CardTitle className="font-display text-teal-700">Sponsored By</CardTitle>
+                <Badge className="bg-teal-100 text-teal-800 border border-teal-200">Verified</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -232,7 +240,7 @@ export default function BatchDetailPage() {
                 <DetailRow
                   label="Address"
                   value={
-                    <span className="font-mono text-sm" title={sponsor.sponsor}>
+                    <span className="font-mono-addr text-sm" title={sponsor.sponsor}>
                       {truncateAddress(sponsor.sponsor)}
                     </span>
                   }
@@ -254,13 +262,13 @@ export default function BatchDetailPage() {
         {/* Sponsor CTA if not sponsored */}
         {!sponsor && (
           <Link href="/impact/sponsor">
-            <Card className="cursor-pointer border-dashed border-teal-300 transition-all duration-200 hover:border-teal-400 hover:bg-teal-50">
-              <CardContent className="py-4">
+            <Card className="cursor-pointer rounded-xl border-2 border-dashed border-dengrow-300 transition-all duration-200 hover:border-dengrow-500 hover:bg-dengrow-50 hover:shadow-glow">
+              <CardContent className="py-5">
                 <div className="flex items-center justify-center gap-3">
-                  <span className="font-medium text-teal-600">
+                  <span className="font-semibold text-dengrow-600">
                     Sponsor this batch
                   </span>
-                  <Badge className="border-teal-300 text-teal-700" variant="outline">
+                  <Badge className="border-dengrow-300 text-dengrow-700" variant="outline">
                     Min 1 STX
                   </Badge>
                 </div>
@@ -281,7 +289,7 @@ export default function BatchDetailPage() {
             <div />
           )}
           <Link href="/impact">
-            <Button variant="ghost" size="sm" className="text-green-600 hover:bg-green-50">
+            <Button variant="ghost" size="sm" className="text-dengrow-600 hover:bg-dengrow-50">
               All Batches
             </Button>
           </Link>
@@ -308,7 +316,7 @@ interface DetailRowProps {
 function DetailRow({ label, value }: DetailRowProps) {
   return (
     <div className="flex items-center justify-between">
-      <span className="shrink-0 text-sm text-gray-600">
+      <span className="shrink-0 text-sm text-muted-foreground">
         {label}
       </span>
       <div>{value}</div>

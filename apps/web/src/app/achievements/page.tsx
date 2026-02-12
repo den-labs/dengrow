@@ -48,8 +48,24 @@ export default function AchievementsPage() {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <span className="text-3xl">🏅</span>
-          <p>Connect your wallet to view achievements</p>
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-dengrow-50">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-8 w-8 text-dengrow-500"
+            >
+              <path d="M7 20h10" />
+              <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+              <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
+              <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
+            </svg>
+          </div>
+          <p className="text-muted-foreground">Connect your wallet to view achievements</p>
         </div>
       </div>
     );
@@ -59,8 +75,8 @@ export default function AchievementsPage() {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-          <p className="text-gray-600">Loading achievements...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-dengrow-500" />
+          <p className="text-muted-foreground">Loading achievements...</p>
         </div>
       </div>
     );
@@ -170,31 +186,36 @@ export default function AchievementsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-8">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-purple-600">
-            Achievements
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+            Player Achievements
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-muted-foreground">
             Earn badges by growing your plants and contributing to the community
           </p>
+          <div className="mt-3 flex justify-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-sm font-medium text-purple-700">
+              Rank: Sprouting
+            </span>
+          </div>
         </div>
 
         {/* Progress */}
-        <Card>
+        <Card className="rounded-xl shadow-card">
           <CardContent className="pt-6">
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <span className="font-medium">Badge Progress</span>
-                <Badge className="bg-purple-100 px-3 py-1 text-base text-purple-800">
+                <span className="font-display font-medium text-foreground">Badges Collected</span>
+                <Badge className="bg-purple-100 px-3 py-1 text-base font-semibold text-purple-800">
                   {earned}/{total}
                 </Badge>
               </div>
               <Progress
                 value={total > 0 ? (earned / total) * 100 : 0}
-                className="h-3 rounded-full"
+                className="h-3 rounded-full [&>div]:bg-purple-500"
               />
             </div>
           </CardContent>
@@ -213,10 +234,10 @@ export default function AchievementsPage() {
         </div>
 
         {/* Info */}
-        <Card className="border-purple-200 bg-purple-50">
+        <Card className="rounded-xl border-purple-200 bg-purple-50">
           <CardContent className="pt-6">
-            <div className="flex flex-col items-center gap-2">
-              <span className="font-bold text-purple-700">
+            <div className="flex flex-col items-center gap-3">
+              <span className="font-display text-lg font-bold text-purple-700">
                 How Badges Work
               </span>
               <p className="text-center text-sm text-purple-600">
@@ -224,6 +245,24 @@ export default function AchievementsPage() {
                 eligibility - the smart contract verifies your plants and progress before granting
                 each badge.
               </p>
+              <ul className="mt-1 grid w-full max-w-md grid-cols-1 gap-2 text-sm text-purple-700 sm:grid-cols-2">
+                <li className="flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-400" />
+                  On-chain verification via Bitcoin L2
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-400" />
+                  Permanent player history
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-400" />
+                  Tradable on marketplaces
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-400" />
+                  Special discounted rates
+                </li>
+              </ul>
             </div>
           </CardContent>
         </Card>
@@ -243,35 +282,35 @@ function BadgeCard({ badge, isClaiming, onClaim }: BadgeCardProps) {
 
   return (
     <Card
-      className={`transition-all duration-200 ${
+      className={`rounded-xl transition-all duration-200 ${
         isEarned
-          ? 'border-2 border-purple-300 bg-white'
-          : 'border opacity-70 hover:border-purple-200 hover:opacity-90'
+          ? 'border-2 border-purple-200 bg-white shadow-card'
+          : 'border opacity-60 hover:opacity-90 hover:shadow-card'
       }`}
     >
       <CardContent className="pt-6">
         <div className="flex items-start gap-4">
           <div
-            className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-3xl ${
-              isEarned ? 'bg-purple-100' : 'bg-gray-100 grayscale'
+            className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-3xl ${
+              isEarned ? 'bg-purple-50' : 'bg-gray-100 grayscale'
             }`}
           >
             {badge.icon}
           </div>
           <div className="flex flex-1 flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-bold">{badge.name}</span>
+              <span className="font-display font-bold text-foreground">{badge.name}</span>
               {isEarned && (
-                <Badge className="bg-purple-100 text-xs text-purple-800">
+                <Badge className="bg-purple-100 text-xs font-medium text-purple-800">
                   Earned
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               {badge.description}
             </p>
             {isEarned && badge.earnedAt && (
-              <p className="text-xs text-gray-400">
+              <p className="font-mono-addr text-xs text-muted-foreground/60">
                 Earned at block {badge.earnedAt}
               </p>
             )}
@@ -279,7 +318,7 @@ function BadgeCard({ badge, isClaiming, onClaim }: BadgeCardProps) {
               <Button
                 size="sm"
                 variant="outline"
-                className="mt-1 w-fit border-purple-600 text-purple-600 hover:bg-purple-50"
+                className="mt-1 w-fit rounded-lg border-purple-500 text-purple-600 hover:bg-purple-50"
                 disabled={isClaiming}
                 onClick={onClaim}
               >
