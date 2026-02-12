@@ -253,7 +253,7 @@ Ver `docs/IMPACT_POLICY.md` para 6 decisiones pendientes antes de mainnet:
 
 **plant-nft.clar:30** (deployed en testnet):
 ```clarity
-(define-data-var base-uri (string-ascii 80) "https://dengrow.app/api/metadata/{id}")
+(define-data-var base-uri (string-ascii 80) "https://dengrow.vercel.app/api/metadata/{id}")
 ```
 
 **Implementación Completa:**
@@ -266,7 +266,7 @@ Ver `docs/IMPACT_POLICY.md` para 6 decisiones pendientes antes de mainnet:
 
 **Verificación:**
 ```bash
-curl https://dengrow.app/api/metadata/1
+curl https://dengrow.vercel.app/api/metadata/1
 # Returns proper SIP-009 metadata with traits and image URL
 ```
 
@@ -458,7 +458,7 @@ pnpm --filter @dengrow/contracts test
 
 **Recomendado para Testnet**
 - [x] ✅ Remover mint permission → Mint público implementado
-- [x] ✅ Actualizar base-uri → `https://dengrow.app/api/metadata/{id}`
+- [x] ✅ Actualizar base-uri → `https://dengrow.vercel.app/api/metadata/{id}`
 - [ ] ⚠️ Cambiar trait a testnet version (funciona con mainnet trait, no crítico)
 
 **Opcional**

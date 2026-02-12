@@ -120,14 +120,14 @@ Total Batches:   2 (unchanged)
 - Partner: Jardín Botánico del Quindío
 - Verification: DenGrow Team
 
-**Proof URL:** `https://dengrow.xyz/testnet/proof/batch-003.md`
+**Proof URL:** `https://dengrow.vercel.app/testnet/proof/batch-003.md`
 *(Note: Test URL for testnet, not actually uploaded)*
 
 ---
 
 ### 5. Execute Redemption ✅
 
-**Command:** `pnpm redeem -- --quantity 5 --proof-url "https://dengrow.xyz/testnet/proof/batch-003.md"`
+**Command:** `pnpm redeem -- --quantity 5 --proof-url "https://dengrow.vercel.app/testnet/proof/batch-003.md"`
 
 **Transaction Details:**
 - TX ID: `6d6a4bef73266947a1c1e12ed0204f09663b49f10c6b0df25db60086e1329eff`
@@ -144,7 +144,7 @@ https://explorer.hiro.so/txid/6d6a4bef73266947a1c1e12ed0204f09663b49f10c6b0df25d
 - Args:
   - quantity: `u5`
   - proof-hash: `0x1507f238d527...` (SHA256 of proof URL)
-  - proof-url: `https://dengrow.xyz/testnet/proof/batch-003.md`
+  - proof-url: `https://dengrow.vercel.app/testnet/proof/batch-003.md`
 
 ---
 
@@ -162,7 +162,7 @@ Total Batches:   3 (+1) ✅
 ```
 Batch ID:     3
 Quantity:     5 trees
-Proof URL:    https://dengrow.xyz/testnet/proof/batch-003.md
+Proof URL:    https://dengrow.vercel.app/testnet/proof/batch-003.md
 Proof Hash:   0x1507f238d52710ba...
 Timestamp:    139799
 Recorded By:  ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ

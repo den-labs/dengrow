@@ -257,10 +257,10 @@ redemption batch.
 12 real trees were planted in Kenya through our partnership
 with One Tree Planted.
 
-View proof: https://dengrow.app/impact/batch/3
+View proof: https://dengrow.vercel.app/impact/batch/3
 
 Ready to grow another tree? Mint a new plant:
-https://dengrow.app
+https://dengrow.vercel.app
 
 Keep growing,
 The DenGrow Team 🌱

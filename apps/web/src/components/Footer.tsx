@@ -26,7 +26,7 @@ export const Footer = () => {
             <p>&copy; {new Date().getFullYear()} DenGrow. Built on Stacks.</p>
             <div className="mt-1 flex justify-center gap-4 md:justify-end">
               <a
-                href="https://docs.dengrow.xyz"
+                href="https://github.com/den-labs/dengrow#documentation"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="transition-colors hover:text-dengrow-500"

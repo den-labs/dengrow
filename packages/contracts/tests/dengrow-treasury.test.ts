@@ -9,7 +9,7 @@ const wallet2 = accounts.get("wallet_2")!;
 const proofHash = Cl.bufferFromHex(
   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 );
-const proofUrl = "https://dengrow.app/proof/batch-1";
+const proofUrl = "https://dengrow.vercel.app/proof/batch-1";
 
 /**
  * Helper: deposit STX into treasury from a given sender.

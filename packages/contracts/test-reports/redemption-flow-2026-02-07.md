@@ -89,7 +89,7 @@ Recorded By:  ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ
 ```
 Batch ID:     1
 Quantity:     2 trees
-Proof URL:    https://dengrow.xyz/proof/batch-2024-week1.pdf
+Proof URL:    https://dengrow.vercel.app/proof/batch-2024-week1.pdf
 Proof Hash:   0x3078336664343466393039383139616662383639653364396362386233643664...
 Timestamp:    139295
 Recorded By:  ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ

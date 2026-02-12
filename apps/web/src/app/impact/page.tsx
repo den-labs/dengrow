@@ -285,7 +285,7 @@ function AdminRedemptionCard({
 }: AdminRedemptionCardProps) {
   const { data: treasury, refetch: refetchTreasury } = useTreasuryStats();
   const [quantity, setQuantity] = useState(currentPoolSize);
-  const [proofUrl, setProofUrl] = useState(`https://dengrow.app/proof/batch-${nextBatchId}`);
+  const [proofUrl, setProofUrl] = useState(`https://dengrow.vercel.app/proof/batch-${nextBatchId}`);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
 
@@ -448,7 +448,7 @@ function AdminRedemptionCard({
 
           <div className="flex flex-col gap-2">
             <Label>Proof URL</Label>
-            <Input value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} placeholder="https://dengrow.app/proof/batch-1" />
+            <Input value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} placeholder="https://dengrow.vercel.app/proof/batch-1" />
             <p className="text-sm text-muted-foreground">URL to the proof document (SHA-256 hash computed automatically)</p>
           </div>
 

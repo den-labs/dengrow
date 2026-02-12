@@ -96,7 +96,7 @@ async function main() {
 
   // 2. Build redeem-with-payout call
   const quantity = 1;
-  const proofUrl = "https://dengrow.app/proof/treasury-test-1";
+  const proofUrl = "https://dengrow.vercel.app/proof/treasury-test-1";
   const proofHash = createHash("sha256").update(proofUrl).digest();
 
   console.log(`\nRedeeming ${quantity} tree...`);

@@ -53,7 +53,7 @@ if (!privateKey) {
 // Parse command line args
 const args = process.argv.slice(2);
 let quantity = 1;
-let proofUrl = "https://dengrow.xyz/proof/batch-1";
+let proofUrl = "https://dengrow.vercel.app/proof/batch-1";
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--quantity" && args[i + 1]) {
