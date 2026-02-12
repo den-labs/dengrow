@@ -1,30 +1,7 @@
 'use client';
 
-import {
-  Container,
-  VStack,
-  HStack,
-  Text,
-  Image,
-  Center,
-  Badge,
-  Button,
-  Box,
-  Progress,
-  Spinner,
-  useToast,
-  Divider,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  SimpleGrid,
-  Card,
-  CardBody,
-  Icon,
-  Heading,
-} from '@chakra-ui/react';
-import { ArrowBackIcon } from '@chakra-ui/icons';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -43,37 +20,23 @@ import { getContractErrorMessage } from '@/lib/contract-errors';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { getExplorerLink } from '@/utils/explorer-links';
 import { generateTraits, calculateRarityScore } from '@/lib/traits';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Stat, StatLabel, StatNumber, StatHelpText } from '@/components/ui/stat';
+import { getColorClasses } from '@/lib/color-variants';
+import { cn } from '@/lib/utils';
 
-// Stage descriptions for the journey
 const stageDescriptions: Record<number, { title: string; description: string; icon: string }> = {
-  0: {
-    title: 'Seed',
-    description: 'Your journey begins! Water daily to help your seed sprout.',
-    icon: '🌱',
-  },
-  1: {
-    title: 'Sprout',
-    description: 'A tiny sprout emerges! Keep watering to grow stronger.',
-    icon: '🌿',
-  },
-  2: {
-    title: 'Seedling',
-    description: 'Your plant is growing nicely. Continue the daily care.',
-    icon: '🪴',
-  },
-  3: {
-    title: 'Vegetative',
-    description: 'Almost there! Your plant is thriving.',
-    icon: '🌳',
-  },
-  4: {
-    title: 'Tree',
-    description: 'Congratulations! Your plant has graduated to the Impact Pool.',
-    icon: '🎄',
-  },
+  0: { title: 'Seed', description: 'Your journey begins! Water daily to help your seed sprout.', icon: '🌱' },
+  1: { title: 'Sprout', description: 'A tiny sprout emerges! Keep watering to grow stronger.', icon: '🌿' },
+  2: { title: 'Seedling', description: 'Your plant is growing nicely. Continue the daily care.', icon: '🪴' },
+  3: { title: 'Vegetative', description: 'Almost there! Your plant is thriving.', icon: '🌳' },
+  4: { title: 'Tree', description: 'Congratulations! Your plant has graduated to the Impact Pool.', icon: '🎄' },
 };
 
-// Growth milestones
 const growthMilestones = [
   { points: 0, stage: 0, label: 'Seed' },
   { points: 2, stage: 1, label: 'Sprout' },
@@ -81,6 +44,13 @@ const growthMilestones = [
   { points: 5, stage: 3, label: 'Vegetative' },
   { points: 7, stage: 4, label: 'Tree' },
 ];
+
+function getRarityBadgeClass(rarity: string): string {
+  if (rarity === 'legendary') return 'bg-yellow-100 text-yellow-800';
+  if (rarity === 'rare') return 'bg-purple-100 text-purple-800';
+  if (rarity === 'uncommon') return 'bg-blue-100 text-blue-800';
+  return 'bg-gray-100 text-gray-800';
+}
 
 export default function PlantDetailPage() {
   const params = useParams();
@@ -90,7 +60,6 @@ export default function PlantDetailPage() {
   const network = useNetwork();
   const currentAddress = useCurrentAddress();
   const { currentWallet } = useDevnetWallet();
-  const toast = useToast();
 
   const [isWatering, setIsWatering] = useState(false);
   const [lastTxId, setLastTxId] = useState<string | null>(null);
@@ -101,7 +70,6 @@ export default function PlantDetailPage() {
   const { data: poolStats } = usePoolStats();
   const { data: txData } = useGetTxId(lastTxId || '');
 
-  // Track TX status for water action
   // @ts-ignore
   const txPending = lastTxId && (!txData || txData?.tx_status === 'pending');
 
@@ -109,23 +77,19 @@ export default function PlantDetailPage() {
     if (!txData || !lastTxId) return;
     // @ts-ignore
     if (txData.tx_status === 'success') {
-      toast({ title: 'Plant Watered', description: 'Transaction confirmed on-chain', status: 'success' });
+      toast.success('Plant Watered', { description: 'Transaction confirmed on-chain' });
       setLastTxId(null);
       refetch();
     // @ts-ignore
     } else if (txData.tx_status === 'abort_by_response') {
-      toast({ title: 'Watering Failed', description: 'Transaction was rejected on-chain', status: 'error' });
+      toast.error('Watering Failed', { description: 'Transaction was rejected on-chain' });
       setLastTxId(null);
     }
-  }, [txData, lastTxId, toast, refetch]);
+  }, [txData, lastTxId, refetch]);
 
   const plantState = plantData?.plant;
   const stage = plantState?.stage ?? 0;
-
-  // Get dynamic image URL with current stage
   const imageSrc = getPlantImage(tokenId, stage);
-
-  // Generate deterministic traits for this plant
   const traits = generateTraits(tokenId);
   const rarityScore = calculateRarityScore(traits);
   const growthPoints = plantState?.['growth-points'] ?? 0;
@@ -133,17 +97,15 @@ export default function PlantDetailPage() {
   const isTree = stage >= 4;
   const isRedeemed = graduationInfo?.redeemed ?? false;
 
-  // Check if watering is allowed
   const isTestnet = network ? isTestnetEnvironment(network) : false;
   const cooldownBlocks = getCooldownBlocks(isTestnet);
   const canWater = plantState && !isTree && (cooldownBlocks === 0 || lastWaterBlock === 0);
 
-  // Calculate progress to next stage
-  const currentMilestone = growthMilestones.find((m) => m.stage === stage);
   const nextMilestone = growthMilestones.find((m) => m.stage === stage + 1);
   const pointsToNextStage = nextMilestone ? nextMilestone.points - growthPoints : 0;
-
   const stageInfo = stageDescriptions[stage] || stageDescriptions[0];
+  const stageColors = getColorClasses(getStageColor(stage));
+  const tierColors = tierInfo ? getColorClasses(tierInfo.colorScheme) : null;
 
   const handleWater = async (withTip = false) => {
     if (!network || !currentAddress || isWatering || txPending) return;
@@ -157,38 +119,22 @@ export default function PlantDetailPage() {
       if (shouldUseDirectCall()) {
         const { txid } = await executeContractCall(txOptions, currentWallet);
         setLastTxId(txid);
-        toast({
-          title: 'Watering Submitted',
-          description: 'Confirming on-chain...',
-          status: 'info',
-        });
+        toast.info('Watering Submitted', { description: 'Confirming on-chain...' });
       } else {
         await openContractCall({
           ...txOptions,
           onFinish: (data) => {
             setLastTxId(data.txId);
-            toast({
-              title: 'Watering Submitted',
-              description: 'Confirming on-chain...',
-              status: 'info',
-            });
+            toast.info('Watering Submitted', { description: 'Confirming on-chain...' });
           },
           onCancel: () => {
-            toast({
-              title: 'Cancelled',
-              description: 'Transaction was cancelled',
-              status: 'info',
-            });
+            toast.info('Cancelled', { description: 'Transaction was cancelled' });
           },
         });
       }
     } catch (error: unknown) {
       console.error('Error watering plant:', error);
-      toast({
-        title: 'Watering Failed',
-        description: getContractErrorMessage(error),
-        status: 'error',
-      });
+      toast.error('Watering Failed', { description: getContractErrorMessage(error) });
     } finally {
       setIsWatering(false);
     }
@@ -196,194 +142,150 @@ export default function PlantDetailPage() {
 
   if (!currentAddress) {
     return (
-      <Center h="50vh">
-        <Text>Please connect your wallet to view this plant</Text>
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <p>Please connect your wallet to view this plant</p>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Spinner size="xl" />
-          <Text>Loading plant data...</Text>
-        </VStack>
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p>Loading plant data...</p>
+        </div>
+      </div>
     );
   }
 
   if (!plantData?.exists) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Text fontSize="xl">Plant #{tokenId} not found</Text>
-          <Button as={Link} href="/my-plants" leftIcon={<ArrowBackIcon />}>
-            Back to My Plants
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xl">Plant #{tokenId} not found</p>
+          <Button asChild variant="ghost">
+            <Link href="/my-plants">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to My Plants
+            </Link>
           </Button>
-        </VStack>
-      </Center>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Container maxW="container.lg" py={8}>
-      <VStack spacing={8} align="stretch">
+    <div className="mx-auto max-w-screen-lg px-4 py-8">
+      <div className="flex flex-col gap-8">
         {/* Header with back button */}
-        <HStack>
-          <Button
-            as={Link}
-            href="/my-plants"
-            variant="ghost"
-            leftIcon={<ArrowBackIcon />}
-            size="sm"
-          >
-            Back to My Plants
+        <div>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/my-plants">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to My Plants
+            </Link>
           </Button>
-        </HStack>
+        </div>
 
         {/* Main content */}
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* Left: Plant Image */}
           <Card>
-            <CardBody>
-              <VStack spacing={4}>
-                <Box
-                  position="relative"
-                  w="full"
-                  paddingTop="100%"
-                  borderRadius="lg"
-                  overflow="hidden"
-                  bg="gray.100"
-                >
-                  <Center position="absolute" top={0} left={0} right={0} bottom={0}>
+            <CardContent className="pt-6">
+              <div className="flex flex-col gap-4">
+                <div className="relative w-full overflow-hidden rounded-lg bg-gray-100 pt-[100%]">
+                  <div className="absolute inset-0 flex items-center justify-center">
                     {imageSrc ? (
-                      <Image
-                        src={imageSrc}
-                        alt={`Plant #${tokenId}`}
-                        objectFit="cover"
-                        w="full"
-                        h="full"
-                      />
+                      <img src={imageSrc} alt={`Plant #${tokenId}`} className="h-full w-full object-cover" />
                     ) : (
-                      <VStack>
-                        <Text fontSize="6xl">{stageInfo.icon}</Text>
-                        <Text color="gray.500">Plant #{tokenId}</Text>
-                      </VStack>
+                      <div className="flex flex-col items-center">
+                        <span className="text-6xl">{stageInfo.icon}</span>
+                        <span className="text-gray-500">Plant #{tokenId}</span>
+                      </div>
                     )}
-                  </Center>
-                  {/* Tier badge overlay */}
-                  {tierInfo && (
-                    <Badge
-                      position="absolute"
-                      top={4}
-                      left={4}
-                      colorScheme={tierInfo.colorScheme}
-                      fontSize="sm"
-                      px={3}
-                      py={1}
-                    >
+                  </div>
+                  {tierInfo && tierColors && (
+                    <span className={cn('absolute left-4 top-4 rounded px-3 py-1 text-sm font-medium', tierColors.badge)}>
                       {tierInfo.name} Tier
-                    </Badge>
+                    </span>
                   )}
-                  {/* Stage badge overlay */}
-                  <Badge
-                    position="absolute"
-                    top={4}
-                    right={4}
-                    colorScheme={getStageColor(stage)}
-                    fontSize="md"
-                    px={3}
-                    py={1}
-                  >
+                  <span className={cn('absolute right-4 top-4 rounded px-3 py-1 text-base font-medium', stageColors.badge)}>
                     {stageInfo.icon} {getStageName(stage)}
-                  </Badge>
-                </Box>
+                  </span>
+                </div>
 
                 {/* Water button */}
                 {isTree ? (
-                  <Button colorScheme="orange" size="lg" width="full" isDisabled>
+                  <Button className="w-full bg-orange-600 text-white" size="lg" disabled>
                     Graduated to Impact Pool 🌳
                   </Button>
                 ) : canWater ? (
-                  <SimpleGrid columns={2} spacing={2} w="full">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
-                      colorScheme={txPending ? 'orange' : 'blue'}
+                      className={cn(getColorClasses(txPending ? 'orange' : 'blue').button)}
                       size="lg"
-                      isDisabled={!!txPending}
-                      isLoading={isWatering || !!txPending}
-                      loadingText={txPending ? 'Confirming...' : 'Watering...'}
+                      disabled={!!txPending || isWatering}
                       onClick={() => handleWater(false)}
                     >
-                      Water 💧
+                      {(isWatering || !!txPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {txPending ? 'Confirming...' : isWatering ? 'Watering...' : 'Water 💧'}
                     </Button>
                     <Button
-                      colorScheme={txPending ? 'orange' : 'teal'}
-                      size="lg"
                       variant="outline"
-                      isDisabled={!!txPending}
-                      isLoading={isWatering || !!txPending}
-                      loadingText={txPending ? 'Confirming...' : 'Watering...'}
+                      className={cn(getColorClasses(txPending ? 'orange' : 'teal').buttonOutline)}
+                      size="lg"
+                      disabled={!!txPending || isWatering}
                       onClick={() => handleWater(true)}
                     >
-                      Water + Tip ({WATER_TIP_STX} STX)
+                      {(isWatering || !!txPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {txPending ? 'Confirming...' : isWatering ? 'Watering...' : `Water + Tip (${WATER_TIP_STX} STX)`}
                     </Button>
-                  </SimpleGrid>
+                  </div>
                 ) : (
-                  <Button colorScheme="gray" size="lg" width="full" isDisabled>
+                  <Button className="w-full bg-gray-600 text-white" size="lg" disabled>
                     Cooldown Active ⏳
                   </Button>
                 )}
 
                 {lastTxId && (
-                  <Button
-                    as="a"
+                  <a
                     href={getExplorerLink(lastTxId, network)}
                     target="_blank"
-                    variant="link"
-                    colorScheme="blue"
-                    size="sm"
+                    rel="noopener noreferrer"
+                    className="text-center text-sm text-blue-500 hover:underline"
                   >
                     View transaction in explorer
-                  </Button>
+                  </a>
                 )}
-              </VStack>
-            </CardBody>
+              </div>
+            </CardContent>
           </Card>
 
           {/* Right: Plant Info */}
-          <VStack spacing={6} align="stretch">
+          <div className="flex flex-col gap-6">
             {/* Title and description */}
-            <Box>
-              <HStack justify="space-between" align="start">
-                <VStack align="start" spacing={1}>
-                  <HStack spacing={3} align="baseline">
-                    <Text fontSize="3xl" fontWeight="bold">
-                      Plant #{tokenId}
-                    </Text>
-                    {tierInfo && (
-                      <Badge colorScheme={tierInfo.colorScheme} fontSize="sm" px={2} py={0.5}>
-                        {tierInfo.name}
-                      </Badge>
-                    )}
-                  </HStack>
-                  <Text color="gray.600">{stageInfo.description}</Text>
-                </VStack>
-              </HStack>
-            </Box>
+            <div>
+              <div className="flex items-baseline gap-3">
+                <h1 className="text-3xl font-bold">Plant #{tokenId}</h1>
+                {tierInfo && tierColors && (
+                  <Badge className={cn(tierColors.badge, 'px-2 py-0.5 text-sm')}>
+                    {tierInfo.name}
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-1 text-gray-600">{stageInfo.description}</p>
+            </div>
 
-            <Divider />
+            <Separator />
 
             {/* Stats */}
-            <SimpleGrid columns={2} spacing={4}>
+            <div className="grid grid-cols-2 gap-4">
               <Stat>
                 <StatLabel>Current Stage</StatLabel>
-                <StatNumber>
-                  {stageInfo.icon} {stageInfo.title}
-                </StatNumber>
+                <StatNumber>{stageInfo.icon} {stageInfo.title}</StatNumber>
                 <StatHelpText>Stage {stage + 1} of 5</StatHelpText>
               </Stat>
-
               <Stat>
                 <StatLabel>Growth Points</StatLabel>
                 <StatNumber>{growthPoints}/7</StatNumber>
@@ -391,263 +293,225 @@ export default function PlantDetailPage() {
                   {isTree ? 'Fully grown!' : `${pointsToNextStage} more to evolve`}
                 </StatHelpText>
               </Stat>
-            </SimpleGrid>
+            </div>
 
             {/* Progress bar */}
-            <Box>
-              <HStack justify="space-between" mb={2}>
-                <Text fontSize="sm" fontWeight="medium">
-                  Growth Progress
-                </Text>
-                <Text fontSize="sm" color="gray.600">
-                  {Math.round((growthPoints / 7) * 100)}%
-                </Text>
-              </HStack>
-              <Progress
-                value={(growthPoints / 7) * 100}
-                colorScheme={getStageColor(stage)}
-                borderRadius="full"
-                size="lg"
-              />
-            </Box>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium">Growth Progress</span>
+                <span className="text-sm text-gray-600">{Math.round((growthPoints / 7) * 100)}%</span>
+              </div>
+              <Progress value={(growthPoints / 7) * 100} className="h-3 rounded-full" />
+            </div>
 
             {/* Growth Journey */}
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={3}>
-                Growth Journey
-              </Text>
-              <HStack spacing={2} justify="space-between">
-                {growthMilestones.map((milestone, index) => (
-                  <VStack key={milestone.stage} spacing={1}>
-                    <Box
-                      w={8}
-                      h={8}
-                      borderRadius="full"
-                      bg={stage >= milestone.stage ? `${getStageColor(milestone.stage)}.500` : 'gray.200'}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Text fontSize="xs" color={stage >= milestone.stage ? 'white' : 'gray.500'}>
-                        {stageDescriptions[milestone.stage]?.icon}
-                      </Text>
-                    </Box>
-                    <Text fontSize="xs" color={stage >= milestone.stage ? 'gray.700' : 'gray.400'}>
-                      {milestone.label}
-                    </Text>
-                  </VStack>
-                ))}
-              </HStack>
-            </Box>
+            <div>
+              <span className="mb-3 block text-sm font-medium">Growth Journey</span>
+              <div className="flex items-center justify-between gap-2">
+                {growthMilestones.map((milestone) => {
+                  const milestoneColors = getColorClasses(getStageColor(milestone.stage));
+                  const reached = stage >= milestone.stage;
+                  return (
+                    <div key={milestone.stage} className="flex flex-col items-center gap-1">
+                      <div
+                        className={cn(
+                          'flex h-8 w-8 items-center justify-center rounded-full',
+                          reached ? milestoneColors.progress + ' text-white' : 'bg-gray-200 text-gray-500'
+                        )}
+                      >
+                        <span className="text-xs">{stageDescriptions[milestone.stage]?.icon}</span>
+                      </div>
+                      <span className={cn('text-xs', reached ? 'text-gray-700' : 'text-gray-400')}>
+                        {milestone.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-            <Divider />
+            <Separator />
 
-            {/* Plant Data */}
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={3}>
-                On-Chain Data
-              </Text>
-              <VStack align="stretch" spacing={2} fontSize="sm">
-                <HStack justify="space-between">
-                  <Text color="gray.600">Token ID</Text>
-                  <Text fontFamily="mono">#{tokenId}</Text>
-                </HStack>
-                <HStack justify="space-between">
-                  <Text color="gray.600">Mint Tier</Text>
-                  {tierInfo ? (
-                    <Badge colorScheme={tierInfo.colorScheme}>{tierInfo.name} ({tierInfo.priceSTX} STX)</Badge>
+            {/* On-Chain Data */}
+            <div>
+              <span className="mb-3 block text-sm font-medium">On-Chain Data</span>
+              <div className="flex flex-col gap-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Token ID</span>
+                  <span className="font-mono">#{tokenId}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Mint Tier</span>
+                  {tierInfo && tierColors ? (
+                    <Badge className={tierColors.badge}>{tierInfo.name} ({tierInfo.priceSTX} STX)</Badge>
                   ) : (
-                    <Text fontFamily="mono" color="gray.400">--</Text>
+                    <span className="font-mono text-gray-400">--</span>
                   )}
-                </HStack>
-                <HStack justify="space-between">
-                  <Text color="gray.600">Owner</Text>
-                  <Text fontFamily="mono" isTruncated maxW="200px">
-                    {plantState?.owner}
-                  </Text>
-                </HStack>
-                <HStack justify="space-between">
-                  <Text color="gray.600">Last Watered</Text>
-                  <Text fontFamily="mono">
-                    {lastWaterBlock === 0 ? 'Never' : `Block #${lastWaterBlock}`}
-                  </Text>
-                </HStack>
-                <HStack justify="space-between">
-                  <Text color="gray.600">Cooldown</Text>
-                  <Text fontFamily="mono">
-                    {cooldownBlocks === 0 ? 'None (Testnet)' : `${cooldownBlocks} blocks`}
-                  </Text>
-                </HStack>
-              </VStack>
-            </Box>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Owner</span>
+                  <span className="max-w-[200px] truncate font-mono">{plantState?.owner}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Last Watered</span>
+                  <span className="font-mono">{lastWaterBlock === 0 ? 'Never' : `Block #${lastWaterBlock}`}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Cooldown</span>
+                  <span className="font-mono">{cooldownBlocks === 0 ? 'None (Testnet)' : `${cooldownBlocks} blocks`}</span>
+                </div>
+              </div>
+            </div>
 
-            <Divider />
+            <Separator />
 
             {/* Plant Traits */}
-            <Box>
-              <HStack justify="space-between" mb={3}>
-                <Text fontSize="sm" fontWeight="medium">
-                  Traits
-                </Text>
-                <Badge colorScheme={rarityScore >= 50 ? 'purple' : rarityScore >= 25 ? 'blue' : 'gray'}>
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-medium">Traits</span>
+                <Badge className={rarityScore >= 50 ? 'bg-purple-100 text-purple-800' : rarityScore >= 25 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
                   Rarity Score: {rarityScore}
                 </Badge>
-              </HStack>
-              <SimpleGrid columns={2} spacing={3}>
-                <Box p={3} bg="gray.50" borderRadius="md">
-                  <Text fontSize="xs" color="gray.500" mb={1}>Pot</Text>
-                  <HStack>
-                    <Box w={4} h={4} borderRadius="full" bg={traits.pot.color} />
-                    <Text fontSize="sm" fontWeight="medium">{traits.pot.name}</Text>
-                  </HStack>
-                  <Badge size="sm" colorScheme={traits.pot.rarity === 'legendary' ? 'yellow' : traits.pot.rarity === 'rare' ? 'purple' : traits.pot.rarity === 'uncommon' ? 'blue' : 'gray'} mt={1}>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-md bg-gray-50 p-3">
+                  <span className="mb-1 block text-xs text-gray-500">Pot</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full" style={{ backgroundColor: traits.pot.color }} />
+                    <span className="text-sm font-medium">{traits.pot.name}</span>
+                  </div>
+                  <Badge className={cn('mt-1 text-xs', getRarityBadgeClass(traits.pot.rarity))}>
                     {traits.pot.rarity}
                   </Badge>
-                </Box>
-                <Box p={3} bg="gray.50" borderRadius="md">
-                  <Text fontSize="xs" color="gray.500" mb={1}>Background</Text>
-                  <HStack>
-                    <Box w={4} h={4} borderRadius="full" bg={traits.background.color} />
-                    <Text fontSize="sm" fontWeight="medium">{traits.background.name}</Text>
-                  </HStack>
-                  <Badge size="sm" colorScheme={traits.background.rarity === 'legendary' ? 'yellow' : traits.background.rarity === 'rare' ? 'purple' : traits.background.rarity === 'uncommon' ? 'blue' : 'gray'} mt={1}>
+                </div>
+                <div className="rounded-md bg-gray-50 p-3">
+                  <span className="mb-1 block text-xs text-gray-500">Background</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full" style={{ backgroundColor: traits.background.color }} />
+                    <span className="text-sm font-medium">{traits.background.name}</span>
+                  </div>
+                  <Badge className={cn('mt-1 text-xs', getRarityBadgeClass(traits.background.rarity))}>
                     {traits.background.rarity}
                   </Badge>
-                </Box>
-                <Box p={3} bg="gray.50" borderRadius="md">
-                  <Text fontSize="xs" color="gray.500" mb={1}>Flower</Text>
-                  <HStack>
-                    <Text>{traits.flower.emoji}</Text>
-                    <Text fontSize="sm" fontWeight="medium">{traits.flower.name}</Text>
-                  </HStack>
-                  <Badge size="sm" colorScheme={traits.flower.rarity === 'legendary' ? 'yellow' : traits.flower.rarity === 'rare' ? 'purple' : traits.flower.rarity === 'uncommon' ? 'blue' : 'gray'} mt={1}>
+                </div>
+                <div className="rounded-md bg-gray-50 p-3">
+                  <span className="mb-1 block text-xs text-gray-500">Flower</span>
+                  <div className="flex items-center gap-2">
+                    <span>{traits.flower.emoji}</span>
+                    <span className="text-sm font-medium">{traits.flower.name}</span>
+                  </div>
+                  <Badge className={cn('mt-1 text-xs', getRarityBadgeClass(traits.flower.rarity))}>
                     {traits.flower.rarity}
                   </Badge>
-                </Box>
-                <Box p={3} bg="gray.50" borderRadius="md">
-                  <Text fontSize="xs" color="gray.500" mb={1}>Companion</Text>
-                  <HStack>
-                    <Text>{traits.companion.emoji || '—'}</Text>
-                    <Text fontSize="sm" fontWeight="medium">{traits.companion.name}</Text>
-                  </HStack>
-                  <Badge size="sm" colorScheme={traits.companion.rarity === 'legendary' ? 'yellow' : traits.companion.rarity === 'rare' ? 'purple' : traits.companion.rarity === 'uncommon' ? 'blue' : 'gray'} mt={1}>
+                </div>
+                <div className="rounded-md bg-gray-50 p-3">
+                  <span className="mb-1 block text-xs text-gray-500">Companion</span>
+                  <div className="flex items-center gap-2">
+                    <span>{traits.companion.emoji || '—'}</span>
+                    <span className="text-sm font-medium">{traits.companion.name}</span>
+                  </div>
+                  <Badge className={cn('mt-1 text-xs', getRarityBadgeClass(traits.companion.rarity))}>
                     {traits.companion.rarity}
                   </Badge>
-                </Box>
-              </SimpleGrid>
-            </Box>
+                </div>
+              </div>
+            </div>
 
-            {/* Impact Pool — Enhanced Post-Graduation UI */}
+            {/* Impact Pool — Post-Graduation UI */}
             {isTree && (
-              <VStack spacing={4}>
-                {/* Section A: Celebration Header */}
-                <Card
-                  bg={isRedeemed ? 'green.50' : 'orange.50'}
-                  borderColor={isRedeemed ? 'green.200' : 'orange.200'}
-                  borderWidth={1}
-                  w="full"
-                >
-                  <CardBody>
-                    <VStack spacing={3}>
-                      <Text fontSize="4xl">{isRedeemed ? '🌍' : '🎉'}</Text>
-                      <Heading
-                        size="md"
-                        color={isRedeemed ? 'green.700' : 'orange.700'}
-                        textAlign="center"
-                      >
+              <div className="flex flex-col gap-4">
+                {/* Celebration Header */}
+                <Card className={isRedeemed ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}>
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col items-center gap-3">
+                      <span className="text-4xl">{isRedeemed ? '🌍' : '🎉'}</span>
+                      <h3 className={cn('text-center text-lg font-bold', isRedeemed ? 'text-green-700' : 'text-orange-700')}>
                         {isRedeemed ? 'Real Impact Made!' : 'Your Tree is in the Impact Pool!'}
-                      </Heading>
-                      <HStack spacing={2}>
-                        <Badge colorScheme={isRedeemed ? 'green' : 'orange'} fontSize="sm" px={2}>
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Badge className={isRedeemed ? 'bg-green-100 px-2 text-sm text-green-800' : 'bg-orange-100 px-2 text-sm text-orange-800'}>
                           {isRedeemed ? 'Redeemed' : 'In Pool'}
                         </Badge>
                         {graduationInfo && (
-                          <Text fontSize="xs" color="gray.500" fontFamily="mono">
+                          <span className="font-mono text-xs text-gray-500">
                             Graduated at block #{graduationInfo.graduatedAt}
-                          </Text>
+                          </span>
                         )}
-                      </HStack>
-                      <Text
-                        textAlign="center"
-                        fontSize="sm"
-                        color={isRedeemed ? 'green.600' : 'orange.600'}
-                      >
+                      </div>
+                      <p className={cn('text-center text-sm', isRedeemed ? 'text-green-600' : 'text-orange-600')}>
                         {isRedeemed
                           ? 'This tree has been converted to real-world impact! A real tree was planted thanks to your care.'
                           : 'Your tree is waiting in the Impact Pool to be converted to real-world impact in the next batch redemption.'}
-                      </Text>
-                    </VStack>
-                  </CardBody>
+                      </p>
+                    </div>
+                  </CardContent>
                 </Card>
 
-                {/* Section B: Mini Pool Stats */}
-                <Card w="full">
-                  <CardBody>
-                    <VStack spacing={3}>
-                      <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                        Impact Pool Status
-                      </Text>
-                      <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4} w="full">
-                        <Stat textAlign="center">
+                {/* Mini Pool Stats */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col items-center gap-3">
+                      <span className="text-sm font-bold text-gray-700">Impact Pool Status</span>
+                      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+                        <Stat className="text-center">
                           <StatLabel>In Pool</StatLabel>
                           <StatNumber>{poolStats?.currentPoolSize ?? '--'}</StatNumber>
                           <StatHelpText>trees waiting</StatHelpText>
                         </Stat>
-                        <Stat textAlign="center">
+                        <Stat className="text-center">
                           <StatLabel>Redeemed</StatLabel>
                           <StatNumber>{poolStats?.totalRedeemed ?? '--'}</StatNumber>
                           <StatHelpText>real trees planted</StatHelpText>
                         </Stat>
-                        <Stat textAlign="center">
+                        <Stat className="text-center">
                           <StatLabel>Batches</StatLabel>
                           <StatNumber>{poolStats?.totalBatches ?? '--'}</StatNumber>
                           <StatHelpText>completed</StatHelpText>
                         </Stat>
-                      </SimpleGrid>
-                      <Box w="full">
-                        <HStack justify="space-between" mb={1}>
-                          <Text fontSize="xs" color="gray.500">
-                            Redemption progress
-                          </Text>
-                          <Text fontSize="xs" color="gray.500">
+                      </div>
+                      <div className="w-full">
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-xs text-gray-500">Redemption progress</span>
+                          <span className="text-xs text-gray-500">
                             {poolStats
                               ? poolStats.totalGraduated > 0
                                 ? `${Math.round((poolStats.totalRedeemed / poolStats.totalGraduated) * 100)}%`
                                 : '0%'
                               : '--'}
-                          </Text>
-                        </HStack>
+                          </span>
+                        </div>
                         <Progress
                           value={
                             poolStats && poolStats.totalGraduated > 0
                               ? (poolStats.totalRedeemed / poolStats.totalGraduated) * 100
                               : 0
                           }
-                          colorScheme={isRedeemed ? 'green' : 'orange'}
-                          borderRadius="full"
-                          size="sm"
-                          hasStripe={!isRedeemed}
-                          isAnimated={!isRedeemed}
+                          className="h-2 rounded-full"
                         />
-                      </Box>
-                    </VStack>
-                  </CardBody>
+                      </div>
+                    </div>
+                  </CardContent>
                 </Card>
 
-                {/* Section C: CTA Row */}
-                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3} w="full">
-                  <Button as={Link} href="/my-plants" colorScheme="green" size="lg">
-                    Mint Another Plant
+                {/* CTA Row */}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Button asChild className="bg-green-600 text-white hover:bg-green-700" size="lg">
+                    <Link href="/my-plants">Mint Another Plant</Link>
                   </Button>
-                  <Button as={Link} href="/impact" variant="outline" colorScheme={isRedeemed ? 'green' : 'orange'} size="lg">
-                    View Impact Dashboard
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className={isRedeemed ? 'border-green-600 text-green-600 hover:bg-green-50' : 'border-orange-600 text-orange-600 hover:bg-orange-50'}
+                  >
+                    <Link href="/impact">View Impact Dashboard</Link>
                   </Button>
-                </SimpleGrid>
-              </VStack>
+                </div>
+              </div>
             )}
-          </VStack>
-        </SimpleGrid>
-      </VStack>
-    </Container>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

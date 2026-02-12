@@ -2,8 +2,6 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
 import { Providers } from '@/components/ui/provider';
-import { ColorModeScript } from '@chakra-ui/react';
-import theme from '@/theme';
 import { Navbar } from '@/components/Navbar';
 
 const geistSans = localFont({
@@ -28,7 +26,6 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ColorModeScript initialColorMode="light" />
         <Providers>
           <>
             <Navbar />

@@ -1,20 +1,7 @@
 'use client';
 
-import {
-  Box,
-  VStack,
-  Text,
-  Image,
-  Center,
-  Badge,
-  HStack,
-  Button,
-  Spinner,
-  Progress,
-  Skeleton,
-  SkeletonText,
-  useToast,
-} from '@chakra-ui/react';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useNetwork } from '@/lib/use-network';
 import { getPlaceholderImage } from '@/utils/nft-utils';
 import { useGetPlant, getStageName, getStageColor, getCooldownBlocks } from '@/hooks/useGetPlant';
@@ -27,6 +14,12 @@ import { useGetTxId } from '@/hooks/useNftHoldings';
 import { useDevnetWallet } from '@/lib/devnet-wallet-context';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getColorClasses } from '@/lib/color-variants';
+import { cn } from '@/lib/utils';
 
 interface PlantCardProps {
   plant: {
@@ -37,7 +30,6 @@ interface PlantCardProps {
 
 export const PlantCard = ({ plant }: PlantCardProps) => {
   const network = useNetwork();
-  const toast = useToast();
   const { currentWallet } = useDevnetWallet();
   const [isWatering, setIsWatering] = useState(false);
   const [waterTxId, setWaterTxId] = useState<string | null>(null);
@@ -60,15 +52,15 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
     if (!txData || !waterTxId) return;
     // @ts-ignore
     if (txData.tx_status === 'success') {
-      toast({ title: 'Plant Watered', description: 'Transaction confirmed on-chain', status: 'success' });
+      toast.success('Plant Watered', { description: 'Transaction confirmed on-chain' });
       setWaterTxId(null);
       refetch();
     // @ts-ignore
     } else if (txData.tx_status === 'abort_by_response') {
-      toast({ title: 'Watering Failed', description: 'Transaction was rejected on-chain', status: 'error' });
+      toast.error('Watering Failed', { description: 'Transaction was rejected on-chain' });
       setWaterTxId(null);
     }
-  }, [txData, waterTxId, toast, refetch]);
+  }, [txData, waterTxId, refetch]);
 
   const handleWater = async () => {
     if (!network || isWatering || txPending) return;
@@ -80,38 +72,22 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
       if (shouldUseDirectCall()) {
         const { txid } = await executeContractCall(txOptions, currentWallet);
         setWaterTxId(txid);
-        toast({
-          title: 'Watering Submitted',
-          description: 'Confirming on-chain...',
-          status: 'info',
-        });
+        toast.info('Watering Submitted', { description: 'Confirming on-chain...' });
       } else {
         await openContractCall({
           ...txOptions,
           onFinish: (data) => {
             setWaterTxId(data.txId);
-            toast({
-              title: 'Watering Submitted',
-              description: 'Confirming on-chain...',
-              status: 'info',
-            });
+            toast.info('Watering Submitted', { description: 'Confirming on-chain...' });
           },
           onCancel: () => {
-            toast({
-              title: 'Cancelled',
-              description: 'Transaction was cancelled',
-              status: 'info',
-            });
+            toast.info('Cancelled', { description: 'Transaction was cancelled' });
           },
         });
       }
     } catch (error: unknown) {
       console.error('Error watering plant:', error);
-      toast({
-        title: 'Watering Failed',
-        description: getContractErrorMessage(error),
-        status: 'error',
-      });
+      toast.error('Watering Failed', { description: getContractErrorMessage(error) });
     } finally {
       setIsWatering(false);
     }
@@ -123,107 +99,87 @@ export const PlantCard = ({ plant }: PlantCardProps) => {
   // Check if watering is allowed based on network cooldown
   const isTestnet = network ? isTestnetEnvironment(network) : false;
   const cooldownBlocks = getCooldownBlocks(isTestnet);
-  // If cooldown is 0 (testnet), always allow watering. Otherwise check last-water-block.
   const canWater = plantState && !isTree && (cooldownBlocks === 0 || plantState['last-water-block'] === 0);
+
+  const stageColors = getColorClasses(getStageColor(stage));
+  const tierColors = tierInfo ? getColorClasses(tierInfo.colorScheme) : null;
+  const buttonColors = getColorClasses(txPending ? 'orange' : 'blue');
 
   return (
     <Link href={`/my-plants/${tokenId}`} style={{ textDecoration: 'none' }}>
-      <Box
-        borderWidth="1px"
-        borderRadius="lg"
-        overflow="hidden"
-        bg="white"
-        boxShadow="md"
-        transition="transform 0.2s, box-shadow 0.2s"
-        _hover={{
-          transform: 'translateY(-4px)',
-          boxShadow: 'lg',
-        }}
-        cursor="pointer"
-      >
-        <Box position="relative" paddingTop="100%">
-          <Center position="absolute" top={0} left={0} right={0} bottom={0} bg="gray.100">
+      <div className="cursor-pointer overflow-hidden rounded-lg border bg-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+        <div className="relative pt-[100%]">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             {imageSrc ? (
-              <Image src={imageSrc} alt={`Plant #${tokenId}`} objectFit="cover" />
+              <img src={imageSrc} alt={`Plant #${tokenId}`} className="object-cover" />
             ) : (
-              <Text color="gray.500" fontSize="sm">
+              <span className="text-sm text-gray-500">
                 Plant #{tokenId}
-              </Text>
+              </span>
             )}
-          </Center>
-          {tierInfo && (
-            <Badge
-              position="absolute"
-              top={2}
-              left={2}
-              colorScheme={tierInfo.colorScheme}
-              fontSize="xs"
-              px={2}
-              py={0.5}
-            >
+          </div>
+          {tierInfo && tierColors && (
+            <span className={cn('absolute left-2 top-2 rounded px-2 py-0.5 text-xs font-medium', tierColors.badge)}>
               {tierInfo.name}
-            </Badge>
+            </span>
           )}
-        </Box>
-        <VStack p={4} spacing={3} align="stretch">
-          <HStack justify="space-between">
-            <Text fontWeight="bold" fontSize="lg">
+        </div>
+        <div className="flex flex-col gap-3 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-bold">
               Plant #{tokenId}
-            </Text>
+            </span>
             {isLoading ? (
-              <Spinner size="sm" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Badge colorScheme={getStageColor(stage)}>{getStageName(stage)}</Badge>
+              <Badge className={stageColors.badge}>{getStageName(stage)}</Badge>
             )}
-          </HStack>
+          </div>
 
           {plantState && (
             <>
-              <Box>
-                <HStack justify="space-between" mb={1}>
-                  <Text fontSize="xs" color="gray.600">
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-xs text-gray-600">
                     Growth Progress
-                  </Text>
-                  <Text fontSize="xs" fontWeight="medium">
+                  </span>
+                  <span className="text-xs font-medium">
                     {growthPoints}/7
-                  </Text>
-                </HStack>
+                  </span>
+                </div>
                 <Progress
                   value={(growthPoints / 7) * 100}
-                  size="sm"
-                  colorScheme={getStageColor(stage)}
-                  borderRadius="full"
+                  className="h-2 rounded-full"
                 />
-              </Box>
+              </div>
 
               <Button
                 size="sm"
-                colorScheme={txPending ? 'orange' : 'blue'}
-                isDisabled={isTree || !canWater || !!txPending}
-                isLoading={isWatering || !!txPending}
-                loadingText={txPending ? 'Confirming...' : 'Watering...'}
+                className={cn(buttonColors.button)}
+                disabled={isTree || !canWater || !!txPending || isWatering}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   handleWater();
                 }}
               >
-                {isTree ? 'Graduated 🌳' : canWater ? 'Water Plant 💧' : 'Cooldown Active ⏳'}
+                {(isWatering || !!txPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isWatering ? 'Watering...' : txPending ? 'Confirming...' : isTree ? 'Graduated 🌳' : canWater ? 'Water Plant 💧' : 'Cooldown Active ⏳'}
               </Button>
             </>
           )}
 
           {!plantState && !isLoading && (
-            <VStack spacing={2} align="stretch">
-              <SkeletonText noOfLines={1} skeletonHeight="3" />
-              <Skeleton height="8px" borderRadius="full" />
-              <Text fontSize="xs" color="gray.400" textAlign="center">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-2 w-full rounded-full" />
+              <span className="text-center text-xs text-gray-400">
                 Loading plant data...
-              </Text>
-            </VStack>
+              </span>
+            </div>
           )}
-        </VStack>
-      </Box>
+        </div>
+      </div>
     </Link>
   );
 };

@@ -1,27 +1,14 @@
 'use client';
 
-import {
-  Container,
-  VStack,
-  Text,
-  Box,
-  HStack,
-  Card,
-  CardBody,
-  CardHeader,
-  Heading,
-  Badge,
-  Spinner,
-  Center,
-  Link as ChakraLink,
-  Divider,
-  Code,
-  Button,
-} from '@chakra-ui/react';
+import { Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useBatchInfo, usePoolStats, useBatchSponsor } from '@/hooks/useImpactRegistry';
 import { useNetwork } from '@/lib/use-network';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 function truncateAddress(address: string): string {
   if (address.length <= 12) return address;
@@ -43,49 +30,49 @@ export default function BatchDetailPage() {
 
   if (!network) {
     return (
-      <Center h="50vh">
-        <Text>Please connect your wallet to view batch data</Text>
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <p>Please connect your wallet to view batch data</p>
+      </div>
     );
   }
 
   if (isNaN(batchId) || batchId < 1) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Text fontSize="xl" color="red.500">Invalid batch ID</Text>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xl text-red-500">Invalid batch ID</p>
           <Link href="/impact">
-            <Button colorScheme="green" variant="outline">Back to Impact Dashboard</Button>
+            <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">Back to Impact Dashboard</Button>
           </Link>
-        </VStack>
-      </Center>
+        </div>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Spinner size="xl" color="orange.500" />
-          <Text color="gray.600">Loading batch #{batchId}...</Text>
-        </VStack>
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+          <p className="text-gray-600">Loading batch #{batchId}...</p>
+        </div>
+      </div>
     );
   }
 
   if (isError || !batch) {
     return (
-      <Center h="50vh">
-        <VStack spacing={4}>
-          <Text fontSize="xl" color="red.500">Batch #{batchId} not found</Text>
-          <Text color="gray.600">
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xl text-red-500">Batch #{batchId} not found</p>
+          <p className="text-gray-600">
             This batch may not exist yet or the contract is not deployed on this network.
-          </Text>
+          </p>
           <Link href="/impact">
-            <Button colorScheme="green" variant="outline">Back to Impact Dashboard</Button>
+            <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">Back to Impact Dashboard</Button>
           </Link>
-        </VStack>
-      </Center>
+        </div>
+      </div>
     );
   }
 
@@ -94,208 +81,196 @@ export default function BatchDetailPage() {
   const hasNext = batchId < totalBatches;
 
   return (
-    <Container maxW="container.md" py={8}>
-      <VStack spacing={6} align="stretch">
+    <div className="mx-auto max-w-screen-md px-4 py-8">
+      <div className="flex flex-col gap-6">
         {/* Breadcrumb */}
-        <HStack spacing={2} fontSize="sm" color="gray.500">
-          <Link href="/impact">
-            <ChakraLink color="green.500">Impact Dashboard</ChakraLink>
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Link href="/impact" className="text-green-500 hover:underline">
+            Impact Dashboard
           </Link>
-          <Text>/</Text>
-          <Text>Batch #{batchId}</Text>
-        </HStack>
+          <span>/</span>
+          <span>Batch #{batchId}</span>
+        </div>
 
         {/* Header */}
-        <HStack justify="space-between" align="center">
-          <VStack align="start" spacing={1}>
-            <HStack flexWrap="wrap">
-              <Heading size="lg">Batch #{batchId}</Heading>
-              <Badge colorScheme="orange" fontSize="sm" px={2} py={1}>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold">Batch #{batchId}</h1>
+              <Badge className="bg-orange-100 text-orange-800 px-2 py-1 text-sm">
                 Verified
               </Badge>
               {sponsor && (
-                <Badge colorScheme="teal" fontSize="sm" px={2} py={1}>
+                <Badge className="bg-teal-100 text-teal-800 px-2 py-1 text-sm">
                   Sponsored
                 </Badge>
               )}
-            </HStack>
-            <Text color="gray.600" fontSize="sm">
+            </div>
+            <p className="text-sm text-gray-600">
               Redemption proof recorded on-chain
-            </Text>
-          </VStack>
-          <Text fontSize="3xl">📦</Text>
-        </HStack>
+            </p>
+          </div>
+          <span className="text-3xl">📦</span>
+        </div>
 
         {/* Main Details Card */}
         <Card>
           <CardHeader>
-            <Heading size="md">Batch Details</Heading>
+            <CardTitle>Batch Details</CardTitle>
           </CardHeader>
-          <CardBody>
-            <VStack spacing={4} align="stretch">
+          <CardContent>
+            <div className="flex flex-col gap-4">
               <DetailRow
                 label="Trees Redeemed"
                 value={
-                  <HStack>
-                    <Text fontWeight="bold" fontSize="lg" color="green.600">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-green-600">
                       {batch.quantity}
-                    </Text>
-                    <Text color="gray.500">trees</Text>
-                  </HStack>
+                    </span>
+                    <span className="text-gray-500">trees</span>
+                  </div>
                 }
               />
-              <Divider />
+              <Separator />
               <DetailRow
                 label="Block Height"
                 value={
-                  <Code px={2} py={1} borderRadius="md">
+                  <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
                     {batch.timestamp}
-                  </Code>
+                  </code>
                 }
               />
-              <Divider />
+              <Separator />
               <DetailRow
                 label="Recorded By"
                 value={
-                  <Text fontFamily="mono" fontSize="sm" title={batch.recordedBy}>
+                  <span className="font-mono text-sm" title={batch.recordedBy}>
                     {truncateAddress(batch.recordedBy)}
-                  </Text>
+                  </span>
                 }
               />
-            </VStack>
-          </CardBody>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Proof Card */}
         <Card>
           <CardHeader>
-            <Heading size="md">Proof of Impact</Heading>
+            <CardTitle>Proof of Impact</CardTitle>
           </CardHeader>
-          <CardBody>
-            <VStack spacing={4} align="stretch">
+          <CardContent>
+            <div className="flex flex-col gap-4">
               {batch.proofUrl && (
                 <>
                   <DetailRow
                     label="Proof URL"
                     value={
-                      <ChakraLink
+                      <a
                         href={batch.proofUrl}
-                        isExternal
-                        color="blue.500"
-                        fontSize="sm"
-                        wordBreak="break-all"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="break-all text-sm text-blue-500 hover:underline"
                       >
                         {batch.proofUrl}
-                      </ChakraLink>
+                      </a>
                     }
                   />
-                  <Divider />
+                  <Separator />
                 </>
               )}
               {batch.proofHash && (
                 <DetailRow
                   label="Proof Hash (SHA-256)"
                   value={
-                    <Code
-                      px={2}
-                      py={1}
-                      borderRadius="md"
-                      fontSize="xs"
-                      wordBreak="break-all"
+                    <code
+                      className="break-all rounded bg-muted px-2 py-1 font-mono text-xs"
                       title={batch.proofHash}
                     >
                       {truncateHash(batch.proofHash)}
-                    </Code>
+                    </code>
                   }
                 />
               )}
               {!batch.proofUrl && !batch.proofHash && (
-                <Text color="gray.500" fontSize="sm">
+                <p className="text-sm text-gray-500">
                   No proof data attached to this batch.
-                </Text>
+                </p>
               )}
-            </VStack>
-          </CardBody>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Sponsor Card */}
         {sponsor && (
-          <Card borderColor="teal.200" borderWidth={1} bg="teal.50">
+          <Card className="border-teal-200 bg-teal-50">
             <CardHeader>
-              <HStack>
-                <Heading size="md" color="teal.700">Sponsored By</Heading>
-                <Badge colorScheme="teal">Verified</Badge>
-              </HStack>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-teal-700">Sponsored By</CardTitle>
+                <Badge className="bg-teal-100 text-teal-800">Verified</Badge>
+              </div>
             </CardHeader>
-            <CardBody>
-              <VStack spacing={3} align="stretch">
+            <CardContent>
+              <div className="flex flex-col gap-3">
                 <DetailRow
                   label="Sponsor"
                   value={
-                    <Text fontWeight="bold" color="teal.700">
+                    <span className="font-bold text-teal-700">
                       {sponsor.sponsorName}
-                    </Text>
+                    </span>
                   }
                 />
-                <Divider borderColor="teal.200" />
+                <Separator className="bg-teal-200" />
                 <DetailRow
                   label="Amount"
                   value={
-                    <Text fontWeight="bold" color="teal.600">
+                    <span className="font-bold text-teal-600">
                       {(sponsor.amount / 1_000_000).toFixed(1)} STX
-                    </Text>
+                    </span>
                   }
                 />
-                <Divider borderColor="teal.200" />
+                <Separator className="bg-teal-200" />
                 <DetailRow
                   label="Address"
                   value={
-                    <Text fontFamily="mono" fontSize="sm" title={sponsor.sponsor}>
+                    <span className="font-mono text-sm" title={sponsor.sponsor}>
                       {truncateAddress(sponsor.sponsor)}
-                    </Text>
+                    </span>
                   }
                 />
-                <Divider borderColor="teal.200" />
+                <Separator className="bg-teal-200" />
                 <DetailRow
                   label="Block"
                   value={
-                    <Code px={2} py={1} borderRadius="md">
+                    <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
                       {sponsor.sponsoredAt}
-                    </Code>
+                    </code>
                   }
                 />
-              </VStack>
-            </CardBody>
+              </div>
+            </CardContent>
           </Card>
         )}
 
         {/* Sponsor CTA if not sponsored */}
         {!sponsor && (
-          <Link href={`/impact/sponsor`}>
-            <Card
-              borderWidth="1px"
-              borderStyle="dashed"
-              borderColor="teal.300"
-              _hover={{ borderColor: 'teal.400', bg: 'teal.50' }}
-              transition="all 0.2s"
-              cursor="pointer"
-            >
-              <CardBody>
-                <HStack justify="center" spacing={3}>
-                  <Text color="teal.600" fontWeight="medium">
+          <Link href="/impact/sponsor">
+            <Card className="cursor-pointer border-dashed border-teal-300 transition-all duration-200 hover:border-teal-400 hover:bg-teal-50">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-center gap-3">
+                  <span className="font-medium text-teal-600">
                     Sponsor this batch
-                  </Text>
-                  <Badge colorScheme="teal" variant="outline">
+                  </span>
+                  <Badge className="border-teal-300 text-teal-700" variant="outline">
                     Min 1 STX
                   </Badge>
-                </HStack>
-              </CardBody>
+                </div>
+              </CardContent>
             </Card>
           </Link>
         )}
 
         {/* Navigation */}
-        <HStack justify="space-between">
+        <div className="flex items-center justify-between">
           {hasPrev ? (
             <Link href={`/impact/batch/${batchId - 1}`}>
               <Button variant="outline" size="sm">
@@ -303,10 +278,10 @@ export default function BatchDetailPage() {
               </Button>
             </Link>
           ) : (
-            <Box />
+            <div />
           )}
           <Link href="/impact">
-            <Button colorScheme="green" variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="text-green-600 hover:bg-green-50">
               All Batches
             </Button>
           </Link>
@@ -317,11 +292,11 @@ export default function BatchDetailPage() {
               </Button>
             </Link>
           ) : (
-            <Box />
+            <div />
           )}
-        </HStack>
-      </VStack>
-    </Container>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -332,11 +307,11 @@ interface DetailRowProps {
 
 function DetailRow({ label, value }: DetailRowProps) {
   return (
-    <HStack justify="space-between" align="center">
-      <Text color="gray.600" fontSize="sm" flexShrink={0}>
+    <div className="flex items-center justify-between">
+      <span className="shrink-0 text-sm text-gray-600">
         {label}
-      </Text>
-      <Box>{value}</Box>
-    </HStack>
+      </span>
+      <div>{value}</div>
+    </div>
   );
 }
