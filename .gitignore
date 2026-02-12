@@ -8,6 +8,9 @@ clarity/.turbo/
 clarity/.debug_history
 clarity/.cache/
 
+# Design references (local only)
+design/
+
 # Temporary documentation
 *_CHECKLIST.md
 *_REPORT_TEMP.md
