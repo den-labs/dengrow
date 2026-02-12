@@ -34,12 +34,12 @@ export const Footer = () => {
                 Docs
               </a>
               <a
-                href="https://twitter.com/dengrow_xyz"
+                href="https://x.com/denlabs_app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="transition-colors hover:text-dengrow-500"
               >
-                Twitter
+                X
               </a>
             </div>
           </div>
