@@ -1,5 +1,20 @@
 # DenGrow
 
+<!-- denlabs-meta
+name: dengrow
+type: app
+surface: public-product
+status: public
+owner: Wolfcito
+pm: pnpm
+repo: https://github.com/den-labs/dengrow
+url: https://dengrow.vercel.app
+scripts: [dev, build, test, lint]
+-->
+
+> **DenLabs Lab** · Product · Stacks
+> On-chain plant NFT game — grow virtual plants, graduate trees, fund real-world impact.
+
 **Grow a plant. Graduate a tree. Plant real impact.**
 
 DenGrow is an on-chain plant NFT game built on [Stacks](https://www.stacks.co/) (Bitcoin L2). Users mint a virtual plant, nurture it daily through watering, and watch it evolve through 5 growth stages. When a plant graduates to a Tree, it enters a global **Impact Pool** — a transparent mechanism for converting virtual achievements into real-world tree planting.
